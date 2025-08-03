@@ -48,7 +48,7 @@ fun MNIST() {
     val net = NeuralNetwork(
         layers = listOf(
             Layer(28 * 28),
-            Layer(16, Logistic),
+            Layer(4, Logistic),
             Layer(10, Logistic),
         ),
         costFunction = MeanSquaredError,
@@ -62,7 +62,7 @@ fun MNIST() {
         println("")
 
         println("Training round $n")
-        learner.train(trainingSet, learningRate = 0.5, batchSize = 10)
+        learner.train(trainingSet, learningRate = 0.1 * (1.0 + 4.0 / n), batchSize = 10)
 
         println("Calculating mean error")
         val count = MutableList(10) { 0 }
