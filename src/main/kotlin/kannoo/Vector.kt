@@ -8,6 +8,9 @@ value class Vector(private val vs: DoubleArray) {
     val size
         get(): Int = vs.size
 
+    val scalars
+        get(): DoubleArray = vs
+
     operator fun get(index: Int): Double =
         vs[index]
 
@@ -45,9 +48,6 @@ value class Vector(private val vs: DoubleArray) {
 
     fun square(): Vector =
         transform { it * it }
-
-    fun <T> map(fn: (Double) -> T): List<T> =
-        vs.map(fn)
 
     fun copyInto(destination: Vector) {
         if (size != destination.size) throw IllegalArgumentException("Vectors must have same size")

@@ -1,15 +1,26 @@
 package kannoo
 
-typealias Matrix = List<Vector>
+@JvmInline
+value class Matrix(private val arr: Array<Vector>) {
 
-fun Matrix(w: Int, h: Int, init: (Int, Int) -> Double): Matrix =
-    List(w) { i -> Vector(h) { j -> init(i, j) } }
+    constructor(rows: Int, cols: Int, init: (row: Int, col: Int) -> Double)
+            : this(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
 
-fun Matrix(w: Int, h: Int, init: () -> Double): Matrix =
-    Matrix(w, h) { _, _ -> init() }
+    constructor(rows: Int, cols: Int, init: () -> Double)
+            : this(rows, cols, { _, _ -> init() })
 
-val Matrix.rows get() = size
-val Matrix.cols get() = if (rows == 0) 0 else this[0].size
+    val rows
+        get(): Int = arr.size
+
+    val cols
+        get(): Int = if (rows == 0) 0 else arr[0].size
+
+    val rowVectors
+        get(): Array<Vector> = arr
+
+    operator fun get(index: Int): Vector =
+        arr[index]
+}
 
 fun Matrix.forEachIndexedCell(fn: (i: Int, j: Int) -> Unit) {
     for (i in 0 until rows)
@@ -18,7 +29,7 @@ fun Matrix.forEachIndexedCell(fn: (i: Int, j: Int) -> Unit) {
 }
 
 fun emptyMatrix(): Matrix =
-    listOf()
+    Matrix(arrayOf())
 
 fun randomMatrix(w: Int, h: Int): Matrix =
     Matrix(w, h) { randomDouble() }

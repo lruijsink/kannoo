@@ -61,7 +61,7 @@ fun booleanFunctionsExample() {
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->
-                        t.map { it.toInt() }.joinToString("") to rnd(computer.compute(t)[0])
+                        t.scalars.map { it.toInt() }.joinToString("") to rnd(computer.compute(t)[0])
                     }
         )
         n++
@@ -71,8 +71,8 @@ fun booleanFunctionsExample() {
 
     net.layers.forEachIndexed { i, layer ->
         if (i > 0) {
-            println("   Bias $i: " + layer.bias.map(::rnd))
-            println("Weights $i: " + net.weights[i].map { it.map(::rnd) })
+            println("   Bias $i: " + layer.bias.scalars.map(::rnd))
+            println("Weights $i: " + net.weights[i].rowVectors.map { it.scalars.map(::rnd) })
         }
     }
 
