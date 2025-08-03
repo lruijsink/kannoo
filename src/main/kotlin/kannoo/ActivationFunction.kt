@@ -1,0 +1,29 @@
+package kannoo
+
+import kotlin.math.exp
+
+interface ActivationFunction {
+    fun sigmoid(x: Double): Double
+    fun sigmoidPrime(x: Double): Double
+}
+
+fun ActivationFunction.sigmoid(v: Vector): Vector = v.mapDouble(::sigmoid)
+fun ActivationFunction.sigmoidPrime(v: Vector): Vector = v.mapDouble(::sigmoidPrime)
+
+object Logistic : ActivationFunction {
+    override fun sigmoid(x: Double) = 1.0 / (1.0 + exp(-x))
+    override fun sigmoidPrime(x: Double): Double {
+        val f = sigmoid(x)
+        return f * (1.0 - f)
+    }
+}
+
+object ReLU : ActivationFunction {
+    override fun sigmoid(x: Double): Double = if (x <= 0.0) 0.0 else x
+    override fun sigmoidPrime(x: Double): Double = if (x <= 0.0) 0.0 else 1.0
+}
+
+object LeakyReLU : ActivationFunction {
+    override fun sigmoid(x: Double): Double = if (x <= 0.0) 0.01 * x else x
+    override fun sigmoidPrime(x: Double): Double = if (x <= 0.0) 0.01 else 1.0
+}
