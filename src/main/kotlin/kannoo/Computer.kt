@@ -15,7 +15,7 @@ class Computer(val neuralNetwork: NeuralNetwork) {
                 weightedSums[p][i] = neuralNetwork.layers[p].bias[i]
                 for (j in 0 until activations[p - 1].size)
                     weightedSums[p][i] += activations[p - 1][j] * neuralNetwork.weights[p][i][j]
-                activations[p][i] = neuralNetwork.activationFunction.sigmoid(weightedSums[p][i])
+                activations[p][i] = neuralNetwork.layers[p].activationFunction.sigmoid(weightedSums[p][i])
             }
         }
         return FeedForwardResult(weightedSums, activations)

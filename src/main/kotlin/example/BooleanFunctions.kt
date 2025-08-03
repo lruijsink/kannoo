@@ -1,6 +1,7 @@
 package example
 
 import kannoo.Computer
+import kannoo.Layer
 import kannoo.Learner
 import kannoo.Logistic
 import kannoo.MeanSquaredError
@@ -12,8 +13,11 @@ import kotlin.random.Random
 
 fun booleanFunctionsExample() {
     val net = NeuralNetwork(
-        layerSizes = listOf(4, 2, 1),
-        activationFunction = Logistic,
+        layers = listOf(
+            Layer(4),
+            Layer(2, Logistic),
+            Layer(1, Logistic),
+        ),
         costFunction = MeanSquaredError,
     )
     val learn = Learner(net)

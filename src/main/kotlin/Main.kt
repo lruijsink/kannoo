@@ -1,5 +1,5 @@
 import example.*
 
 fun main() {
-    MNIST()
+    booleanFunctionsExample()
 }

@@ -1,10 +1,13 @@
 package example
 
 import kannoo.Computer
+import kannoo.Layer
+import kannoo.LeakyReLU
 import kannoo.Learner
 import kannoo.Logistic
 import kannoo.MeanSquaredError
 import kannoo.NeuralNetwork
+import kannoo.ReLU
 import kannoo.Vector
 import java.io.FileInputStream
 import kotlin.math.round
@@ -43,12 +46,11 @@ fun MNIST() {
     val testSet = readCSVs(testFile)
 
     val net = NeuralNetwork(
-        layerSizes = listOf(
-            28 * 28,
-            16,
-            10,
+        layers = listOf(
+            Layer(28 * 28),
+            Layer(16, Logistic),
+            Layer(10, Logistic),
         ),
-        activationFunction = Logistic,
         costFunction = MeanSquaredError,
     )
     val computer = Computer(net)
@@ -60,7 +62,7 @@ fun MNIST() {
         println("")
 
         println("Training round $n")
-        learner.train(trainingSet, learningRate = 0.3, batchSize = 10)
+        learner.train(trainingSet, learningRate = 0.5, batchSize = 10)
 
         println("Calculating mean error")
         val count = MutableList(10) { 0 }

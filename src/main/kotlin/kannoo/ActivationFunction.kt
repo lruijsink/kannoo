@@ -19,11 +19,16 @@ object Logistic : ActivationFunction {
 }
 
 object ReLU : ActivationFunction {
-    override fun sigmoid(x: Double): Double = if (x <= 0.0) 0.0 else x
-    override fun sigmoidPrime(x: Double): Double = if (x <= 0.0) 0.0 else 1.0
+    override fun sigmoid(x: Double) = if (x <= 0.0) 0.0 else x
+    override fun sigmoidPrime(x: Double) = if (x <= 0.0) 0.0 else 1.0
 }
 
 object LeakyReLU : ActivationFunction {
-    override fun sigmoid(x: Double): Double = if (x <= 0.0) 0.01 * x else x
-    override fun sigmoidPrime(x: Double): Double = if (x <= 0.0) 0.01 else 1.0
+    override fun sigmoid(x: Double) = if (x <= 0.0) 0.01 * x else x
+    override fun sigmoidPrime(x: Double) = if (x <= 0.0) 0.01 else 1.0
+}
+
+object Linear : ActivationFunction {
+    override fun sigmoid(x: Double) = x
+    override fun sigmoidPrime(x: Double) = 1.0
 }
