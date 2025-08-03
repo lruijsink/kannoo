@@ -20,12 +20,26 @@ value class Matrix(private val arr: Array<Vector>) {
 
     operator fun get(index: Int): Vector =
         arr[index]
-}
 
-fun Matrix.forEachIndexedCell(fn: (i: Int, j: Int) -> Unit) {
-    for (i in 0 until rows)
-        for (j in 0 until cols)
-            fn(i, j)
+    operator fun plusAssign(rhs: Matrix) {
+        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
+        forEachIndexed { i, j -> this[i][j] += rhs[i][j] }
+    }
+
+    operator fun minusAssign(rhs: Matrix) {
+        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
+        forEachIndexed { i, j -> this[i][j] -= rhs[i][j] }
+    }
+
+    operator fun timesAssign(rhs: Double) {
+        forEachIndexed { i, j -> this[i][j] *= rhs }
+    }
+
+    fun forEachIndexed(fn: (i: Int, j: Int) -> Unit) {
+        for (i in 0 until rows)
+            for (j in 0 until cols)
+                fn(i, j)
+    }
 }
 
 fun emptyMatrix(): Matrix =
@@ -42,18 +56,4 @@ fun transposeDot(m: Matrix, v: Vector): Vector {
     return Vector(m.cols) { j ->
         (0 until m.rows).sumOf { i -> m[i][j] * v[i] }
     }
-}
-
-fun Matrix.addInPlace(m: Matrix) {
-    if (rows != m.rows || cols != m.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-    forEachIndexedCell { i, j -> this[i][j] += m[i][j] }
-}
-
-fun Matrix.subInPlace(m: Matrix) {
-    if (rows != m.rows || cols != m.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-    forEachIndexedCell { i, j -> this[i][j] -= m[i][j] }
-}
-
-fun Matrix.mulInPlace(s: Double) {
-    forEachIndexedCell { i, j -> this[i][j] *= s }
 }
