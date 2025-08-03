@@ -23,22 +23,22 @@ value class Matrix(private val arr: Array<Vector>) {
 
     operator fun plusAssign(rhs: Matrix) {
         if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-        forEachIndexed { i, j -> this[i][j] += rhs[i][j] }
+        forEachIndexed { row, col -> this[row][col] += rhs[row][col] }
     }
 
     operator fun minusAssign(rhs: Matrix) {
         if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-        forEachIndexed { i, j -> this[i][j] -= rhs[i][j] }
+        forEachIndexed { row, col -> this[row][col] -= rhs[row][col] }
     }
 
     operator fun timesAssign(rhs: Double) {
-        forEachIndexed { i, j -> this[i][j] *= rhs }
+        forEachIndexed { row, col -> this[row][col] *= rhs }
     }
 
-    fun forEachIndexed(fn: (i: Int, j: Int) -> Unit) {
-        for (i in 0 until rows)
-            for (j in 0 until cols)
-                fn(i, j)
+    fun forEachIndexed(fn: (row: Int, col: Int) -> Unit) {
+        for (row in 0 until rows)
+            for (col in 0 until cols)
+                fn(row, col)
     }
 }
 
