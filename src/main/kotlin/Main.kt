@@ -1,5 +1,6 @@
 import example.booleanFunctionsExample
+import example.performanceTest
 
 fun main() {
-    booleanFunctionsExample()
+    performanceTest()
 }
