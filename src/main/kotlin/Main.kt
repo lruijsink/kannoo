@@ -1,6 +1,5 @@
-import example.booleanFunctionsExample
-import example.performanceTest
+import example.*
 
 fun main() {
-    performanceTest()
+    MNIST()
 }

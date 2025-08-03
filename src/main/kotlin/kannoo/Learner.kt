@@ -21,8 +21,8 @@ class Learner(val neuralNetwork: NeuralNetwork) {
     private fun batch(trainingData: List<Pair<Vector, Vector>>, learningRate: Double) {
         val batch = Batch(neuralNetwork)
         trainingData.forEach { (input, target) -> batch.backPropagate(input, target) }
-        batch.deltaBiases.forEach { it *= learningRate }
-        batch.deltaWeights.forEach { it *= learningRate }
+        batch.deltaBiases.forEach { it *= learningRate / trainingData.size }
+        batch.deltaWeights.forEach { it *= learningRate / trainingData.size }
         neuralNetwork.layers.forEachIndexed { i, layer -> layer.bias -= batch.deltaBiases[i] }
         neuralNetwork.weights.forEachIndexed { i, weights -> weights -= batch.deltaWeights[i] }
     }

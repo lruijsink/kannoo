@@ -22,6 +22,9 @@ value class Vector(private val vs: DoubleArray) {
         if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
         else zipMap(rhs) { a, b -> a - b }
 
+    operator fun div(rhs: Double): Vector =
+        transform { it / rhs }
+
     operator fun plusAssign(rhs: Vector) {
         if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
         for (i in 0 until size) this[i] += rhs[i]
