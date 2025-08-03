@@ -15,10 +15,34 @@ value class Vector(private val vs: DoubleArray) {
         vs[index] = value
     }
 
+    operator fun minus(rhs: Vector): Vector =
+        zipMap(rhs) { a, b -> a - b }
+
+    operator fun plusAssign(rhs: Vector) {
+        for (i in 0 until size) this[i] += rhs[i]
+    }
+
+    operator fun minusAssign(rhs: Vector) {
+        for (i in 0 until size) this[i] -= rhs[i]
+    }
+
+    operator fun timesAssign(rhs: Double) {
+        for (i in 0 until size) this[i] *= rhs
+    }
+
     fun sum(): Double =
         vs.sum()
 
-    fun <T> map(fn: (Double) -> T) =
+    fun zipMap(rhs: Vector, fn: (Double, Double) -> Double): Vector =
+        Vector(size) { fn(this[it], rhs[it]) }
+
+    fun map(fn: (Double) -> Double): Vector =
+        Vector(size) { fn(this[it]) }
+
+    fun square(): Vector =
+        map { it * it }
+
+    fun <T> map(fn: (Double) -> T): List<T> =
         vs.map(fn)
 
     fun copyInto(destination: Vector) {
@@ -27,40 +51,13 @@ value class Vector(private val vs: DoubleArray) {
 }
 
 fun emptyVector(): Vector =
-    Vector(doubleArrayOf())
+    vectorOf()
 
 fun vectorOf(vararg vs: Double) =
     Vector(doubleArrayOf(*vs))
 
 fun randomVector(size: Int): Vector =
     Vector(size) { randomDouble() }
-
-fun Vector.mapDouble(fn: (Double) -> Double): Vector =
-    Vector(size) { fn(this[it]) }
-
-fun square(v: Vector): Vector =
-    v.mapDouble { it * it }
-
-infix fun Vector.sub(v: Vector): Vector =
-    zipMap(this, v) { a, b -> a - b }
-
-fun Vector.addInPlace(v: Vector) {
-    if (size != v.size) throw IllegalArgumentException("Must be equal size")
-    for (i in 0 until size) this[i] += v[i]
-}
-
-fun Vector.subInPlace(v: Vector) {
-    if (size != v.size) throw IllegalArgumentException("Must be equal size")
-    for (i in 0 until size) this[i] -= v[i]
-}
-
-fun Vector.mulInPlace(s: Double) {
-    for (i in 0 until size) this[i] *= s
-}
-
-fun zipMap(a: Vector, b: Vector, f: (Double, Double) -> Double) =
-    if (a.size != b.size) throw IllegalArgumentException("Must be equal size")
-    else Vector(a.size) { f(a[it], b[it]) }
 
 fun hadamard(a: Vector, b: Vector) =
     if (a.size != b.size) throw IllegalArgumentException("Must be equal size")
