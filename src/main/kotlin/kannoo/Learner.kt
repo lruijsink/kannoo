@@ -21,10 +21,10 @@ class Learner(val neuralNetwork: NeuralNetwork) {
     private fun batch(trainingData: List<Pair<Vector, Vector>>, learningRate: Double) {
         val batch = Batch(neuralNetwork)
         trainingData.forEach { (input, target) -> batch.backPropagate(input, target) }
-        batch.deltaBiases.forEach { it.mulInPlace(learningRate) }
-        batch.deltaWeights.forEach { it.mulInPlace(learningRate) }
-        neuralNetwork.layers.forEachIndexed { i, layer -> layer.bias.subInPlace(batch.deltaBiases[i]) }
-        neuralNetwork.weights.forEachIndexed { i, weights -> weights.subInPlace(batch.deltaWeights[i]) }
+        batch.deltaBiases.forEach { it *= learningRate }
+        batch.deltaWeights.forEach { it *= learningRate }
+        neuralNetwork.layers.forEachIndexed { i, layer -> layer.bias -= batch.deltaBiases[i] }
+        neuralNetwork.weights.forEachIndexed { i, weights -> weights -= batch.deltaWeights[i] }
     }
 
     private fun Batch.backPropagate(input: Vector, target: Vector) {
@@ -37,16 +37,16 @@ class Learner(val neuralNetwork: NeuralNetwork) {
 
         var delta = hadamard(
             neuralNetwork.costFunction.costDerivative(target, feedForwardResult.output),
-            neuralNetwork.activationFunction.sigmoidPrime(weightedSums.last())
+            neuralNetwork.activationFunction.sigmoidPrime(weightedSums.last()),
         )
-        deltaBiases[numLayers - 1].addInPlace(delta)
-        deltaWeights[numLayers - 1].addInPlace(outer(delta, activations[numLayers - 2]))
+        deltaBiases[numLayers - 1] += delta
+        deltaWeights[numLayers - 1] += outer(delta, activations[numLayers - 2])
 
         for (l in 2 until numLayers) {
             val sigmoidPrimes = neuralNetwork.activationFunction.sigmoidPrime(weightedSums[numLayers - l])
             delta = hadamard(transposeDot(neuralNetwork.weights[numLayers - l + 1], delta), sigmoidPrimes)
-            deltaBiases[numLayers - l].addInPlace(delta)
-            deltaWeights[numLayers - l].addInPlace(outer(delta, activations[numLayers - l - 1]))
+            deltaBiases[numLayers - l] += delta
+            deltaWeights[numLayers - l] += outer(delta, activations[numLayers - l - 1])
         }
     }
 }

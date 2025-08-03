@@ -5,6 +5,7 @@ import kannoo.Learner
 import kannoo.Logistic
 import kannoo.MeanSquaredError
 import kannoo.NeuralNetwork
+import kannoo.vectorOf
 import kotlin.collections.map
 import kotlin.math.round
 import kotlin.random.Random
@@ -20,46 +21,28 @@ fun booleanFunctionsExample() {
 
     val trainingData = listOf(
         // 0, 0 = and
-        doubleArrayOf(0.0, 0.0, 0.0, 0.0) to doubleArrayOf(0.0),
-        doubleArrayOf(0.0, 0.0, 1.0, 0.0) to doubleArrayOf(0.0),
-        doubleArrayOf(0.0, 0.0, 0.0, 1.0) to doubleArrayOf(0.0),
-        doubleArrayOf(0.0, 0.0, 1.0, 1.0) to doubleArrayOf(1.0),
+        vectorOf(0.0, 0.0, 0.0, 0.0) to vectorOf(0.0),
+        vectorOf(0.0, 0.0, 1.0, 0.0) to vectorOf(0.0),
+        vectorOf(0.0, 0.0, 0.0, 1.0) to vectorOf(0.0),
+        vectorOf(0.0, 0.0, 1.0, 1.0) to vectorOf(1.0),
 
         // 0, 1 = or
-        doubleArrayOf(0.0, 1.0, 0.0, 0.0) to doubleArrayOf(0.0),
-        doubleArrayOf(0.0, 1.0, 1.0, 0.0) to doubleArrayOf(1.0),
-        doubleArrayOf(0.0, 1.0, 0.0, 1.0) to doubleArrayOf(1.0),
-        doubleArrayOf(0.0, 1.0, 1.0, 1.0) to doubleArrayOf(1.0),
+        vectorOf(0.0, 1.0, 0.0, 0.0) to vectorOf(0.0),
+        vectorOf(0.0, 1.0, 1.0, 0.0) to vectorOf(1.0),
+        vectorOf(0.0, 1.0, 0.0, 1.0) to vectorOf(1.0),
+        vectorOf(0.0, 1.0, 1.0, 1.0) to vectorOf(1.0),
 
         // 1, 0 = xor
-        doubleArrayOf(1.0, 0.0, 0.0, 0.0) to doubleArrayOf(0.0),
-        doubleArrayOf(1.0, 0.0, 1.0, 0.0) to doubleArrayOf(1.0),
-        doubleArrayOf(1.0, 0.0, 0.0, 1.0) to doubleArrayOf(1.0),
-        doubleArrayOf(1.0, 0.0, 1.0, 1.0) to doubleArrayOf(0.0),
+        vectorOf(1.0, 0.0, 0.0, 0.0) to vectorOf(0.0),
+        vectorOf(1.0, 0.0, 1.0, 0.0) to vectorOf(1.0),
+        vectorOf(1.0, 0.0, 0.0, 1.0) to vectorOf(1.0),
+        vectorOf(1.0, 0.0, 1.0, 1.0) to vectorOf(0.0),
 
         // 1, 1 = eq
-        doubleArrayOf(1.0, 1.0, 0.0, 0.0) to doubleArrayOf(1.0),
-        doubleArrayOf(1.0, 1.0, 1.0, 0.0) to doubleArrayOf(0.0),
-        doubleArrayOf(1.0, 1.0, 0.0, 1.0) to doubleArrayOf(0.0),
-        doubleArrayOf(1.0, 1.0, 1.0, 1.0) to doubleArrayOf(1.0),
-
-
-        //doubleArrayOf(0.0, 0.0, 0.0, 0.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(0.0, 0.0, 1.0, 0.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(0.0, 0.0, 0.0, 1.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(0.0, 0.0, 1.0, 1.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(1.0, 0.0, 0.0, 0.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(1.0, 0.0, 1.0, 0.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(1.0, 0.0, 0.0, 1.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(1.0, 0.0, 1.0, 1.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(0.0, 1.0, 0.0, 0.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(0.0, 1.0, 1.0, 0.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(0.0, 1.0, 0.0, 1.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(0.0, 1.0, 1.0, 1.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(1.0, 1.0, 0.0, 0.0) to doubleArrayOf(1.0),
-        //doubleArrayOf(1.0, 1.0, 1.0, 0.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(1.0, 1.0, 0.0, 1.0) to doubleArrayOf(0.0),
-        //doubleArrayOf(1.0, 1.0, 1.0, 1.0) to doubleArrayOf(1.0),
+        vectorOf(1.0, 1.0, 0.0, 0.0) to vectorOf(1.0),
+        vectorOf(1.0, 1.0, 1.0, 0.0) to vectorOf(0.0),
+        vectorOf(1.0, 1.0, 0.0, 1.0) to vectorOf(0.0),
+        vectorOf(1.0, 1.0, 1.0, 1.0) to vectorOf(1.0),
     )
 
     fun rnd(d: Double): String {
@@ -76,11 +59,11 @@ fun booleanFunctionsExample() {
         }
         e = trainingData.sumOf { (input, target) -> net.costFunction.cost(target, computer.compute(input)) }
         println(
-            "${
-                n.toString().padStart(4, ' ')
-            }: [E =${rnd(e)}] " + trainingData.associate { (t, _) ->
-                t.map { it.toInt() }.joinToString("") to rnd(computer.compute(t)[0])
-            })
+            "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
+                    trainingData.associate { (t, _) ->
+                        t.scalars.map { it.toInt() }.joinToString("") to rnd(computer.compute(t)[0])
+                    }
+        )
         n++
     }
 
@@ -88,8 +71,8 @@ fun booleanFunctionsExample() {
 
     net.layers.forEachIndexed { i, layer ->
         if (i > 0) {
-            println("   Bias $i: " + layer.bias.map(::rnd))
-            println("Weights $i: " + net.weights[i].map { it.map(::rnd) })
+            println("   Bias $i: " + layer.bias.scalars.map(::rnd))
+            println("Weights $i: " + net.weights[i].rowVectors.map { it.scalars.map(::rnd) })
         }
     }
 

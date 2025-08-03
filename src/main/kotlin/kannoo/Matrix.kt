@@ -1,24 +1,49 @@
 package kannoo
 
-typealias Matrix = List<DoubleArray>
+@JvmInline
+value class Matrix(private val arr: Array<Vector>) {
 
-fun Matrix(w: Int, h: Int, init: (Int, Int) -> Double): Matrix =
-    List(w) { i -> Vector(h) { j -> init(i, j) } }
+    constructor(rows: Int, cols: Int, init: (row: Int, col: Int) -> Double)
+            : this(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
 
-fun Matrix(w: Int, h: Int, init: () -> Double): Matrix =
-    Matrix(w, h) { _, _ -> init() }
+    constructor(rows: Int, cols: Int, init: () -> Double)
+            : this(rows, cols, { _, _ -> init() })
 
-val Matrix.rows get() = size
-val Matrix.cols get() = if (rows == 0) 0 else this[0].size
+    val rows
+        get(): Int = arr.size
 
-fun Matrix.forEachIndexedCell(fn: (i: Int, j: Int) -> Unit) {
-    for (i in 0 until rows)
-        for (j in 0 until cols)
-            fn(i, j)
+    val cols
+        get(): Int = if (rows == 0) 0 else arr[0].size
+
+    val rowVectors
+        get(): Array<Vector> = arr
+
+    operator fun get(index: Int): Vector =
+        arr[index]
+
+    operator fun plusAssign(rhs: Matrix) {
+        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
+        forEachIndexed { row, col -> this[row][col] += rhs[row][col] }
+    }
+
+    operator fun minusAssign(rhs: Matrix) {
+        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
+        forEachIndexed { row, col -> this[row][col] -= rhs[row][col] }
+    }
+
+    operator fun timesAssign(rhs: Double) {
+        forEachIndexed { row, col -> this[row][col] *= rhs }
+    }
+
+    fun forEachIndexed(fn: (row: Int, col: Int) -> Unit) {
+        for (row in 0 until rows)
+            for (col in 0 until cols)
+                fn(row, col)
+    }
 }
 
 fun emptyMatrix(): Matrix =
-    listOf()
+    Matrix(arrayOf())
 
 fun randomMatrix(w: Int, h: Int): Matrix =
     Matrix(w, h) { randomDouble() }
@@ -31,18 +56,4 @@ fun transposeDot(m: Matrix, v: Vector): Vector {
     return Vector(m.cols) { j ->
         (0 until m.rows).sumOf { i -> m[i][j] * v[i] }
     }
-}
-
-fun Matrix.addInPlace(m: Matrix) {
-    if (rows != m.rows || cols != m.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-    forEachIndexedCell { i, j -> this[i][j] += m[i][j] }
-}
-
-fun Matrix.subInPlace(m: Matrix) {
-    if (rows != m.rows || cols != m.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-    forEachIndexedCell { i, j -> this[i][j] -= m[i][j] }
-}
-
-fun Matrix.mulInPlace(s: Double) {
-    forEachIndexedCell { i, j -> this[i][j] *= s }
 }
