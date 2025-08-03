@@ -1,6 +1,6 @@
 package kannoo
 
-typealias Matrix = List<DoubleArray>
+typealias Matrix = List<Vector>
 
 fun Matrix(w: Int, h: Int, init: (Int, Int) -> Double): Matrix =
     List(w) { i -> Vector(h) { j -> init(i, j) } }

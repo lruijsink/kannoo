@@ -1,9 +1,36 @@
 package kannoo
 
-typealias Vector = DoubleArray
+@JvmInline
+value class Vector(private val vs: DoubleArray) {
+    constructor(size: Int) : this(DoubleArray(size))
+    constructor(size: Int, init: (i: Int) -> Double) : this(DoubleArray(size, init))
+
+    val size
+        get(): Int = vs.size
+
+    operator fun get(index: Int): Double =
+        vs[index]
+
+    operator fun set(index: Int, value: Double) {
+        vs[index] = value
+    }
+
+    fun sum(): Double =
+        vs.sum()
+
+    fun <T> map(fn: (Double) -> T) =
+        vs.map(fn)
+
+    fun copyInto(destination: Vector) {
+        vs.copyInto(destination.vs)
+    }
+}
 
 fun emptyVector(): Vector =
-    doubleArrayOf()
+    Vector(doubleArrayOf())
+
+fun vectorOf(vararg vs: Double) =
+    Vector(doubleArrayOf(*vs))
 
 fun randomVector(size: Int): Vector =
     Vector(size) { randomDouble() }

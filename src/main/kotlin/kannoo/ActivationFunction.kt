@@ -7,7 +7,7 @@ interface ActivationFunction {
     fun sigmoidPrime(x: Double): Double
 }
 
-fun ActivationFunction.sigmoid(v: Vector): Vector = v.mapDouble(::sigmoid)
+fun ActivationFunction.sigmoid(v: Vector): Vector = v.map(::sigmoid)
 fun ActivationFunction.sigmoidPrime(v: Vector): Vector = v.mapDouble(::sigmoidPrime)
 
 object Logistic : ActivationFunction {
