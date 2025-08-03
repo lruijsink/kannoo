@@ -7,8 +7,8 @@ interface ActivationFunction {
     fun sigmoidPrime(x: Double): Double
 }
 
-fun ActivationFunction.sigmoid(v: Vector): Vector = v.map(::sigmoid)
-fun ActivationFunction.sigmoidPrime(v: Vector): Vector = v.map(::sigmoidPrime)
+fun ActivationFunction.sigmoid(v: Vector): Vector = v.transform(::sigmoid)
+fun ActivationFunction.sigmoidPrime(v: Vector): Vector = v.transform(::sigmoidPrime)
 
 object Logistic : ActivationFunction {
     override fun sigmoid(x: Double) = 1.0 / (1.0 + exp(-x))

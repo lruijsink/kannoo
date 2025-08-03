@@ -40,11 +40,11 @@ value class Vector(private val vs: DoubleArray) {
         if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
         else Vector(size) { fn(this[it], rhs[it]) }
 
-    fun map(fn: (Double) -> Double): Vector =
+    fun transform(fn: (Double) -> Double): Vector =
         Vector(size) { fn(this[it]) }
 
     fun square(): Vector =
-        map { it * it }
+        transform { it * it }
 
     fun <T> map(fn: (Double) -> T): List<T> =
         vs.map(fn)
