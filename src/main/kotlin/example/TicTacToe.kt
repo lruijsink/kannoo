@@ -190,11 +190,10 @@ fun ticTacToeExample() {
             Layer(3 * 3 * 5, ReLU),
             Layer(3 * 3, Logistic),
         ),
-        costFunction = MeanSquaredError,
     )
 
     val computer = Computer(net)
-    val learner = Learner(net)
+    val learner = Learner(net, MeanSquaredError)
     (1..100).forEach { n ->
         println()
         println("------------------------------------------------------------------------------------------------")
@@ -216,7 +215,9 @@ fun ticTacToeExample() {
         draw(dense.map { computer.compute(it.toInput()).toMoves() })
         println()
 
-        val costSum = trainingData.sumOf { (input, target) -> net.costFunction.cost(target, computer.compute(input)) }
+        val costSum = trainingData.sumOf { (input, target) ->
+            learner.costFunction.cost(target, computer.compute(input))
+        }
         println("Error: " + rnd(costSum / trainingData.size.toDouble()))
         println()
     }

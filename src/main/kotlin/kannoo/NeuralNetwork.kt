@@ -2,7 +2,6 @@ package kannoo
 
 class NeuralNetwork(
     val layers: List<Layer>,
-    val costFunction: CostFunction,
 ) {
     init {
         if (layers.size < 2) throw IllegalArgumentException("Too few layers")

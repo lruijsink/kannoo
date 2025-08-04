@@ -51,10 +51,9 @@ fun MNIST() {
             Layer(4, Logistic),
             Layer(10, Logistic),
         ),
-        costFunction = MeanSquaredError,
     )
     val computer = Computer(net)
-    val learner = Learner(net)
+    val learner = Learner(net, MeanSquaredError)
 
     (1..100).forEach { n ->
         println("")
@@ -74,7 +73,7 @@ fun MNIST() {
             val output = computer.compute(input)
             count[digit]++
             outputSum[digit] += output
-            costSum[digit] += net.costFunction.cost(target, output)
+            costSum[digit] += learner.costFunction.cost(target, output)
         }
 
         println("Mean error: ${costSum.sum() / testSet.size.toDouble()}")

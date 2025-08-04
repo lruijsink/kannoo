@@ -1,6 +1,9 @@
 package kannoo
 
-class Learner(val neuralNetwork: NeuralNetwork) {
+class Learner(
+    val neuralNetwork: NeuralNetwork,
+    val costFunction: CostFunction,
+) {
     class Batch(neuralNetwork: NeuralNetwork) {
         val deltaBiases = MutableList(neuralNetwork.layers.size) { i ->
             Vector(neuralNetwork.layers[i].size)
@@ -36,7 +39,7 @@ class Learner(val neuralNetwork: NeuralNetwork) {
         val activations = feedForwardResult.activations
 
         var delta = hadamard(
-            neuralNetwork.costFunction.costDerivative(target, feedForwardResult.output),
+            costFunction.costDerivative(target, feedForwardResult.output),
             neuralNetwork.layers.last().activationFunction.sigmoidPrime(weightedSums.last()),
         )
         deltaBiases[numLayers - 1] += delta

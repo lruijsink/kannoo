@@ -20,7 +20,6 @@ fun performanceTest() {
             Layer(1000, ReLU),
             Layer(outputSize),
         ),
-        costFunction = MeanSquaredError,
     )
 
     val biases = net.layers.sumOf { it.bias.size }

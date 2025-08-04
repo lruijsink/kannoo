@@ -18,9 +18,8 @@ fun booleanFunctionsExample() {
             Layer(2, Logistic),
             Layer(1, Logistic),
         ),
-        costFunction = MeanSquaredError,
     )
-    val learn = Learner(net)
+    val learn = Learner(net, MeanSquaredError)
     val computer = Computer(net)
 
     val trainingData = listOf(
@@ -61,7 +60,7 @@ fun booleanFunctionsExample() {
         repeat(10000) {
             learn.train(trainingData, lr, 4)
         }
-        e = trainingData.sumOf { (input, target) -> net.costFunction.cost(target, computer.compute(input)) }
+        e = trainingData.sumOf { (input, target) -> learn.costFunction.cost(target, computer.compute(input)) }
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->
