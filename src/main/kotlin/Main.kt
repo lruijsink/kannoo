@@ -1,5 +1,5 @@
-import example.performanceTest3
+import example.testNewBackend
 
 fun main() {
-    performanceTest3()
+    testNewBackend()
 }
