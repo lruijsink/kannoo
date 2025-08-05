@@ -1,14 +1,13 @@
-package example
+package kannoo.example
 
-import kannoo.Computer
-import kannoo.Layer
-import kannoo.LeakyReLU
-import kannoo.Learner
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.ReLU
-import kannoo.Vector
+import kannoo.old.Computer
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.old.NeuralNetwork
+import kannoo.impl.ReLU
+import kannoo.math.Vector
 import java.io.FileInputStream
 import kotlin.math.round
 
@@ -48,13 +47,12 @@ fun MNIST() {
     val net = NeuralNetwork(
         layers = listOf(
             Layer(28 * 28),
-            Layer(4, Logistic),
+            Layer(64, ReLU),
             Layer(10, Logistic),
         ),
-        costFunction = MeanSquaredError,
     )
     val computer = Computer(net)
-    val learner = Learner(net)
+    val learner = Learner(net, MeanSquaredError)
 
     (1..100).forEach { n ->
         println("")
@@ -62,7 +60,7 @@ fun MNIST() {
         println("")
 
         println("Training round $n")
-        learner.train(trainingSet, learningRate = 0.1 * (1.0 + 4.0 / n), batchSize = 10)
+        learner.train(trainingSet, learningRate = 0.1, batchSize = 10)
 
         println("Calculating mean error")
         val count = MutableList(10) { 0 }
@@ -73,14 +71,14 @@ fun MNIST() {
             val digit = (0..9).first { n -> target[n] == 1.0 }
             val output = computer.compute(input)
             count[digit]++
-            outputSum[digit] += output
-            costSum[digit] += net.costFunction.cost(target, output)
+            outputSum[digit].plusAssign(output)
+            costSum[digit] += learner.costFunction.compute(target, output)
         }
 
         println("Mean error: ${costSum.sum() / testSet.size.toDouble()}")
         (0..9).forEach { digit ->
             println(
-                "$digit "+
+                "$digit " +
                         "error: ${rnd(costSum[digit] / count[digit].toDouble())}" +
                         "    " +
                         "mean: ${rnd(outputSum[digit][digit] / count[digit].toDouble())}",

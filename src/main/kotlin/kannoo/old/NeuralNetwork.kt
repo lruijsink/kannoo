@@ -1,8 +1,11 @@
-package kannoo
+package kannoo.old
+
+import kannoo.math.Matrix
+import kannoo.math.emptyMatrix
+import kannoo.math.randomMatrix
 
 class NeuralNetwork(
     val layers: List<Layer>,
-    val costFunction: CostFunction,
 ) {
     init {
         if (layers.size < 2) throw IllegalArgumentException("Too few layers")

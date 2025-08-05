@@ -1,4 +1,4 @@
-package kannoo
+package kannoo.math
 
 @JvmInline
 value class Vector(private val vs: DoubleArray) {
@@ -18,12 +18,17 @@ value class Vector(private val vs: DoubleArray) {
         vs[index] = value
     }
 
-    operator fun minus(rhs: Vector): Vector =
-        if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
-        else zipMap(rhs) { a, b -> a - b }
+    operator fun plus(rhs: Vector): Vector =
+        zipMap(rhs) { a, b -> a + b }
 
-    operator fun div(rhs: Double): Vector =
-        transform { it / rhs }
+    operator fun minus(rhs: Vector): Vector =
+        zipMap(rhs) { a, b -> a - b }
+
+    operator fun times(scalar: Double): Vector =
+        transform { it * scalar }
+
+    operator fun div(scalar: Double): Vector =
+        transform { it / scalar }
 
     operator fun plusAssign(rhs: Vector) {
         if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
@@ -70,3 +75,22 @@ fun randomVector(size: Int): Vector =
 fun hadamard(a: Vector, b: Vector) =
     if (a.size != b.size) throw IllegalArgumentException("Vectors must have same size")
     else Vector(a.size) { a[it] * b[it] }
+
+inline fun <T> Iterable<T>.sumOfVector(selector: (T) -> Vector): Vector {
+    val first = this.firstOrNull() ?: return emptyVector()
+    val sum = selector(first)
+    this.forEachIndexed { i, el ->
+        if (i > 0) sum += selector(el)
+    }
+    return sum
+}
+
+fun Iterable<Vector>.sum(): Vector {
+    val sum = this.firstOrNull() ?: return emptyVector()
+    this.forEachIndexed { i, matrix ->
+        if (i > 0) sum += matrix
+    }
+    return sum
+}
+
+operator fun Double.times(vector: Vector): Vector = vector * this

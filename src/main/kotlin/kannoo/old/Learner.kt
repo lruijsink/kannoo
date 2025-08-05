@@ -1,6 +1,18 @@
-package kannoo
+package kannoo.old
 
-class Learner(val neuralNetwork: NeuralNetwork) {
+import kannoo.core.CostFunction
+import kannoo.math.Matrix
+import kannoo.math.Vector
+import kannoo.core.derivative
+import kannoo.math.emptyMatrix
+import kannoo.math.hadamard
+import kannoo.math.outer
+import kannoo.math.transposeDot
+
+class Learner(
+    val neuralNetwork: NeuralNetwork,
+    val costFunction: CostFunction,
+) {
     class Batch(neuralNetwork: NeuralNetwork) {
         val deltaBiases = MutableList(neuralNetwork.layers.size) { i ->
             Vector(neuralNetwork.layers[i].size)
@@ -36,17 +48,17 @@ class Learner(val neuralNetwork: NeuralNetwork) {
         val activations = feedForwardResult.activations
 
         var delta = hadamard(
-            neuralNetwork.costFunction.costDerivative(target, feedForwardResult.output),
-            neuralNetwork.layers.last().activationFunction.sigmoidPrime(weightedSums.last()),
+            costFunction.derivative(target, feedForwardResult.output),
+            neuralNetwork.layers.last().activationFunction.derivative(weightedSums.last()),
         )
-        deltaBiases[numLayers - 1] += delta
+        deltaBiases[numLayers - 1].plusAssign(delta)
         deltaWeights[numLayers - 1] += outer(delta, activations[numLayers - 2])
 
         for (l in 2 until numLayers) {
             val activationFunction = neuralNetwork.layers[numLayers - l].activationFunction
-            val sigmoidPrimes = activationFunction.sigmoidPrime(weightedSums[numLayers - l])
+            val sigmoidPrimes = activationFunction.derivative(weightedSums[numLayers - l])
             delta = hadamard(transposeDot(neuralNetwork.weights[numLayers - l + 1], delta), sigmoidPrimes)
-            deltaBiases[numLayers - l] += delta
+            deltaBiases[numLayers - l].plusAssign(delta)
             deltaWeights[numLayers - l] += outer(delta, activations[numLayers - l - 1])
         }
     }

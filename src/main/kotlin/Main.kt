@@ -1,5 +1,5 @@
-import example.*
+import kannoo.example.testNewBackend
 
 fun main() {
-    ticTacToeExample()
+    testNewBackend()
 }

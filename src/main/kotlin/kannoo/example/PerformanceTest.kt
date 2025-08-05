@@ -1,11 +1,11 @@
-package example
+package kannoo.example
 
-import kannoo.Computer
-import kannoo.Layer
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.ReLU
-import kannoo.randomVector
+import kannoo.old.Computer
+import kannoo.old.Layer
+import kannoo.impl.Logistic
+import kannoo.old.NeuralNetwork
+import kannoo.impl.ReLU
+import kannoo.math.randomVector
 import kotlin.system.measureTimeMillis
 
 fun performanceTest() {
@@ -18,9 +18,8 @@ fun performanceTest() {
             Layer(10000, ReLU),
             Layer(4000, ReLU),
             Layer(1000, ReLU),
-            Layer(outputSize),
+            Layer(outputSize, Logistic),
         ),
-        costFunction = MeanSquaredError,
     )
 
     val biases = net.layers.sumOf { it.bias.size }

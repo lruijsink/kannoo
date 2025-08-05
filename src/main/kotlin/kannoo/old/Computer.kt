@@ -1,4 +1,6 @@
-package kannoo
+package kannoo.old
+
+import kannoo.math.Vector
 
 class Computer(val neuralNetwork: NeuralNetwork) {
     private val weightedSums = neuralNetwork.layers.map { Vector(it.size) }
@@ -15,7 +17,7 @@ class Computer(val neuralNetwork: NeuralNetwork) {
                 weightedSums[p][i] = neuralNetwork.layers[p].bias[i]
                 for (j in 0 until activations[p - 1].size)
                     weightedSums[p][i] += activations[p - 1][j] * neuralNetwork.weights[p][i][j]
-                activations[p][i] = neuralNetwork.layers[p].activationFunction.sigmoid(weightedSums[p][i])
+                activations[p][i] = neuralNetwork.layers[p].activationFunction.compute(weightedSums[p][i])
             }
         }
         return FeedForwardResult(weightedSums, activations)

@@ -1,20 +1,19 @@
-package example
+package kannoo.example
 
-import example.Eval.Draw
-import example.Eval.OWin
-import example.Eval.XWin
-import example.Square.Empty
-import example.Square.O
-import example.Square.X
-import kannoo.Computer
-import kannoo.Layer
-import kannoo.LeakyReLU
-import kannoo.Learner
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.ReLU
-import kannoo.Vector
+import kannoo.example.Eval.Draw
+import kannoo.example.Eval.OWin
+import kannoo.example.Eval.XWin
+import kannoo.example.Square.Empty
+import kannoo.example.Square.O
+import kannoo.example.Square.X
+import kannoo.old.Computer
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.old.NeuralNetwork
+import kannoo.impl.ReLU
+import kannoo.math.Vector
 
 enum class Square { X, O, Empty }
 
@@ -187,14 +186,13 @@ fun ticTacToeExample() {
     val net = NeuralNetwork(
         layers = listOf(
             Layer(3 * 3),
-            Layer(3 * 3 * 5, ReLU),
+            Layer(3 * 3 * 20, ReLU),
             Layer(3 * 3, Logistic),
         ),
-        costFunction = MeanSquaredError,
     )
 
     val computer = Computer(net)
-    val learner = Learner(net)
+    val learner = Learner(net, MeanSquaredError)
     (1..100).forEach { n ->
         println()
         println("------------------------------------------------------------------------------------------------")
@@ -216,7 +214,9 @@ fun ticTacToeExample() {
         draw(dense.map { computer.compute(it.toInput()).toMoves() })
         println()
 
-        val costSum = trainingData.sumOf { (input, target) -> net.costFunction.cost(target, computer.compute(input)) }
+        val costSum = trainingData.sumOf { (input, target) ->
+            learner.costFunction.compute(target, computer.compute(input))
+        }
         println("Error: " + rnd(costSum / trainingData.size.toDouble()))
         println()
     }
