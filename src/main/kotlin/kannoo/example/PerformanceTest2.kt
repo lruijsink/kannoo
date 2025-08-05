@@ -1,4 +1,4 @@
-package example
+package kannoo.example
 
 import kannoo.impl.Logistic
 import kannoo.impl.ReLU

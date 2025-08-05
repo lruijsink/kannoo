@@ -1,4 +1,4 @@
-import example.testNewBackend
+import kannoo.example.testNewBackend
 
 fun main() {
     testNewBackend()

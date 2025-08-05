@@ -1,11 +1,11 @@
-package example
+package kannoo.example
 
-import example.Eval.Draw
-import example.Eval.OWin
-import example.Eval.XWin
-import example.Square.Empty
-import example.Square.O
-import example.Square.X
+import kannoo.example.Eval.Draw
+import kannoo.example.Eval.OWin
+import kannoo.example.Eval.XWin
+import kannoo.example.Square.Empty
+import kannoo.example.Square.O
+import kannoo.example.Square.X
 import kannoo.old.Computer
 import kannoo.old.Layer
 import kannoo.old.Learner

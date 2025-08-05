@@ -1,4 +1,4 @@
-package example
+package kannoo.example
 
 import kannoo.old.Computer
 import kannoo.old.Layer
