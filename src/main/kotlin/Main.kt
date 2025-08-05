@@ -1,5 +1,5 @@
-import example.*
+import example.performanceTest3
 
 fun main() {
-    ticTacToeExample()
+    performanceTest3()
 }

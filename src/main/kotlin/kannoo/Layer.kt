@@ -4,5 +4,5 @@ class Layer(
     val size: Int,
     val activationFunction: ActivationFunction = Linear,
 ) {
-    val bias = randomVector(size)
+    val bias = Vector(size)
 }

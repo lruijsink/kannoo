@@ -8,7 +8,6 @@ import example.Square.O
 import example.Square.X
 import kannoo.Computer
 import kannoo.Layer
-import kannoo.LeakyReLU
 import kannoo.Learner
 import kannoo.Logistic
 import kannoo.MeanSquaredError
@@ -187,7 +186,7 @@ fun ticTacToeExample() {
     val net = NeuralNetwork(
         layers = listOf(
             Layer(3 * 3),
-            Layer(3 * 3 * 5, ReLU),
+            Layer(3 * 3 * 20, ReLU),
             Layer(3 * 3, Logistic),
         ),
     )

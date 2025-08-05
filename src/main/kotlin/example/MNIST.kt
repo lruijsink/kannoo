@@ -2,7 +2,6 @@ package example
 
 import kannoo.Computer
 import kannoo.Layer
-import kannoo.LeakyReLU
 import kannoo.Learner
 import kannoo.Logistic
 import kannoo.MeanSquaredError
@@ -48,7 +47,7 @@ fun MNIST() {
     val net = NeuralNetwork(
         layers = listOf(
             Layer(28 * 28),
-            Layer(4, Logistic),
+            Layer(64, ReLU),
             Layer(10, Logistic),
         ),
     )
@@ -61,7 +60,7 @@ fun MNIST() {
         println("")
 
         println("Training round $n")
-        learner.train(trainingSet, learningRate = 0.1 * (1.0 + 4.0 / n), batchSize = 10)
+        learner.train(trainingSet, learningRate = 0.1, batchSize = 10)
 
         println("Calculating mean error")
         val count = MutableList(10) { 0 }
@@ -72,14 +71,14 @@ fun MNIST() {
             val digit = (0..9).first { n -> target[n] == 1.0 }
             val output = computer.compute(input)
             count[digit]++
-            outputSum[digit] += output
+            outputSum[digit].plusAssign(output)
             costSum[digit] += learner.costFunction.cost(target, output)
         }
 
         println("Mean error: ${costSum.sum() / testSet.size.toDouble()}")
         (0..9).forEach { digit ->
             println(
-                "$digit "+
+                "$digit " +
                         "error: ${rnd(costSum[digit] / count[digit].toDouble())}" +
                         "    " +
                         "mean: ${rnd(outputSum[digit][digit] / count[digit].toDouble())}",

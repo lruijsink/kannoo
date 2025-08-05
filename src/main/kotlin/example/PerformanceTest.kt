@@ -2,7 +2,7 @@ package example
 
 import kannoo.Computer
 import kannoo.Layer
-import kannoo.MeanSquaredError
+import kannoo.Logistic
 import kannoo.NeuralNetwork
 import kannoo.ReLU
 import kannoo.randomVector
@@ -18,7 +18,7 @@ fun performanceTest() {
             Layer(10000, ReLU),
             Layer(4000, ReLU),
             Layer(1000, ReLU),
-            Layer(outputSize),
+            Layer(outputSize, Logistic),
         ),
     )
 

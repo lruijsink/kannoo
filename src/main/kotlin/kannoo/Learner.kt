@@ -39,17 +39,17 @@ class Learner(
         val activations = feedForwardResult.activations
 
         var delta = hadamard(
-            costFunction.costDerivative(target, feedForwardResult.output),
-            neuralNetwork.layers.last().activationFunction.sigmoidPrime(weightedSums.last()),
+            costFunction.derivative(target, feedForwardResult.output),
+            neuralNetwork.layers.last().activationFunction.derivative(weightedSums.last()),
         )
-        deltaBiases[numLayers - 1] += delta
+        deltaBiases[numLayers - 1].plusAssign(delta)
         deltaWeights[numLayers - 1] += outer(delta, activations[numLayers - 2])
 
         for (l in 2 until numLayers) {
             val activationFunction = neuralNetwork.layers[numLayers - l].activationFunction
-            val sigmoidPrimes = activationFunction.sigmoidPrime(weightedSums[numLayers - l])
+            val sigmoidPrimes = activationFunction.derivative(weightedSums[numLayers - l])
             delta = hadamard(transposeDot(neuralNetwork.weights[numLayers - l + 1], delta), sigmoidPrimes)
-            deltaBiases[numLayers - l] += delta
+            deltaBiases[numLayers - l].plusAssign(delta)
             deltaWeights[numLayers - l] += outer(delta, activations[numLayers - l - 1])
         }
     }

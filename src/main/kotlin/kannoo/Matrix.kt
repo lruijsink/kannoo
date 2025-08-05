@@ -21,6 +21,18 @@ value class Matrix(private val arr: Array<Vector>) {
     operator fun get(index: Int): Vector =
         arr[index]
 
+    operator fun times(rhs: Vector): Vector {
+        if (rhs.size != cols) throw IllegalArgumentException("Vector size must equal column count")
+        val res = Vector(rows)
+        for (i in 0 until rows)
+            for (j in 0 until cols)
+                res[i] += this[i][j] * rhs[j]
+        return res
+    }
+
+    operator fun times(scalar: Double): Matrix =
+        Matrix(rows, cols) { row, col -> this[row][col] * scalar }
+
     operator fun plusAssign(rhs: Matrix) {
         if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
         forEachIndexed { row, col -> this[row][col] += rhs[row][col] }
@@ -40,6 +52,10 @@ value class Matrix(private val arr: Array<Vector>) {
             for (col in 0 until cols)
                 fn(row, col)
     }
+
+    fun zero() {
+        forEachIndexed { row, col -> this[row][col] = 0.0 }
+    }
 }
 
 fun emptyMatrix(): Matrix =
@@ -57,3 +73,22 @@ fun transposeDot(m: Matrix, v: Vector): Vector {
         (0 until m.rows).sumOf { i -> m[i][j] * v[i] }
     }
 }
+
+inline fun <T> Iterable<T>.sumOfMatrix(selector: (T) -> Matrix): Matrix {
+    val first = this.firstOrNull() ?: return emptyMatrix()
+    val sum = selector(first)
+    this.forEachIndexed { i, el ->
+        if (i > 0) sum += selector(el)
+    }
+    return sum
+}
+
+fun Iterable<Matrix>.sum(): Matrix {
+    val sum = this.firstOrNull() ?: return emptyMatrix()
+    this.forEachIndexed { i, matrix ->
+        if (i > 0) sum += matrix
+    }
+    return sum
+}
+
+operator fun Double.times(matrix: Matrix): Matrix = matrix * this
