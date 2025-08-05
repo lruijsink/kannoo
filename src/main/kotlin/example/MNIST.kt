@@ -1,13 +1,13 @@
 package example
 
-import kannoo.Computer
-import kannoo.Layer
-import kannoo.Learner
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.ReLU
-import kannoo.Vector
+import kannoo.old.Computer
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.old.NeuralNetwork
+import kannoo.impl.ReLU
+import kannoo.math.Vector
 import java.io.FileInputStream
 import kotlin.math.round
 
@@ -72,7 +72,7 @@ fun MNIST() {
             val output = computer.compute(input)
             count[digit]++
             outputSum[digit].plusAssign(output)
-            costSum[digit] += learner.costFunction.cost(target, output)
+            costSum[digit] += learner.costFunction.compute(target, output)
         }
 
         println("Mean error: ${costSum.sum() / testSet.size.toDouble()}")

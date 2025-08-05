@@ -1,11 +1,11 @@
 package example
 
-import kannoo.Logistic
-import kannoo.ReLU
-import kannoo.api.DenseLayer
-import kannoo.api.InputLayer
-import kannoo.api.Model
-import kannoo.randomVector
+import kannoo.impl.Logistic
+import kannoo.impl.ReLU
+import kannoo.impl.DenseLayer
+import kannoo.core.InputLayer
+import kannoo.core.Model
+import kannoo.math.randomVector
 import kotlin.system.measureTimeMillis
 
 fun performanceTest2() {

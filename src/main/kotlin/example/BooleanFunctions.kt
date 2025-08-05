@@ -1,13 +1,12 @@
 package example
 
-import kannoo.Computer
-import kannoo.Layer
-import kannoo.Learner
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.vectorOf
-import kotlin.collections.map
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.math.vectorOf
+import kannoo.old.Computer
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.old.NeuralNetwork
 import kotlin.math.round
 import kotlin.random.Random
 
@@ -60,7 +59,7 @@ fun booleanFunctionsExample() {
         repeat(10000) {
             learn.train(trainingData, lr, 4)
         }
-        e = trainingData.sumOf { (input, target) -> learn.costFunction.cost(target, computer.compute(input)) }
+        e = trainingData.sumOf { (input, target) -> learn.costFunction.compute(target, computer.compute(input)) }
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->

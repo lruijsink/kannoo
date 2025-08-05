@@ -1,4 +1,4 @@
-package kannoo
+package kannoo.math
 
 import kotlin.random.Random
 

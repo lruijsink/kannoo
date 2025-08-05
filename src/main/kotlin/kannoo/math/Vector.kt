@@ -1,4 +1,4 @@
-package kannoo
+package kannoo.math
 
 @JvmInline
 value class Vector(private val vs: DoubleArray) {

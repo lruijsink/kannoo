@@ -6,14 +6,14 @@ import example.Eval.XWin
 import example.Square.Empty
 import example.Square.O
 import example.Square.X
-import kannoo.Computer
-import kannoo.Layer
-import kannoo.Learner
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.ReLU
-import kannoo.Vector
+import kannoo.old.Computer
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.old.NeuralNetwork
+import kannoo.impl.ReLU
+import kannoo.math.Vector
 
 enum class Square { X, O, Empty }
 
@@ -215,7 +215,7 @@ fun ticTacToeExample() {
         println()
 
         val costSum = trainingData.sumOf { (input, target) ->
-            learner.costFunction.cost(target, computer.compute(input))
+            learner.costFunction.compute(target, computer.compute(input))
         }
         println("Error: " + rnd(costSum / trainingData.size.toDouble()))
         println()

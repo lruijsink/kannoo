@@ -1,6 +1,6 @@
-package kannoo.api
+package kannoo.core
 
-import kannoo.Vector
+import kannoo.math.Vector
 
 data class TrainingExample(
     val input: Vector,

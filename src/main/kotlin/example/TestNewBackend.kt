@@ -1,13 +1,13 @@
 package example
 
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.api.DenseLayer
-import kannoo.api.InputLayer
-import kannoo.api.MiniBatchSGD
-import kannoo.api.Model
-import kannoo.api.TrainingExample
-import kannoo.vectorOf
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.impl.DenseLayer
+import kannoo.core.InputLayer
+import kannoo.impl.MiniBatchSGD
+import kannoo.core.Model
+import kannoo.core.TrainingExample
+import kannoo.math.vectorOf
 import kotlin.math.roundToInt
 
 fun testNewBackend() {

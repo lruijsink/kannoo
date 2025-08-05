@@ -1,6 +1,6 @@
-package kannoo.api
+package kannoo.core
 
-import kannoo.CostFunction
+import kannoo.core.TrainingExample
 
 class BackPropagator(
     private val model: Model,

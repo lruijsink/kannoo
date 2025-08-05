@@ -1,4 +1,8 @@
-package kannoo
+package kannoo.old
+
+import kannoo.math.Matrix
+import kannoo.math.emptyMatrix
+import kannoo.math.randomMatrix
 
 class NeuralNetwork(
     val layers: List<Layer>,

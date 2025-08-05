@@ -1,8 +1,11 @@
-package kannoo.api
+package kannoo.impl
 
-import kannoo.CostFunction
-import kannoo.sumOfMatrix
-import kannoo.sumOfVector
+import kannoo.core.TrainingExample
+import kannoo.core.BackPropagator
+import kannoo.core.CostFunction
+import kannoo.core.Model
+import kannoo.math.sumOfMatrix
+import kannoo.math.sumOfVector
 
 class MiniBatchSGD(
     model: Model,

@@ -1,14 +1,19 @@
-package kannoo.api
+package kannoo.impl
 
-import kannoo.ActivationFunction
-import kannoo.Vector
-import kannoo.derivative
-import kannoo.emptyMatrix
-import kannoo.hadamard
-import kannoo.outer
-import kannoo.randomMatrix
-import kannoo.sigmoid
-import kannoo.transposeDot
+import kannoo.core.ActivationFunction
+import kannoo.core.BackPropagation
+import kannoo.core.ForwardPass
+import kannoo.core.InnerLayer
+import kannoo.core.ParameterDelta
+import kannoo.core.ParameterDeltas
+import kannoo.core.compute
+import kannoo.core.derivative
+import kannoo.math.Vector
+import kannoo.math.emptyMatrix
+import kannoo.math.hadamard
+import kannoo.math.outer
+import kannoo.math.randomMatrix
+import kannoo.math.transposeDot
 
 class DenseLayer(
     size: Int,
@@ -31,7 +36,7 @@ class DenseLayer(
         return ForwardPass(
             input = input,
             preActivation = preActivation,
-            output = activationFunction.sigmoid(preActivation),
+            output = activationFunction.compute(preActivation),
         )
     }
 

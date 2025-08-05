@@ -1,17 +1,17 @@
 package example
 
-import kannoo.Layer
-import kannoo.Learner
-import kannoo.Logistic
-import kannoo.MeanSquaredError
-import kannoo.NeuralNetwork
-import kannoo.ReLU
-import kannoo.api.DenseLayer
-import kannoo.api.InputLayer
-import kannoo.api.MiniBatchSGD
-import kannoo.api.Model
-import kannoo.api.TrainingExample
-import kannoo.randomVector
+import kannoo.impl.DenseLayer
+import kannoo.core.InputLayer
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.impl.MiniBatchSGD
+import kannoo.core.Model
+import kannoo.old.NeuralNetwork
+import kannoo.impl.ReLU
+import kannoo.core.TrainingExample
+import kannoo.math.randomVector
 import kotlin.system.measureTimeMillis
 
 private const val inputLayerSize = 28 * 28

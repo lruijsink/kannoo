@@ -1,4 +1,4 @@
-package kannoo
+package kannoo.math
 
 @JvmInline
 value class Matrix(private val arr: Array<Vector>) {
