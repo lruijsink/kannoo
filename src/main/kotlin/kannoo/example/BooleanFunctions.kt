@@ -15,7 +15,7 @@ fun booleanFunctionsExample() {
     val cost = MeanSquaredError
     val model = Model(
         InputLayer(4),
-        DenseLayer(2, Logistic),
+        DenseLayer(4, Logistic),
         DenseLayer(1, Logistic),
     )
     val sgd = MiniBatchSGD(model, MeanSquaredError, 4, 0.3)

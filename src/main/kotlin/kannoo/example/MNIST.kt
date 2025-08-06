@@ -3,11 +3,11 @@ package kannoo.example
 import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.DenseLayer
-import kannoo.impl.Logistic
-import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
+import kannoo.impl.Softmax
 import kannoo.math.Vector
 import java.io.FileInputStream
 import kotlin.math.round
@@ -45,11 +45,11 @@ fun MNIST() {
     println("Parsing test set...")
     val testSet = readCSVs(testFile)
 
-    val cost = MeanSquaredError
+    val cost = CrossEntropyLoss
     val model = Model(
         InputLayer(28 * 28),
         DenseLayer(64, ReLU),
-        DenseLayer(10, Logistic),
+        DenseLayer(10, Softmax),
     )
     val sgd = MiniBatchSGD(model, cost, 10, 0.1)
 

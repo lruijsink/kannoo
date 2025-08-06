@@ -3,7 +3,6 @@ package kannoo.old
 import kannoo.core.CostFunction
 import kannoo.math.Matrix
 import kannoo.math.Vector
-import kannoo.core.derivative
 import kannoo.math.emptyMatrix
 import kannoo.math.hadamard
 import kannoo.math.outer

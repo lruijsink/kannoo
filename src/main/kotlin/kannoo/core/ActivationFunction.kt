@@ -3,9 +3,6 @@ package kannoo.core
 import kannoo.math.Vector
 
 interface ActivationFunction {
-    fun compute(x: Double): Double
-    fun derivative(x: Double): Double
+    fun compute(v: Vector): Vector
+    fun derivative(v: Vector): Vector
 }
-
-fun ActivationFunction.compute(v: Vector): Vector = v.transform(::compute)
-fun ActivationFunction.derivative(v: Vector): Vector = v.transform(::derivative)

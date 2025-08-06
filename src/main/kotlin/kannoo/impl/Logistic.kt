@@ -1,9 +1,9 @@
 package kannoo.impl
 
-import kannoo.core.ActivationFunction
+import kannoo.core.ElementWiseActivationFunction
 import kotlin.math.exp
 
-object Logistic : ActivationFunction {
+object Logistic : ElementWiseActivationFunction() {
     override fun compute(x: Double) = 1.0 / (1.0 + exp(-x))
     override fun derivative(x: Double): Double {
         val f = compute(x)
