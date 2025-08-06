@@ -1,11 +1,12 @@
 package kannoo.example
 
-import kannoo.old.Computer
-import kannoo.old.Layer
-import kannoo.old.Learner
+import kannoo.core.InputLayer
+import kannoo.core.Model
+import kannoo.core.TrainingExample
+import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.old.NeuralNetwork
+import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.Vector
 import java.io.FileInputStream
@@ -25,14 +26,14 @@ fun targetOf(digit: String): Vector {
 fun inputOf(pixels: List<String>): Vector =
     Vector(pixels.map { it.toDouble() / 255.0 }.toDoubleArray())
 
-fun readCSVs(fileName: String): List<Pair<Vector, Vector>> =
+fun readCSVs(fileName: String): List<TrainingExample> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
         .split('\n')
         .filter { !it.isBlank() }
         .map { it.split(',') }
-        .map { ex -> inputOf(ex.drop(1)) to targetOf(ex[0]) }
+        .map { ex -> TrainingExample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
 fun MNIST() {
     val trainingFile = "./data/mnist_train.csv"
@@ -44,15 +45,13 @@ fun MNIST() {
     println("Parsing test set...")
     val testSet = readCSVs(testFile)
 
-    val net = NeuralNetwork(
-        layers = listOf(
-            Layer(28 * 28),
-            Layer(64, ReLU),
-            Layer(10, Logistic),
-        ),
+    val cost = MeanSquaredError
+    val model = Model(
+        InputLayer(28 * 28),
+        DenseLayer(64, ReLU),
+        DenseLayer(10, Logistic),
     )
-    val computer = Computer(net)
-    val learner = Learner(net, MeanSquaredError)
+    val sgd = MiniBatchSGD(model, cost, 10, 0.1)
 
     (1..100).forEach { n ->
         println("")
@@ -60,7 +59,7 @@ fun MNIST() {
         println("")
 
         println("Training round $n")
-        learner.train(trainingSet, learningRate = 0.1, batchSize = 10)
+        sgd.apply(trainingSet)
 
         println("Calculating mean error")
         val count = MutableList(10) { 0 }
@@ -69,10 +68,10 @@ fun MNIST() {
 
         testSet.forEach { (input, target) ->
             val digit = (0..9).first { n -> target[n] == 1.0 }
-            val output = computer.compute(input)
+            val output = model.compute(input)
             count[digit]++
             outputSum[digit].plusAssign(output)
-            costSum[digit] += learner.costFunction.compute(target, output)
+            costSum[digit] += cost.compute(target, output)
         }
 
         println("Mean error: ${costSum.sum() / testSet.size.toDouble()}")

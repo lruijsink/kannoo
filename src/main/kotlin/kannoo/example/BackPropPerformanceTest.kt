@@ -1,31 +1,31 @@
 package kannoo.example
 
-import kannoo.impl.DenseLayer
 import kannoo.core.InputLayer
-import kannoo.old.Layer
-import kannoo.old.Learner
+import kannoo.core.Model
+import kannoo.core.TrainingExample
+import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
-import kannoo.core.Model
-import kannoo.old.NeuralNetwork
 import kannoo.impl.ReLU
-import kannoo.core.TrainingExample
 import kannoo.math.randomVector
+import kannoo.old.Layer
+import kannoo.old.Learner
+import kannoo.old.NeuralNetwork
 import kotlin.system.measureTimeMillis
 
-private const val inputLayerSize = 28 * 28
-private const val hiddenLayerSize = 64
-private val hiddenLayerActivationFunction = ReLU
-private const val outputLayerSize = 10
-private val outputLayerActivationFunction = Logistic
-private val costFunction = MeanSquaredError
-private const val learningRate = 0.1
-private const val batchSize = 10
-private const val trainingDataSize = 1000
-private const val rounds = 10
+fun backPropPerformanceTest() {
+    val inputLayerSize = 28 * 28
+    val hiddenLayerSize = 64
+    val hiddenLayerActivationFunction = ReLU
+    val outputLayerSize = 10
+    val outputLayerActivationFunction = Logistic
+    val costFunction = MeanSquaredError
+    val learningRate = 0.1
+    val batchSize = 10
+    val trainingDataSize = 1000
+    val rounds = 10
 
-fun performanceTest3() {
     /**
      * New:
      */

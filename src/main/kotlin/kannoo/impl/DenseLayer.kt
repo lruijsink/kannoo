@@ -20,8 +20,8 @@ class DenseLayer(
     activationFunction: ActivationFunction,
 ) : InnerLayer(size, activationFunction) {
 
-    private var weights = emptyMatrix()
-    private val bias = Vector(size)
+    var weights = emptyMatrix()
+    val bias = Vector(size)
 
     val trainableParameterCount
         get() = weights.rows * weights.rows + bias.size

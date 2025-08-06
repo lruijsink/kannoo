@@ -1,17 +1,18 @@
 package kannoo.example
 
+import kannoo.core.InputLayer
+import kannoo.core.Model
+import kannoo.core.TrainingExample
 import kannoo.example.Eval.Draw
 import kannoo.example.Eval.OWin
 import kannoo.example.Eval.XWin
 import kannoo.example.Square.Empty
 import kannoo.example.Square.O
 import kannoo.example.Square.X
-import kannoo.old.Computer
-import kannoo.old.Layer
-import kannoo.old.Learner
+import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.old.NeuralNetwork
+import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.Vector
 
@@ -179,43 +180,41 @@ fun ticTacToeExample() {
         }
     }
 
-    val trainingData: List<Pair<Vector, Vector>> = bestMoves.map { (board, bestMoves) ->
-        Pair(board.toInput(), bestMoves.toTarget())
+    val trainingData: List<TrainingExample> = bestMoves.map { (board, bestMoves) ->
+        TrainingExample(input = board.toInput(), target = bestMoves.toTarget())
     }
 
-    val net = NeuralNetwork(
-        layers = listOf(
-            Layer(3 * 3),
-            Layer(3 * 3 * 20, ReLU),
-            Layer(3 * 3, Logistic),
-        ),
+    val cost = MeanSquaredError
+    val model = Model(
+        InputLayer(3 * 3),
+        DenseLayer(3 * 3 * 20, ReLU),
+        DenseLayer(3 * 3, Logistic),
     )
+    val sgd = MiniBatchSGD(model, cost, 25, 0.1)
 
-    val computer = Computer(net)
-    val learner = Learner(net, MeanSquaredError)
     (1..100).forEach { n ->
         println()
         println("------------------------------------------------------------------------------------------------")
         println("Training round $n")
         println()
-        learner.train(trainingData, 0.1, 25)
+        sgd.apply(trainingData)
 
         println("Sparse examples:")
         val sparse = bestMoves.keys.filter { it.emptySquares > 4 }.shuffled().take(20)
         draw(sparse)
         println()
-        draw(sparse.map { computer.compute(it.toInput()).toMoves() })
+        draw(sparse.map { model.compute(it.toInput()).toMoves() })
         println()
 
         println("Dense examples:")
         val dense = bestMoves.keys.filter { it.emptySquares <= 4 }.shuffled().take(20)
         draw(dense)
         println()
-        draw(dense.map { computer.compute(it.toInput()).toMoves() })
+        draw(dense.map { model.compute(it.toInput()).toMoves() })
         println()
 
         val costSum = trainingData.sumOf { (input, target) ->
-            learner.costFunction.compute(target, computer.compute(input))
+            cost.compute(target, model.compute(input))
         }
         println("Error: " + rnd(costSum / trainingData.size.toDouble()))
         println()
