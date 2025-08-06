@@ -2,7 +2,7 @@ package kannoo.example
 
 import kannoo.core.InputLayer
 import kannoo.core.Model
-import kannoo.core.TrainingExample
+import kannoo.core.Sample
 import kannoo.example.Eval.Draw
 import kannoo.example.Eval.OWin
 import kannoo.example.Eval.XWin
@@ -180,8 +180,8 @@ fun ticTacToeExample() {
         }
     }
 
-    val trainingData: List<TrainingExample> = bestMoves.map { (board, bestMoves) ->
-        TrainingExample(input = board.toInput(), target = bestMoves.toTarget())
+    val trainingData: List<Sample> = bestMoves.map { (board, bestMoves) ->
+        Sample(input = board.toInput(), target = bestMoves.toTarget())
     }
 
     val cost = MeanSquaredError

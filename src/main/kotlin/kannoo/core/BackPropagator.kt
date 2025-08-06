@@ -1,12 +1,10 @@
 package kannoo.core
 
-import kannoo.core.TrainingExample
-
 class BackPropagator(
     private val model: Model,
     private val cost: CostFunction,
 ) {
-    fun backPropagate(example: TrainingExample): List<ParameterDeltas> {
+    fun backPropagate(example: Sample): List<ParameterDeltas> {
         val parameterDeltas = mutableListOf<ParameterDeltas>()
         val forwardPasses = forwardPass(example)
         var deltaOutput = cost.derivative(example.target, forwardPasses.last().output)
@@ -20,7 +18,7 @@ class BackPropagator(
         return parameterDeltas
     }
 
-    private fun forwardPass(example: TrainingExample): List<ForwardPass> {
+    private fun forwardPass(example: Sample): List<ForwardPass> {
         var input = example.input
         val results = mutableListOf<ForwardPass>()
         for (layer in model.layers) {

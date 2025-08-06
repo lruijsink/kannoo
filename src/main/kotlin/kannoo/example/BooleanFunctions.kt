@@ -2,7 +2,7 @@ package kannoo.example
 
 import kannoo.core.InputLayer
 import kannoo.core.Model
-import kannoo.core.TrainingExample
+import kannoo.core.Sample
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
@@ -22,28 +22,28 @@ fun booleanFunctionsExample() {
 
     val trainingData = listOf(
         // 0, 0 = and
-        TrainingExample(input = vectorOf(0.0, 0.0, 0.0, 0.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(0.0, 0.0, 1.0, 0.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(0.0, 0.0, 0.0, 1.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(0.0, 0.0, 1.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(0.0, 0.0, 0.0, 0.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(0.0, 0.0, 1.0, 0.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(0.0, 0.0, 0.0, 1.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(0.0, 0.0, 1.0, 1.0), target = vectorOf(1.0)),
 
         // 0, 1 = or
-        TrainingExample(input = vectorOf(0.0, 1.0, 0.0, 0.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(0.0, 1.0, 1.0, 0.0), target = vectorOf(1.0)),
-        TrainingExample(input = vectorOf(0.0, 1.0, 0.0, 1.0), target = vectorOf(1.0)),
-        TrainingExample(input = vectorOf(0.0, 1.0, 1.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(0.0, 1.0, 0.0, 0.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(0.0, 1.0, 1.0, 0.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(0.0, 1.0, 0.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(0.0, 1.0, 1.0, 1.0), target = vectorOf(1.0)),
 
         // 1, 0 = xor
-        TrainingExample(input = vectorOf(1.0, 0.0, 0.0, 0.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(1.0, 0.0, 1.0, 0.0), target = vectorOf(1.0)),
-        TrainingExample(input = vectorOf(1.0, 0.0, 0.0, 1.0), target = vectorOf(1.0)),
-        TrainingExample(input = vectorOf(1.0, 0.0, 1.0, 1.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(1.0, 0.0, 0.0, 0.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(1.0, 0.0, 1.0, 0.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(1.0, 0.0, 0.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(1.0, 0.0, 1.0, 1.0), target = vectorOf(0.0)),
 
         // 1, 1 = eq
-        TrainingExample(input = vectorOf(1.0, 1.0, 0.0, 0.0), target = vectorOf(1.0)),
-        TrainingExample(input = vectorOf(1.0, 1.0, 1.0, 0.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(1.0, 1.0, 0.0, 1.0), target = vectorOf(0.0)),
-        TrainingExample(input = vectorOf(1.0, 1.0, 1.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(1.0, 1.0, 0.0, 0.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(1.0, 1.0, 1.0, 0.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(1.0, 1.0, 0.0, 1.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(1.0, 1.0, 1.0, 1.0), target = vectorOf(1.0)),
     )
 
     fun rnd(d: Double): String {

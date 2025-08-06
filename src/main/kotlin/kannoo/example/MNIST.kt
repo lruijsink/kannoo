@@ -2,7 +2,7 @@ package kannoo.example
 
 import kannoo.core.InputLayer
 import kannoo.core.Model
-import kannoo.core.TrainingExample
+import kannoo.core.Sample
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
@@ -26,14 +26,14 @@ fun targetOf(digit: String): Vector {
 fun inputOf(pixels: List<String>): Vector =
     Vector(pixels.map { it.toDouble() / 255.0 }.toDoubleArray())
 
-fun readCSVs(fileName: String): List<TrainingExample> =
+fun readCSVs(fileName: String): List<Sample> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
         .split('\n')
         .filter { !it.isBlank() }
         .map { it.split(',') }
-        .map { ex -> TrainingExample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
+        .map { ex -> Sample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
 fun MNIST() {
     val trainingFile = "./data/mnist_train.csv"

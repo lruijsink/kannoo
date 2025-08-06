@@ -2,7 +2,7 @@ package kannoo.example
 
 import kannoo.core.InputLayer
 import kannoo.core.Model
-import kannoo.core.TrainingExample
+import kannoo.core.Sample
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
@@ -36,7 +36,7 @@ fun backPropPerformanceTest() {
     )
     val sgd = MiniBatchSGD(model, costFunction, batchSize, learningRate)
     val trainingDataNew = List(trainingDataSize) {
-        TrainingExample(input = randomVector(inputLayerSize), target = randomVector(outputLayerSize))
+        Sample(input = randomVector(inputLayerSize), target = randomVector(outputLayerSize))
     }
 
     /**
