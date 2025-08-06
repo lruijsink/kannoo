@@ -1,21 +1,21 @@
 package kannoo.math
 
 @JvmInline
-value class Vector(private val vs: DoubleArray) {
+value class Vector(val elements: DoubleArray) {
     constructor(size: Int) : this(DoubleArray(size))
     constructor(size: Int, init: (i: Int) -> Double) : this(DoubleArray(size, init))
 
     val size
-        get(): Int = vs.size
+        get(): Int = elements.size
 
     val scalars
-        get(): DoubleArray = vs
+        get(): DoubleArray = elements
 
     operator fun get(index: Int): Double =
-        vs[index]
+        elements[index]
 
     operator fun set(index: Int, value: Double) {
-        vs[index] = value
+        elements[index] = value
     }
 
     operator fun plus(rhs: Vector): Vector =
@@ -45,11 +45,24 @@ value class Vector(private val vs: DoubleArray) {
     }
 
     fun sum(): Double =
-        vs.sum()
+        elements.sum()
+
+    fun min(): Double =
+        elements.min()
+
+    fun max(): Double =
+        elements.max()
 
     fun zipMap(rhs: Vector, fn: (Double, Double) -> Double): Vector =
         if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
         else Vector(size) { fn(this[it], rhs[it]) }
+
+    inline fun zipSumOf(rhs: Vector, fn: (Double, Double) -> Double): Double {
+        if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
+        var sum = 0.0
+        for (i in 0 until size) sum += fn(this[i], rhs[i])
+        return sum
+    }
 
     fun transform(fn: (Double) -> Double): Vector =
         Vector(size) { fn(this[it]) }
@@ -59,8 +72,10 @@ value class Vector(private val vs: DoubleArray) {
 
     fun copyInto(destination: Vector) {
         if (size != destination.size) throw IllegalArgumentException("Vectors must have same size")
-        vs.copyInto(destination.vs)
+        elements.copyInto(destination.elements)
     }
+
+    override fun toString(): String = elements.toList().toString()
 }
 
 fun emptyVector(): Vector =
@@ -73,8 +88,7 @@ fun randomVector(size: Int): Vector =
     Vector(size) { randomDouble() }
 
 fun hadamard(a: Vector, b: Vector) =
-    if (a.size != b.size) throw IllegalArgumentException("Vectors must have same size")
-    else Vector(a.size) { a[it] * b[it] }
+    a.zipMap(b) { x, y -> x * y }
 
 inline fun <T> Iterable<T>.sumOfVector(selector: (T) -> Vector): Vector {
     val first = this.firstOrNull() ?: return emptyVector()

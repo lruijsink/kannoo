@@ -56,6 +56,9 @@ value class Matrix(private val arr: Array<Vector>) {
     fun zero() {
         forEachIndexed { row, col -> this[row][col] = 0.0 }
     }
+
+    fun transpose(): Matrix =
+        Matrix(cols, rows) { i, j -> this[j][i] }
 }
 
 fun emptyMatrix(): Matrix =
@@ -92,3 +95,12 @@ fun Iterable<Matrix>.sum(): Matrix {
 }
 
 operator fun Double.times(matrix: Matrix): Matrix = matrix * this
+
+operator fun Vector.times(m: Matrix): Vector {
+    if (size != m.rows) throw IllegalArgumentException("Vector size must equal row count")
+    val res = Vector(m.cols)
+    for (i in 0 until m.rows)
+        for (j in 0 until m.cols)
+            res[j] += m[i][j] * this[i]
+    return res
+}
