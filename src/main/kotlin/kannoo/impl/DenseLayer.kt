@@ -8,6 +8,7 @@ import kannoo.core.ParameterDelta
 import kannoo.core.ParameterDeltas
 import kannoo.math.Vector
 import kannoo.math.emptyMatrix
+import kannoo.math.emptyVector
 import kannoo.math.hadamard
 import kannoo.math.outer
 import kannoo.math.randomMatrix
@@ -35,13 +36,13 @@ class DenseLayer(
         )
     }
 
-    override fun backPropagate(forwardPass: ForwardPass, deltaOutput: Vector): BackPropagation {
+    override fun backPropagate(forwardPass: ForwardPass, deltaOutput: Vector, skipDeltaInput: Boolean): BackPropagation {
         val deltaPreActivation =
             if (activationFunction is Softmax) deltaOutput
             else hadamard(deltaOutput, activationFunction.derivative(forwardPass.preActivation))
 
         return BackPropagation(
-            deltaInput = deltaPreActivation * weights,
+            deltaInput = if (skipDeltaInput) emptyVector() else deltaPreActivation * weights,
             parameterDeltas = ParameterDeltas(
                 matrices = listOf(ParameterDelta(weights, outer(deltaPreActivation, forwardPass.input))),
                 vectors = listOf(ParameterDelta(bias, deltaPreActivation)),

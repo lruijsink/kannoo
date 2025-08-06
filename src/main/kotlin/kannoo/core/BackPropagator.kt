@@ -21,7 +21,7 @@ class BackPropagator(
         var deltaOutput = cost.derivative(target = sample.target, forwardPasses.last().output)
 
         for (i in model.layers.size - 1 downTo 0) {
-            val backPropagation = model.layers[i].backPropagate(forwardPasses[i], deltaOutput)
+            val backPropagation = model.layers[i].backPropagate(forwardPasses[i], deltaOutput, i == 0)
             parameterDeltas += backPropagation.parameterDeltas
             deltaOutput = backPropagation.deltaInput
         }

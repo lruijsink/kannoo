@@ -10,5 +10,5 @@ abstract class InnerLayer(
 
     abstract fun forwardPass(input: Vector): ForwardPass
 
-    abstract fun backPropagate(forwardPass: ForwardPass, deltaOutput: Vector): BackPropagation
+    abstract fun backPropagate(forwardPass: ForwardPass, deltaOutput: Vector, skipDeltaInput: Boolean): BackPropagation
 }
