@@ -56,9 +56,6 @@ value class Matrix(private val arr: Array<Vector>) {
     fun zero() {
         forEachIndexed { row, col -> this[row][col] = 0.0 }
     }
-
-    fun transpose(): Matrix =
-        Matrix(cols, rows) { i, j -> this[j][i] }
 }
 
 fun emptyMatrix(): Matrix =
