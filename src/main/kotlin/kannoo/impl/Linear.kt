@@ -1,8 +1,8 @@
 package kannoo.impl
 
-import kannoo.core.ActivationFunction
+import kannoo.core.ElementWiseActivationFunction
 
-object Linear : ActivationFunction {
+object Linear : ElementWiseActivationFunction() {
     override fun compute(x: Double) = x
     override fun derivative(x: Double) = 1.0
 }

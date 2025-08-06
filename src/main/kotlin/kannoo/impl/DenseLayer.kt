@@ -6,8 +6,6 @@ import kannoo.core.ForwardPass
 import kannoo.core.InnerLayer
 import kannoo.core.ParameterDelta
 import kannoo.core.ParameterDeltas
-import kannoo.core.compute
-import kannoo.core.derivative
 import kannoo.math.Vector
 import kannoo.math.emptyMatrix
 import kannoo.math.hadamard
@@ -22,9 +20,6 @@ class DenseLayer(
 
     var weights = emptyMatrix()
     val bias = Vector(size)
-
-    val trainableParameterCount
-        get() = weights.rows * weights.rows + bias.size
 
     override fun initialize(previousLayerSize: Int) {
         weights = randomMatrix(size, previousLayerSize)
