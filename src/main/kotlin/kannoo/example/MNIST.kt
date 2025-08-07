@@ -9,9 +9,13 @@ import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.impl.Softmax
+import kannoo.io.readModelFromFile
+import kannoo.io.writeModelToFile
 import kannoo.math.Vector
 import java.io.FileInputStream
 import kotlin.math.round
+
+const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
 fun rnd(d: Double): String {
     val r = (round(d * 100.0) / 100.0).toString()
@@ -53,12 +57,18 @@ fun MNIST() {
     val miniTestSet = testSet.shuffled().take(1000)
 
     val cost = CrossEntropyLoss
-    val model = Model(
-        InputLayer(28 * 28),
-        DenseLayer(256, ReLU),
-        DenseLayer(64, ReLU),
-        DenseLayer(10, Softmax),
-    )
+    val model = try {
+        readModelFromFile(MNIST_MODEL_FILE)
+            .also { println("Successfully loaded pre-trained model") }
+    } catch (e: Exception) {
+        println("Pre-trained model not found, creating new instance (${e})")
+        Model(
+            InputLayer(28 * 28),
+            DenseLayer(256, ReLU),
+            DenseLayer(64, ReLU),
+            DenseLayer(10, Softmax),
+        )
+    }
     val sgd = MiniBatchSGD(model, cost, 10, 0.1)
 
     (1..100).forEach { n ->
@@ -71,6 +81,7 @@ fun MNIST() {
 
             println("Training round $n, subset ${i + 1} / ${trainingSet.size / perRound}")
             sgd.apply(subSet)
+            writeModelToFile(model, MNIST_MODEL_FILE)
 
             val count = MutableList(10) { 0 }
             val costSum = MutableList(10) { 0.0 }
