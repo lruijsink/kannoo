@@ -6,6 +6,7 @@ import kannoo.core.ForwardPass
 import kannoo.core.InnerLayer
 import kannoo.core.ParameterDelta
 import kannoo.core.ParameterDeltas
+import kannoo.math.Matrix
 import kannoo.math.Vector
 import kannoo.math.emptyMatrix
 import kannoo.math.emptyVector
@@ -14,16 +15,17 @@ import kannoo.math.outer
 import kannoo.math.randomMatrix
 import kannoo.math.times
 
-class DenseLayer(
-    size: Int,
-    activationFunction: ActivationFunction,
-) : InnerLayer(size, activationFunction) {
+class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: ActivationFunction) :
+    InnerLayer(bias.size, activationFunction) {
 
-    var weights = emptyMatrix()
-    var bias = Vector(size)
+    constructor(size: Int, activationFunction: ActivationFunction) :
+            this(weights = emptyMatrix(), bias = Vector(size), activationFunction = activationFunction)
+
+    val initialized get() = weights.rows > 0
 
     override fun initialize(previousLayerSize: Int) {
-        weights = randomMatrix(size, previousLayerSize)
+        if (!initialized)
+            weights = randomMatrix(size, previousLayerSize)
     }
 
     override fun forwardPass(input: Vector): ForwardPass {
@@ -36,7 +38,11 @@ class DenseLayer(
         )
     }
 
-    override fun backPropagate(forwardPass: ForwardPass, deltaOutput: Vector, skipDeltaInput: Boolean): BackPropagation {
+    override fun backPropagate(
+        forwardPass: ForwardPass,
+        deltaOutput: Vector,
+        skipDeltaInput: Boolean
+    ): BackPropagation {
         val deltaPreActivation =
             if (activationFunction is Softmax) deltaOutput
             else hadamard(deltaOutput, activationFunction.derivative(forwardPass.preActivation))
