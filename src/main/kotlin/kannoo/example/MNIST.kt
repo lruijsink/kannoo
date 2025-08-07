@@ -56,6 +56,7 @@ fun MNIST() {
     val model = Model(
         InputLayer(28 * 28),
         DenseLayer(256, ReLU),
+        DenseLayer(64, ReLU),
         DenseLayer(10, Softmax),
     )
     val sgd = MiniBatchSGD(model, cost, 10, 0.1)
