@@ -9,9 +9,6 @@ import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.randomVector
-import kannoo.old.Layer
-import kannoo.old.Learner
-import kannoo.old.NeuralNetwork
 import kotlin.system.measureTimeMillis
 
 fun backPropPerformanceTest() {
@@ -26,9 +23,6 @@ fun backPropPerformanceTest() {
     val trainingDataSize = 1000
     val rounds = 10
 
-    /**
-     * New:
-     */
     val model = Model(
         InputLayer(inputLayerSize),
         DenseLayer(hiddenLayerSize, hiddenLayerActivationFunction),
@@ -39,33 +33,8 @@ fun backPropPerformanceTest() {
         Sample(input = randomVector(inputLayerSize), target = randomVector(outputLayerSize))
     }
 
-    /**
-     * Old:
-     */
-    val net = NeuralNetwork(
-        layers = listOf(
-            Layer(inputLayerSize),
-            Layer(hiddenLayerSize, hiddenLayerActivationFunction),
-            Layer(outputLayerSize, outputLayerActivationFunction),
-        ),
-    )
-    val learner = Learner(net, costFunction)
-    val trainingDataOld = List(trainingDataSize) {
-        Pair(randomVector(inputLayerSize), randomVector(outputLayerSize))
-    }
-
-    /**
-     * Test:
-     */
     repeat(rounds) { n ->
         println("Round ${n + 1}:")
-
-        val elapsedNew = measureTimeMillis { sgd.apply(trainingDataNew) }
-        println("New: $elapsedNew ms")
-
-        val elapsedOld = measureTimeMillis { learner.train(trainingDataOld, learningRate, batchSize) }
-        println("Old: $elapsedOld ms")
-
-        println()
-    }
+        val elapsed = measureTimeMillis { sgd.apply(trainingDataNew) }
+        println("$elapsed ms")    }
 }
