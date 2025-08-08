@@ -2,6 +2,7 @@ package kannoo.core
 
 import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.Softmax
+import kannoo.math.hadamard
 
 class BackPropagator(
     private val model: Model,
@@ -17,11 +18,15 @@ class BackPropagator(
 
     fun backPropagate(sample: Sample): List<ParameterDeltas> {
         val parameterDeltas = mutableListOf<ParameterDeltas>()
-        val forwardPasses = forwardPass(sample)
-        var deltaOutput = cost.derivative(target = sample.target, forwardPasses.last().output)
+        val forward = forwardPass(sample)
+        var deltaOutput = cost.derivative(target = sample.target, actual = forward.last().output)
 
         for (i in model.layers.size - 1 downTo 0) {
-            val backPropagation = model.layers[i].backPropagate(forwardPasses[i], deltaOutput, i == 0)
+            val deltaPreActivation =
+                if (model.layers[i].activationFunction == Softmax) deltaOutput // Combined into one operation
+                else hadamard(deltaOutput, model.layers[i].activationFunction.derivative(forward[i].preActivation))
+
+            val backPropagation = model.layers[i].backPropagate(forward[i], deltaPreActivation)
             parameterDeltas += backPropagation.parameterDeltas
             deltaOutput = backPropagation.deltaInput
         }
