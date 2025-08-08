@@ -104,7 +104,7 @@ fun MNIST() {
     val sgd = MiniBatchSGD(model, cost, 64, 0.1)
 
     (1..100).forEach { n ->
-        val perRound = 6000
+        val subsetSize = 6000
 
         println()
         println("=====================================")
@@ -115,9 +115,9 @@ fun MNIST() {
         showTestSetError(fullTestSet, model, cost)
         println()
 
-        trainingSet.shuffled().chunked(perRound).forEachIndexed { i, subSet ->
+        trainingSet.shuffled().chunked(subsetSize).forEachIndexed { i, subSet ->
 
-            println("Training round $n, subset ${i + 1} / ${trainingSet.size / perRound}")
+            println("Training round $n, subset ${i + 1} / ${trainingSet.size / subsetSize}")
             sgd.apply(subSet)
             writeModelToFile(model, MNIST_MODEL_FILE)
 
