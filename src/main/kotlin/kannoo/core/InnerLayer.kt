@@ -8,7 +8,12 @@ abstract class InnerLayer(
 ) {
     abstract fun initialize(previousLayerSize: Int)
 
-    abstract fun forwardPass(input: Vector): ForwardPass
+    abstract fun backPropagate(forwardPass: ForwardPass, deltaPreActivation: Vector): BackPropagation
 
-    abstract fun backPropagate(forwardPass: ForwardPass, deltaOutput: Vector, skipDeltaInput: Boolean): BackPropagation
+    protected abstract fun computePreActivation(input: Vector): Vector
+
+    fun forwardPass(input: Vector): ForwardPass {
+        val preActivation = computePreActivation(input)
+        return ForwardPass(input, preActivation, activationFunction.compute(preActivation))
+    }
 }

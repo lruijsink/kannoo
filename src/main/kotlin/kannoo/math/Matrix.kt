@@ -39,7 +39,8 @@ value class Matrix(private val arr: Array<Vector>) {
     }
 
     operator fun minusAssign(rhs: Matrix) {
-        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
+        if (rows != rhs.rows || cols != rhs.cols)
+            throw IllegalArgumentException("Matrices must have same dimensions")
         forEachIndexed { row, col -> this[row][col] -= rhs[row][col] }
     }
 

@@ -9,8 +9,6 @@ import kannoo.core.ParameterDeltas
 import kannoo.math.Matrix
 import kannoo.math.Vector
 import kannoo.math.emptyMatrix
-import kannoo.math.emptyVector
-import kannoo.math.hadamard
 import kannoo.math.outer
 import kannoo.math.randomMatrix
 import kannoo.math.times
@@ -28,31 +26,15 @@ class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: Acti
             weights = randomMatrix(size, previousLayerSize)
     }
 
-    override fun forwardPass(input: Vector): ForwardPass {
-        if (input.size != weights.cols) throw IllegalArgumentException("Expecting input of size $size")
-        val preActivation = (weights * input) + bias
-        return ForwardPass(
-            input = input,
-            preActivation = preActivation,
-            output = activationFunction.compute(preActivation),
-        )
-    }
+    override fun computePreActivation(input: Vector): Vector =
+        (weights * input) + bias
 
-    override fun backPropagate(
-        forwardPass: ForwardPass,
-        deltaOutput: Vector,
-        skipDeltaInput: Boolean
-    ): BackPropagation {
-        val deltaPreActivation =
-            if (activationFunction is Softmax) deltaOutput
-            else hadamard(deltaOutput, activationFunction.derivative(forwardPass.preActivation))
-
-        return BackPropagation(
-            deltaInput = if (skipDeltaInput) emptyVector() else deltaPreActivation * weights,
+    override fun backPropagate(forwardPass: ForwardPass, deltaPreActivation: Vector) =
+        BackPropagation(
+            deltaInput = deltaPreActivation * weights,
             parameterDeltas = ParameterDeltas(
                 matrices = listOf(ParameterDelta(weights, outer(deltaPreActivation, forwardPass.input))),
                 vectors = listOf(ParameterDelta(bias, deltaPreActivation)),
-            )
+            ),
         )
-    }
 }

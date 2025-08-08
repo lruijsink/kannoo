@@ -96,7 +96,6 @@ fun MNIST() {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
             InputLayer(28 * 28),
-            DenseLayer(256, ReLU),
             DenseLayer(64, ReLU),
             DenseLayer(10, Softmax),
         )

@@ -9,7 +9,6 @@ import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.math.vectorOf
 import kotlin.math.round
-import kotlin.random.Random
 
 fun booleanFunctionsExample() {
     val cost = MeanSquaredError
@@ -54,7 +53,6 @@ fun booleanFunctionsExample() {
     var n = 0
     var e = 1000.0
     while (n < 1000 && e > 0.001) {
-        val lr = 0.3 + 0.5 * (Random.nextDouble() * Random.nextDouble())
         repeat(10000) {
             sgd.apply(trainingData)
         }
