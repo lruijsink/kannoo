@@ -1,0 +1,169 @@
+package kannoo.math2
+
+/**
+ * 1-dimensional [Tensor] of elements (scalars). This is the lowest supported rank of [Tensor] and so [slices] is
+ * inaccessible.
+ */
+@JvmInline
+value class Vector(val elements: FloatArray) : Tensor {
+
+    /**
+     * Tensor rank, always equal to `1` for vectors.
+     */
+    override val rank get() = 1
+
+    /**
+     * A vector tensor cannot be further subdivided into rank 0 slices (its individual elements). This field should not
+     * be accessed.
+     *
+     * @throws VectorSlicesAccessException
+     */
+    override val slices get() = throw VectorSlicesAccessException()
+
+    /**
+     * Number of elements in this vector.
+     */
+    override val size: Int get() = elements.size
+
+    /**
+     * @param index The index of the element to get
+     * @return The element at index [index]
+     */
+    operator fun get(index: Int): Float =
+        elements[index]
+
+    /**
+     * Set the element at index [index] to [value]
+     *
+     * @param index The index to modify
+     * @param value The value to set the element to
+     */
+    operator fun set(index: Int, value: Float) {
+        elements[index] = value
+    }
+
+    /**
+     * @param t The tensor to sum with, must be a [Vector] of equal size
+     * @return A new vector `V` where `V[i]` = `this[i] + t[i]`
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun plus(t: Tensor): Vector {
+        val v = assertVectorOfEqualDimensions(t)
+        return Vector(size) { i -> this[i] + v[i] }
+    }
+
+    /**
+     * @param t The tensor to subtract, must be a [Vector] of equal size
+     * @return A new vector `V` where `V[i]` = `this[i] - t[i]`
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun minus(t: Tensor): Vector {
+        val v = assertVectorOfEqualDimensions(t)
+        return Vector(size) { i -> this[i] - v[i] }
+    }
+
+    /**
+     * @param s Scalar value to multiple by
+     * @return A new vector V where `V[i]` = `this[i] * s`
+     */
+    override operator fun times(s: Float): Vector =
+        transform { it * s }
+
+    /**
+     * @param s Scalar value to divide by
+     * @return A new vector V where `V[i]` = `this[i] / s`
+     */
+    override operator fun div(s: Float): Vector =
+        transform { it / s }
+
+    /**
+     * Add each element in [t] to the corresponding element in this vector, in-place.
+     * @param t The tensor to sum with, must be a [Vector] of equal size
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun plusAssign(t: Tensor) {
+        val v = assertVectorOfEqualDimensions(t)
+        for (i in 0 until size) this[i] += v[i]
+    }
+
+    /**
+     * Subtract each element in [t] from the corresponding element in this vector, in-place.
+     * @param t The tensor to subtract, must be a [Vector] of equal size
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun minusAssign(t: Tensor) {
+        val v = assertVectorOfEqualDimensions(t)
+        for (i in 0 until size) this[i] -= v[i]
+    }
+
+    /**
+     * Multiplies all values in this vector by [s], in place.
+     * @param s Scalar value to multiple by
+     */
+    override operator fun timesAssign(s: Float) {
+        reassign { it * s }
+    }
+
+    /**
+     * Divides all values in this vector by [s], in place.
+     * @param s Scalar value to multiple by
+     */
+    override operator fun divAssign(s: Float) {
+        reassign { it / s }
+    }
+
+    /**
+     * @return A deep copy of this vector
+     */
+    override fun copy(): Vector =
+        Vector(elements.copyOf())
+
+    /**
+     * @param [transform] Function to apply
+     * @return A copy of this vector with [transform] applied to each element
+     */
+    override fun transform(function: (Float) -> Float): Vector =
+        Vector(size) { i -> function(this[i]) }
+
+    /**
+     * Applies [transform] to all elements in this vector, in place.
+     * @param [transform] Function to apply
+     */
+    override fun reassign(transform: (Float) -> Float) {
+        for (i in 0 until size) this[i] = transform(this[i])
+    }
+
+    private fun assertVectorOfEqualDimensions(t: Tensor): Vector {
+        if (t !is Vector) throw UnsupportedTensorOperation("Cannot add non-vectors to a vector")
+        if (t.size != this.size) throw UnsupportedTensorOperation("Cannot subtract vectors of different sizes")
+        return t
+    }
+}
+
+/**
+ * @param size The size of the new vector
+ * @param init Initialization callback
+ * @return A new [Vector] of size [size] initialized by [init]
+ */
+inline fun Vector(size: Int, crossinline init: (index: Int) -> Float): Vector =
+    Vector(FloatArray(size) { i -> init(i) })
+
+/**
+ * @param elements Elements of the new vector
+ * @return A new [Vector] containing the given elements
+ */
+fun vector(vararg elements: Float): Vector =
+    Vector(elements)
+
+/**
+ * @param elements Elements of the new vector, will be converted to [Float] with [Number.toFloat]
+ * @return A new [Vector] containing the given elements
+ */
+fun vector(vararg elements: Number): Vector =
+    Vector(elements.size) { elements[it].toFloat() }
+
+/**
+ * Thrown when attempting to access [Vector.slices]
+ */
+class VectorSlicesAccessException :
+    IllegalAccessException("Attempted to access slices of a vector, this operation is not supported")
