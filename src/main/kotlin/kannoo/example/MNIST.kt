@@ -12,7 +12,9 @@ import kannoo.impl.MiniBatchSGD
 import kannoo.impl.Softmax
 import kannoo.io.readModelFromFile
 import kannoo.io.writeLayerAsRGB
+import kannoo.io.writeMatricesAsRGB
 import kannoo.io.writeModelToFile
+import kannoo.math.Matrix
 import kannoo.math.Vector
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -93,17 +95,24 @@ fun MNIST() {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
             InputLayer(28 * 28),
-            DenseLayer(64, Logistic),
-            DenseLayer(256, Logistic),
-            DenseLayer(256, Logistic),
-            DenseLayer(64, Logistic),
+            DenseLayer(36, Logistic),
             DenseLayer(10, Softmax),
         )
     }
-    val sgd = MiniBatchSGD(model, cost, 64, 0.1f)
 
     (1..100).forEach { n ->
-        val subsetSize = 6000
+        val sgd = MiniBatchSGD(model, cost, 64, 0.1f * (1 + n))
+
+        fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
+            if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")
+            else Matrix(rows, cols) { i, j -> elements[i * cols + j] }
+
+        FileOutputStream("./data/MNIST.weights.$n.png").writeMatricesAsRGB(
+            (model.layers[0] as DenseLayer).weights.rowVectors.map { it.asMatrix(28, 28) },
+            padding = 2,
+        )
+
+        val subsetSize = 60000
 
         println()
         println("=====================================")
@@ -122,6 +131,7 @@ fun MNIST() {
             model.layers.forEachIndexed { i, layer ->
                 FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])
             }
+
             showTestSetError(miniTestSet, model, cost, true)
             println()
         }
