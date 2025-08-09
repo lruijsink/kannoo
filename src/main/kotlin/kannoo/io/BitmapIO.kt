@@ -16,10 +16,10 @@ fun OutputStream.writeLayerAsRGB(layer: InnerLayer) {
     val wMin = w.rowVectors.minOf { it.min() }
     val wMax = w.rowVectors.maxOf { it.max() }
 
-    operator fun Color.times(s: Double): Color =
+    operator fun Color.times(s: Float): Color =
         Color((red * s).roundToInt(), (green * s).roundToInt(), (blue * s).roundToInt())
 
-    fun Double.colorize(): Color =
+    fun Float.colorize(): Color =
         if (this < 0) negative * (this / wMin) else positive * (this / wMax)
 
     val b = BufferedImage(w.cols, w.rows, BufferedImage.TYPE_INT_RGB)

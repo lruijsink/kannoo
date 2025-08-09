@@ -3,10 +3,10 @@ package kannoo.math
 @JvmInline
 value class Matrix(private val arr: Array<Vector>) {
 
-    constructor(rows: Int, cols: Int, init: (row: Int, col: Int) -> Double)
+    constructor(rows: Int, cols: Int, init: (row: Int, col: Int) -> Float)
             : this(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
 
-    constructor(rows: Int, cols: Int, init: () -> Double)
+    constructor(rows: Int, cols: Int, init: () -> Float)
             : this(rows, cols, { _, _ -> init() })
 
     val rows
@@ -30,7 +30,7 @@ value class Matrix(private val arr: Array<Vector>) {
         return res
     }
 
-    operator fun times(scalar: Double): Matrix =
+    operator fun times(scalar: Float): Matrix =
         Matrix(rows, cols) { row, col -> this[row][col] * scalar }
 
     operator fun plusAssign(rhs: Matrix) {
@@ -43,7 +43,7 @@ value class Matrix(private val arr: Array<Vector>) {
         forEachIndexed { row, col -> this[row][col] -= rhs[row][col] }
     }
 
-    operator fun timesAssign(rhs: Double) {
+    operator fun timesAssign(rhs: Float) {
         forEachIndexed { row, col -> this[row][col] *= rhs }
     }
 
@@ -54,7 +54,7 @@ value class Matrix(private val arr: Array<Vector>) {
     }
 
     fun zero() {
-        forEachIndexed { row, col -> this[row][col] = 0.0 }
+        forEachIndexed { row, col -> this[row][col] = 0f }
     }
 }
 
@@ -62,7 +62,7 @@ fun emptyMatrix(): Matrix =
     Matrix(arrayOf())
 
 fun randomMatrix(w: Int, h: Int): Matrix =
-    Matrix(w, h) { randomDouble() }
+    Matrix(w, h) { randomFloat() }
 
 fun outer(a: Vector, b: Vector): Matrix =
     Matrix(a.size, b.size) { i, j -> a[i] * b[j] }
@@ -91,7 +91,7 @@ fun Iterable<Matrix>.sum(): Matrix {
     return sum
 }
 
-operator fun Double.times(matrix: Matrix): Matrix = matrix * this
+operator fun Float.times(matrix: Matrix): Matrix = matrix * this
 
 operator fun Vector.times(m: Matrix): Vector {
     if (size != m.rows) throw IllegalArgumentException("Vector size must equal row count")

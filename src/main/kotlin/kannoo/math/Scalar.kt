@@ -4,8 +4,14 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-fun randomDouble() =
-    2.0 * Random.nextDouble() - 1.0
+fun randomFloat(): Float =
+    2f * Random.nextFloat() - 1f
 
-fun Double.clip(minValue: Double, maxValue: Double) =
+fun Float.clip(minValue: Float, maxValue: Float) =
     max(minValue, min(this, maxValue))
+
+fun <T> Iterable<T>.sumOf(fn: (T) -> Float): Float {
+    var acc = 0f
+    for (el in this) acc += fn(el)
+    return acc
+}

@@ -3,6 +3,6 @@ package kannoo.impl
 import kannoo.core.ElementWiseActivationFunction
 
 object LeakyReLU : ElementWiseActivationFunction() {
-    override fun compute(x: Double) = if (x <= 0.0) 0.01 * x else x
-    override fun derivative(x: Double) = if (x <= 0.0) 0.01 else 1.0
+    override fun compute(x: Float) = if (x <= 0f) 0.01f * x else x
+    override fun derivative(x: Float) = if (x <= 0f) 0.01f else 1f
 }

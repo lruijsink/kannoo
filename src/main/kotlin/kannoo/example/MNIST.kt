@@ -20,24 +20,19 @@ import kotlin.math.round
 
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
-fun rnd(d: Double): String {
-    val r = (round(d * 100.0) / 100.0).toString()
+fun rnd(d: Float): String {
+    val r = (round(d * 100f) / 100f).toString()
     return r.padEnd(4, ' ')
-}
-
-fun rnd5(d: Double): String {
-    val r = (round(d * 1000.0) / 1000.0).toString()
-    return r.padEnd(5, ' ')
 }
 
 fun targetOf(digit: String): Vector {
     val v = Vector(10)
-    v[digit.toInt()] = 1.0
+    v[digit.toInt()] = 1f
     return v
 }
 
 fun inputOf(pixels: List<String>): Vector =
-    Vector(pixels.map { it.toDouble() / 255.0 }.toDoubleArray())
+    Vector(pixels.map { it.toFloat() / 255f }.toFloatArray())
 
 fun readCSVs(fileName: String): List<Sample> =
     FileInputStream(fileName)
@@ -50,12 +45,12 @@ fun readCSVs(fileName: String): List<Sample> =
 
 fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, compact: Boolean = false) {
     val count = MutableList(10) { 0 }
-    val costSum = MutableList(10) { 0.0 }
-    val mseSum = MutableList(10) { 0.0 }
+    val costSum = MutableList(10) { 0f }
+    val mseSum = MutableList(10) { 0f }
     val outputSum = MutableList(10) { Vector(10) }
 
     testSet.forEach { (input, target) ->
-        val digit = (0..9).first { n -> target[n] == 1.0 }
+        val digit = (0..9).first { n -> target[n] == 1f }
         val output = model.compute(input)
         count[digit]++
         outputSum[digit].plusAssign(output)
@@ -71,9 +66,9 @@ fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, co
         (0..9).forEach { digit ->
             println(
                 "   $digit " +
-                        "error: ${rnd(costSum[digit] / count[digit].toDouble())}" +
+                        "error: ${rnd(costSum[digit] / count[digit].toFloat())}" +
                         "    " +
-                        "mean: ${rnd(outputSum[digit][digit] / count[digit].toDouble())}",
+                        "mean: ${rnd(outputSum[digit][digit] / count[digit].toFloat())}",
             )
         }
     }
@@ -105,7 +100,7 @@ fun MNIST() {
             DenseLayer(10, Softmax),
         )
     }
-    val sgd = MiniBatchSGD(model, cost, 64, 0.1)
+    val sgd = MiniBatchSGD(model, cost, 64, 0.1f)
 
     (1..100).forEach { n ->
         val subsetSize = 6000
