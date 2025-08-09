@@ -18,7 +18,7 @@ fun backPropPerformanceTest() {
     val outputLayerSize = 10
     val outputLayerActivationFunction = Logistic
     val costFunction = MeanSquaredError
-    val learningRate = 0.1
+    val learningRate = 0.1f
     val batchSize = 10
     val trainingDataSize = 1000
     val rounds = 10

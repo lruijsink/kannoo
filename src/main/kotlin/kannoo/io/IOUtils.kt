@@ -13,13 +13,13 @@ import java.io.FileOutputStream
 private const val STRING_TERMINATOR = '\n'
 
 fun DataInputStream.readVector(size: Int): Vector =
-    Vector(size) { readDouble() }
+    Vector(size) { readFloat() }
 
 fun DataInputStream.readMatrix(rows: Int, cols: Int): Matrix =
     Matrix(Array(rows) { readVector(cols) })
 
 fun DataOutputStream.writeVector(vector: Vector) {
-    vector.elements.forEach { writeDouble(it) }
+    vector.elements.forEach { writeFloat(it) }
 }
 
 fun DataOutputStream.writeMatrix(matrix: Matrix) {

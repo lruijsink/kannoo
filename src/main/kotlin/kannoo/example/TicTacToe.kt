@@ -15,6 +15,7 @@ import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.Vector
+import kannoo.math.sumOf
 
 enum class Square { X, O, Empty }
 
@@ -126,23 +127,23 @@ fun solve(board: Board, player: Square): Eval {
     return bestPlayEval
 }
 
-fun Square.toInput(): Double =
+fun Square.toInput(): Float =
     when (this) {
-        X -> 1.0
-        O -> -1.0
-        Empty -> 0.0
+        X -> 1f
+        O -> -1f
+        Empty -> 0f
     }
 
 fun Board.toInput(): Vector =
-    Vector(this.flatMap { row -> row.map { it.toInput() } }.toDoubleArray())
+    Vector(this.flatMap { row -> row.map { it.toInput() } }.toFloatArray())
 
 fun List<Pair<Int, Int>>.toTarget(): Vector =
     Vector(
         (0 until 3).flatMap { i ->
             (0 until 3).map { j ->
-                if (Pair(i, j) in this) 1.0 else 0.0
+                if (Pair(i, j) in this) 1f else 0f
             }
-        }.toDoubleArray()
+        }.toFloatArray()
     )
 
 fun Vector.toMoves(): List<Pair<Int, Int>> =
@@ -190,7 +191,7 @@ fun ticTacToeExample() {
         DenseLayer(3 * 3 * 20, ReLU),
         DenseLayer(3 * 3, Logistic),
     )
-    val sgd = MiniBatchSGD(model, cost, 25, 0.1)
+    val sgd = MiniBatchSGD(model, cost, 25, 0.1f)
 
     (1..100).forEach { n ->
         println()
@@ -216,7 +217,7 @@ fun ticTacToeExample() {
         val costSum = trainingData.sumOf { (input, target) ->
             cost.compute(target, model.compute(input))
         }
-        println("Error: " + rnd(costSum / trainingData.size.toDouble()))
+        println("Error: " + rnd(costSum / trainingData.size.toFloat()))
         println()
     }
 }

@@ -11,7 +11,7 @@ class MiniBatchSGD(
     model: Model,
     cost: CostFunction,
     private val batchSize: Int,
-    private val learningRate: Double,
+    private val learningRate: Float,
 ) {
     private val backPropagator = BackPropagator(model, cost)
 

@@ -7,6 +7,7 @@ import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
+import kannoo.math.sumOf
 import kannoo.math.vectorOf
 import kotlin.math.round
 
@@ -17,42 +18,42 @@ fun booleanFunctionsExample() {
         DenseLayer(4, Logistic),
         DenseLayer(1, Logistic),
     )
-    val sgd = MiniBatchSGD(model, MeanSquaredError, 4, 0.3)
+    val sgd = MiniBatchSGD(model, MeanSquaredError, 4, 0.3f)
 
     val trainingData = listOf(
         // 0, 0 = and
-        Sample(input = vectorOf(0.0, 0.0, 0.0, 0.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(0.0, 0.0, 1.0, 0.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(0.0, 0.0, 0.0, 1.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(0.0, 0.0, 1.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(0f, 0f, 0f, 0f), target = vectorOf(0f)),
+        Sample(input = vectorOf(0f, 0f, 1f, 0f), target = vectorOf(0f)),
+        Sample(input = vectorOf(0f, 0f, 0f, 1f), target = vectorOf(0f)),
+        Sample(input = vectorOf(0f, 0f, 1f, 1f), target = vectorOf(1f)),
 
         // 0, 1 = or
-        Sample(input = vectorOf(0.0, 1.0, 0.0, 0.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(0.0, 1.0, 1.0, 0.0), target = vectorOf(1.0)),
-        Sample(input = vectorOf(0.0, 1.0, 0.0, 1.0), target = vectorOf(1.0)),
-        Sample(input = vectorOf(0.0, 1.0, 1.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(0f, 1f, 0f, 0f), target = vectorOf(0f)),
+        Sample(input = vectorOf(0f, 1f, 1f, 0f), target = vectorOf(1f)),
+        Sample(input = vectorOf(0f, 1f, 0f, 1f), target = vectorOf(1f)),
+        Sample(input = vectorOf(0f, 1f, 1f, 1f), target = vectorOf(1f)),
 
         // 1, 0 = xor
-        Sample(input = vectorOf(1.0, 0.0, 0.0, 0.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(1.0, 0.0, 1.0, 0.0), target = vectorOf(1.0)),
-        Sample(input = vectorOf(1.0, 0.0, 0.0, 1.0), target = vectorOf(1.0)),
-        Sample(input = vectorOf(1.0, 0.0, 1.0, 1.0), target = vectorOf(0.0)),
+        Sample(input = vectorOf(1f, 0f, 0f, 0f), target = vectorOf(0f)),
+        Sample(input = vectorOf(1f, 0f, 1f, 0f), target = vectorOf(1f)),
+        Sample(input = vectorOf(1f, 0f, 0f, 1f), target = vectorOf(1f)),
+        Sample(input = vectorOf(1f, 0f, 1f, 1f), target = vectorOf(0f)),
 
         // 1, 1 = eq
-        Sample(input = vectorOf(1.0, 1.0, 0.0, 0.0), target = vectorOf(1.0)),
-        Sample(input = vectorOf(1.0, 1.0, 1.0, 0.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(1.0, 1.0, 0.0, 1.0), target = vectorOf(0.0)),
-        Sample(input = vectorOf(1.0, 1.0, 1.0, 1.0), target = vectorOf(1.0)),
+        Sample(input = vectorOf(1f, 1f, 0f, 0f), target = vectorOf(1f)),
+        Sample(input = vectorOf(1f, 1f, 1f, 0f), target = vectorOf(0f)),
+        Sample(input = vectorOf(1f, 1f, 0f, 1f), target = vectorOf(0f)),
+        Sample(input = vectorOf(1f, 1f, 1f, 1f), target = vectorOf(1f)),
     )
 
-    fun rnd(d: Double): String {
-        val r = (round(d * 1000.0) / 1000.0).toString()
-        return if (d >= 0.0) ' ' + r.padEnd(5, ' ') else r.padEnd(6, ' ')
+    fun rnd(d: Float): String {
+        val r = (round(d * 1000f) / 1000f).toString()
+        return if (d >= 0f) ' ' + r.padEnd(5, ' ') else r.padEnd(6, ' ')
     }
 
     var n = 0
-    var e = 1000.0
-    while (n < 1000 && e > 0.001) {
+    var e = 1000f
+    while (n < 1000 && e > 0.01f) {
         repeat(10000) {
             sgd.apply(trainingData)
         }
