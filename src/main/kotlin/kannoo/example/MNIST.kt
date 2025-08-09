@@ -6,14 +6,16 @@ import kannoo.core.Model
 import kannoo.core.Sample
 import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.DenseLayer
+import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
-import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.io.readModelFromFile
+import kannoo.io.writeLayerAsRGB
 import kannoo.io.writeModelToFile
 import kannoo.math.Vector
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import kotlin.math.round
 
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
@@ -96,8 +98,10 @@ fun MNIST() {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
             InputLayer(28 * 28),
-            DenseLayer(256, ReLU),
-            DenseLayer(64, ReLU),
+            DenseLayer(64, Logistic),
+            DenseLayer(256, Logistic),
+            DenseLayer(256, Logistic),
+            DenseLayer(64, Logistic),
             DenseLayer(10, Softmax),
         )
     }
@@ -120,7 +124,9 @@ fun MNIST() {
             println("Training round $n, subset ${i + 1} / ${trainingSet.size / subsetSize}")
             sgd.apply(subSet)
             writeModelToFile(model, MNIST_MODEL_FILE)
-
+            model.layers.forEachIndexed { i, layer ->
+                FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])
+            }
             showTestSetError(miniTestSet, model, cost, true)
             println()
         }
