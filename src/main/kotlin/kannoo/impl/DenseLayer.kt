@@ -11,13 +11,12 @@ import kannoo.math.Vector
 import kannoo.math.emptyMatrix
 import kannoo.math.outer
 import kannoo.math.randomMatrix
-import kannoo.math.times
 
 class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: ActivationFunction) :
     InnerLayer(bias.size, activationFunction) {
 
     constructor(size: Int, activationFunction: ActivationFunction) :
-            this(weights = emptyMatrix(), bias = Vector(size), activationFunction = activationFunction)
+            this(weights = emptyMatrix(), bias = Vector(size) { 0f }, activationFunction = activationFunction)
 
     val initialized get() = weights.rows > 0
 

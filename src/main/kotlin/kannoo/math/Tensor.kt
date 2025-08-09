@@ -1,4 +1,4 @@
-package kannoo.math2
+package kannoo.math
 
 /**
  * A tensor is a numeric data structure of dimensions equal to its [rank] which abstracts the concept of [Vector]
@@ -98,30 +98,44 @@ sealed interface Tensor {
     fun reassign(transform: (Float) -> Float)
 }
 
-operator fun <T : Tensor> Float.times(tensor: T): T {
-    @Suppress("UNCHECKED_CAST")
-    return (tensor * this) as T
-}
+// TODO: doc
+operator fun <T : Tensor> Float.times(tensor: T) =
+    tensor.transformGeneric { it * this }
 
+// TODO: doc
 operator fun <T : Tensor> Number.times(tensor: T): T =
     tensor * this
 
-operator fun <T : Tensor> T.times(s: Number): T {
-    @Suppress("UNCHECKED_CAST")
-    return (this * s.toFloat()) as T
-}
+// TODO: doc
+operator fun <T : Tensor> T.times(s: Number): T =
+    s.toFloat() * this
 
+// TODO: doc
 operator fun <T : Tensor> T.timesAssign(s: Number) {
     timesAssign(s.toFloat())
 }
 
-operator fun <T : Tensor> T.div(s: Number): T {
-    @Suppress("UNCHECKED_CAST")
-    return (this / s.toFloat()) as T
-}
+// TODO: doc
+operator fun <T : Tensor> T.div(s: Number): T =
+    this.transformGeneric { it / s.toFloat() }
 
+// TODO: doc
 operator fun <T : Tensor> T.divAssign(s: Number) {
     timesAssign(s.toFloat())
 }
 
-class UnsupportedTensorOperation(message: String) : IllegalArgumentException(message)
+// TODO: doc
+inline fun <E, T : Tensor> Iterable<E>.sumOfTensor(crossinline selector: (E) -> T): T {
+    val itr = iterator()
+    if (!itr.hasNext()) throw UnsupportedTensorOperation("Cannot sum over empty collection of tensors")
+
+    val accumulator = selector(itr.next())
+    while (itr.hasNext())
+        accumulator += selector(itr.next())
+
+    return accumulator
+}
+
+// TODO: doc
+class UnsupportedTensorOperation(message: String) :
+    IllegalArgumentException(message)

@@ -1,4 +1,4 @@
-package kannoo.math2
+package kannoo.math
 
 @JvmInline
 value class CompositeTensor(override val slices: Array<Tensor>) : Tensor {

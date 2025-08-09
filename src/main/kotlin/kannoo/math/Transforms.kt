@@ -1,4 +1,4 @@
-package kannoo.math2
+package kannoo.math
 
 import kotlin.math.exp
 import kotlin.math.log2

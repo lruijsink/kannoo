@@ -28,7 +28,7 @@ fun rnd(d: Float): String {
 }
 
 fun targetOf(digit: String): Vector {
-    val v = Vector(10)
+    val v = Vector(10) { 0f }
     v[digit.toInt()] = 1f
     return v
 }
@@ -49,7 +49,7 @@ fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, co
     val count = MutableList(10) { 0 }
     val costSum = MutableList(10) { 0f }
     val mseSum = MutableList(10) { 0f }
-    val outputSum = MutableList(10) { Vector(10) }
+    val outputSum = MutableList(10) { Vector(10) { 0f } }
 
     testSet.forEach { (input, target) ->
         val digit = (0..9).first { n -> target[n] == 1f }

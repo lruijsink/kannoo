@@ -4,8 +4,7 @@ import kannoo.core.BackPropagator
 import kannoo.core.CostFunction
 import kannoo.core.Model
 import kannoo.core.Sample
-import kannoo.math.sumOfMatrix
-import kannoo.math.sumOfVector
+import kannoo.math.sumOfTensor
 
 class SGD(
     model: Model,
@@ -24,11 +23,11 @@ class SGD(
         val vectors = parameterDeltas.flatMap { it.vectors }
 
         matrices.groupBy { it.param }.forEach { (param, paramMatrices) ->
-            param -= paramMatrices.sumOfMatrix { it.delta } * learningRate
+            param -= paramMatrices.sumOfTensor { it.delta } * learningRate
         }
 
         vectors.groupBy { it.param }.forEach { (param, paramVectors) ->
-            param -= paramVectors.sumOfVector { it.delta } * learningRate
+            param -= paramVectors.sumOfTensor { it.delta } * learningRate
         }
     }
 }

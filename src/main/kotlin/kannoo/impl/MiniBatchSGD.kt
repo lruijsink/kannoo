@@ -4,8 +4,7 @@ import kannoo.core.BackPropagator
 import kannoo.core.CostFunction
 import kannoo.core.Model
 import kannoo.core.Sample
-import kannoo.math.sumOfMatrix
-import kannoo.math.sumOfVector
+import kannoo.math.sumOfTensor
 
 class MiniBatchSGD(
     model: Model,
@@ -26,11 +25,11 @@ class MiniBatchSGD(
         val scale = learningRate / batch.size
 
         matrices.groupBy { it.param }.forEach { (param, paramMatrices) ->
-            param -= paramMatrices.sumOfMatrix { it.delta } * scale
+            param -= paramMatrices.sumOfTensor { it.delta } * scale
         }
 
         vectors.groupBy { it.param }.forEach { (param, paramVectors) ->
-            param -= paramVectors.sumOfVector { it.delta } * scale
+            param -= paramVectors.sumOfTensor { it.delta } * scale
         }
     }
 }

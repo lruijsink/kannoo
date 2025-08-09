@@ -1,110 +1,213 @@
 package kannoo.math
 
+/**
+ * 1-dimensional [Tensor] of elements (scalars). This is the lowest supported rank of [Tensor] and so [slices] is
+ * inaccessible.
+ */
 @JvmInline
-value class Vector(val elements: FloatArray) {
-    constructor(size: Int) : this(FloatArray(size))
-    constructor(size: Int, init: (i: Int) -> Float) : this(FloatArray(size, init))
+value class Vector(val elements: FloatArray) : Tensor {
 
-    val size
-        get(): Int = elements.size
+    /**
+     * Tensor rank, always equal to `1` for vectors.
+     */
+    override val rank get() = 1
 
-    val scalars
-        get(): FloatArray = elements
+    /**
+     * A vector tensor cannot be further subdivided into rank 0 slices (its individual elements). This field should not
+     * be accessed.
+     *
+     * @throws VectorSlicesAccessException
+     */
+    override val slices get() = throw VectorSlicesAccessException()
 
+    /**
+     * Number of elements in this vector.
+     */
+    override val size: Int get() = elements.size
+
+    /**
+     * @param index The index of the element to get
+     * @return The element at index [index]
+     */
     operator fun get(index: Int): Float =
         elements[index]
 
+    /**
+     * Set the element at index [index] to [value]
+     *
+     * @param index The index to modify
+     * @param value The value to set the element to
+     */
     operator fun set(index: Int, value: Float) {
         elements[index] = value
     }
 
-    operator fun plus(rhs: Vector): Vector =
-        zipMap(rhs) { a, b -> a + b }
-
-    operator fun minus(rhs: Vector): Vector =
-        zipMap(rhs) { a, b -> a - b }
-
-    operator fun times(scalar: Float): Vector =
-        transform { it * scalar }
-
-    operator fun div(scalar: Float): Vector =
-        transform { it / scalar }
-
-    operator fun plusAssign(rhs: Vector) {
-        if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
-        for (i in 0 until size) this[i] += rhs[i]
+    /**
+     * @param t The tensor to sum with, must be a [Vector] of equal size
+     * @return A new vector `V` where `V[i]` = `this[i] + t[i]`
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun plus(t: Tensor): Vector {
+        val v = assertVectorOfEqualDimensions(t)
+        return Vector(size) { i -> this[i] + v[i] }
     }
 
-    operator fun minusAssign(rhs: Vector) {
-        if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
-        for (i in 0 until size) this[i] -= rhs[i]
+    /**
+     * @param t The tensor to subtract, must be a [Vector] of equal size
+     * @return A new vector `V` where `V[i]` = `this[i] - t[i]`
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun minus(t: Tensor): Vector {
+        val v = assertVectorOfEqualDimensions(t)
+        return Vector(size) { i -> this[i] - v[i] }
     }
 
-    operator fun timesAssign(rhs: Float) {
-        for (i in 0 until size) this[i] *= rhs
+    /**
+     * @param s Scalar value to multiple by
+     * @return A new vector V where `V[i]` = `this[i] * s`
+     */
+    override operator fun times(s: Float): Vector =
+        transform { it * s }
+
+    /**
+     * @param s Scalar value to divide by
+     * @return A new vector V where `V[i]` = `this[i] / s`
+     */
+    override operator fun div(s: Float): Vector =
+        transform { it / s }
+
+    /**
+     * Add each element in [t] to the corresponding element in this vector, in-place.
+     * @param t The tensor to sum with, must be a [Vector] of equal size
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun plusAssign(t: Tensor) {
+        val v = assertVectorOfEqualDimensions(t)
+        for (i in 0 until size) this[i] += v[i]
     }
 
+    /**
+     * Subtract each element in [t] from the corresponding element in this vector, in-place.
+     * @param t The tensor to subtract, must be a [Vector] of equal size
+     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     */
+    override operator fun minusAssign(t: Tensor) {
+        val v = assertVectorOfEqualDimensions(t)
+        for (i in 0 until size) this[i] -= v[i]
+    }
+
+    /**
+     * Multiplies all values in this vector by [s], in place.
+     * @param s Scalar value to multiple by
+     */
+    override operator fun timesAssign(s: Float) {
+        reassign { it * s }
+    }
+
+    /**
+     * Divides all values in this vector by [s], in place.
+     * @param s Scalar value to multiple by
+     */
+    override operator fun divAssign(s: Float) {
+        reassign { it / s }
+    }
+
+    /**
+     * @return A deep copy of this vector
+     */
+    override fun copy(): Vector =
+        Vector(elements.copyOf())
+
+    /**
+     * @param [transform] Function to apply
+     * @return A copy of this vector with [transform] applied to each element
+     */
+    override fun transform(function: (Float) -> Float): Vector =
+        Vector(size) { i -> function(this[i]) }
+
+    /**
+     * Applies [transform] to all elements in this vector, in place.
+     * @param [transform] Function to apply
+     */
+    override fun reassign(transform: (Float) -> Float) {
+        for (i in 0 until size) this[i] = transform(this[i])
+    }
+
+    // TODO: doc
+    // TODO: generalize to tensor
+    operator fun times(m: Matrix): Vector {
+        if (size != m.rows) throw IllegalArgumentException("Vector size must equal matrix row count")
+        val res = Vector(m.cols) { 0f }
+        for (i in 0 until m.rows)
+            for (j in 0 until m.cols)
+                res[j] += m[i][j] * this[i]
+        return res
+    }
+
+    // TODO: doc
     fun sum(): Float =
         elements.sum()
 
+    // TODO: doc
     fun min(): Float =
         elements.min()
 
+    // TODO: doc
     fun max(): Float =
         elements.max()
 
-    fun zipMap(rhs: Vector, fn: (Float, Float) -> Float): Vector =
-        if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
-        else Vector(size) { fn(this[it], rhs[it]) }
-
-    inline fun zipSumOf(rhs: Vector, fn: (Float, Float) -> Float): Float {
-        if (size != rhs.size) throw IllegalArgumentException("Vectors must have same size")
-        var sum = 0f
-        for (i in 0 until size) sum += fn(this[i], rhs[i])
-        return sum
+    // TODO: doc
+    private fun assertVectorOfEqualDimensions(t: Tensor): Vector {
+        if (t !is Vector) throw UnsupportedTensorOperation("Cannot add non-vectors to a vector")
+        if (t.size != this.size) throw UnsupportedTensorOperation("Cannot subtract vectors of different sizes")
+        return t
     }
-
-    fun transform(fn: (Float) -> Float): Vector =
-        Vector(size) { fn(this[it]) }
-
-    fun square(): Vector =
-        transform { it * it }
-
-    fun copyInto(destination: Vector) {
-        if (size != destination.size) throw IllegalArgumentException("Vectors must have same size")
-        elements.copyInto(destination.elements)
-    }
-
-    override fun toString(): String = elements.toList().toString()
 }
+
+/**
+ * @param size The size of the new vector
+ * @param init Initialization callback
+ * @return A new [Vector] of size [size] initialized by [init]
+ */
+inline fun Vector(size: Int, crossinline init: (index: Int) -> Float): Vector =
+    Vector(FloatArray(size) { i -> init(i) })
+
+/**
+ * @param elements Elements of the new vector
+ * @return A new [Vector] containing the given elements
+ */
+fun vector(vararg elements: Float): Vector =
+    Vector(elements)
+
+/**
+ * @param elements Elements of the new vector, will be converted to [Float] with [Number.toFloat]
+ * @return A new [Vector] containing the given elements
+ */
+fun vector(vararg elements: Number): Vector =
+    Vector(elements.size) { elements[it].toFloat() }
 
 fun emptyVector(): Vector =
-    vectorOf()
+    Vector(floatArrayOf())
 
-fun vectorOf(vararg vs: Float) =
-    Vector(floatArrayOf(*vs))
+// TODO: doc
+// TODO: generalize to tensor
+fun hadamard(a: Vector, b: Vector): Vector = // TODO: verify same size
+    Vector(a.size) { i -> a[i] * b[i] }
 
-fun randomVector(size: Int): Vector =
-    Vector(size) { randomFloat() }
+// TODO: doc
+fun outer(a: Vector, b: Vector): Matrix =
+    Matrix(rows = a.size, cols = b.size) { i, j -> a[i] * b[j] }
 
-fun hadamard(a: Vector, b: Vector) =
-    a.zipMap(b) { x, y -> x * y }
-
-inline fun <T> Iterable<T>.sumOfVector(selector: (T) -> Vector): Vector {
-    val first = this.firstOrNull() ?: return emptyVector()
-    val sum = selector(first)
-    this.forEachIndexed { i, el ->
-        if (i > 0) sum += selector(el)
-    }
+// TODO: doc
+inline fun Vector.zipSumOf(v: Vector, crossinline function: (Float, Float) -> Float): Float {
+    // TODO: verify same size
+    var sum = 0f
+    for (i in 0 until size) sum += function(this[i], v[i])
     return sum
 }
 
-fun Iterable<Vector>.sum(): Vector {
-    val sum = this.firstOrNull() ?: return emptyVector()
-    this.forEachIndexed { i, matrix ->
-        if (i > 0) sum += matrix
-    }
-    return sum
-}
-
-operator fun Float.times(vector: Vector): Vector = vector * this
+/**
+ * Thrown when attempting to access [Vector.slices]
+ */
+class VectorSlicesAccessException :
+    IllegalAccessException("Attempted to access slices of a vector, this operation is not supported")

@@ -1,103 +1,113 @@
 package kannoo.math
 
+/**
+ * 2-dimensional [Tensor] composed of of [Vector] slices. By convention, the slices are stored row-first, meaning the
+ * matrix element `M[i][j]` refers to the element in row `i` and column `j`.
+ */
 @JvmInline
-value class Matrix(private val arr: Array<Vector>) {
+value class Matrix(val rowVectors: Array<Vector>) : Tensor {
+    /**
+     * Matrices are tensors of rank 2.
+     */
+    override val rank get() = 2
 
-    constructor(rows: Int, cols: Int, init: (row: Int, col: Int) -> Float)
-            : this(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
+    /**
+     * Equivalent to [rowVectors] but cast to `Array<Tensor>`. It is safe to read from this array, but only [Vector]
+     * (and no other [Tensor] subtype) elements may be written to it.
+     */
+    @Suppress("UNCHECKED_CAST")
+    override val slices get() = rowVectors as Array<Tensor>
 
-    constructor(rows: Int, cols: Int, init: () -> Float)
-            : this(rows, cols, { _, _ -> init() })
+    override val size: Int get() = rowVectors.size
 
-    val rows
-        get(): Int = arr.size
+    val rows: Int get() = rowVectors.size
 
-    val cols
-        get(): Int = if (rows == 0) 0 else arr[0].size
-
-    val rowVectors
-        get(): Array<Vector> = arr
+    val cols: Int get() = rowVectors[0].size
 
     operator fun get(index: Int): Vector =
-        arr[index]
+        rowVectors[index]
 
-    operator fun times(rhs: Vector): Vector {
-        if (rhs.size != cols) throw IllegalArgumentException("Vector size must equal column count")
-        val res = Vector(rows)
+    operator fun set(index: Int, vector: Vector) {
+        rowVectors[index] = vector
+    }
+
+    override operator fun plus(t: Tensor): Matrix =
+        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        else Matrix(rows) { i -> rowVectors[i] + t.rowVectors[i] }
+
+    override operator fun minus(t: Tensor): Matrix =
+        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        else Matrix(rows) { i -> rowVectors[i] - t.rowVectors[i] }
+
+    override operator fun times(s: Float): Matrix =
+        transform { it * s }
+
+    override operator fun div(s: Float): Matrix =
+        transform { it / s }
+
+    override operator fun plusAssign(t: Tensor) {
+        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        for (i in 0 until size) this[i].plusAssign(t[i])
+    }
+
+    override operator fun minusAssign(t: Tensor) {
+        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        for (i in 0 until size) this[i].minusAssign(t[i])
+    }
+
+    override operator fun timesAssign(s: Float) {
+        reassign { it * s }
+    }
+
+    override operator fun divAssign(s: Float) {
+        reassign { it / s }
+    }
+
+    override fun transform(function: (Float) -> Float): Matrix =
+        Matrix(rows) { i -> this[i].transform(function) }
+
+    override fun reassign(transform: (Float) -> Float) {
+        for (i in 0 until size) this[i].reassign(transform)
+    }
+
+    override fun copy(): Tensor =
+        Matrix(rows) { this[it].copy() }
+
+    // TODO: doc
+    // TODO: generalize to tensor
+    operator fun times(v: Vector): Vector {
+        if (v.size != cols) throw UnsupportedTensorOperation("Vector size must equal matrix column count")
+        val res = Vector(rows) { 0f }
         for (i in 0 until rows)
             for (j in 0 until cols)
-                res[i] += this[i][j] * rhs[j]
+                res[i] += this[i][j] * v[j]
         return res
     }
 
-    operator fun times(scalar: Float): Matrix =
-        Matrix(rows, cols) { row, col -> this[row][col] * scalar }
-
-    operator fun plusAssign(rhs: Matrix) {
-        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-        forEachIndexed { row, col -> this[row][col] += rhs[row][col] }
-    }
-
-    operator fun minusAssign(rhs: Matrix) {
-        if (rows != rhs.rows || cols != rhs.cols) throw IllegalArgumentException("Matrices must have same dimensions")
-        forEachIndexed { row, col -> this[row][col] -= rhs[row][col] }
-    }
-
-    operator fun timesAssign(rhs: Float) {
-        forEachIndexed { row, col -> this[row][col] *= rhs }
-    }
-
-    fun forEachIndexed(fn: (row: Int, col: Int) -> Unit) {
-        for (row in 0 until rows)
-            for (col in 0 until cols)
-                fn(row, col)
-    }
-
-    fun zero() {
-        forEachIndexed { row, col -> this[row][col] = 0f }
+    // TODO: doc
+    // TODO: add to Vector too
+    inline fun forEachIndexed(crossinline action: (row: Int, col: Int) -> Unit) {
+        for (i in 0 until rows)
+            for (j in 0 until cols)
+                action(i, j)
     }
 }
 
+inline fun Matrix(rows: Int, crossinline init: (row: Int) -> Vector): Matrix =
+    Matrix(Array(rows) { row -> init(row) })
+
+inline fun Matrix(rows: Int, cols: Int, crossinline init: () -> Float): Matrix =
+    Matrix(Array(rows) { Vector(cols) { init() } })
+
+inline fun Matrix(rows: Int, cols: Int, crossinline init: (row: Int, col: Int) -> Float): Matrix =
+    Matrix(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
+
+@Suppress("FINAL_UPPER_BOUND") // varargs of value classes are not normally allowed, hacky workaround
+fun <T : Vector> matrix(vararg rowVectors: T): Matrix {
+    @Suppress("UNCHECKED_CAST", "KotlinConstantConditions")
+    return Matrix(rowVectors as Array<Vector>)
+}
+
+// TODO: doc
 fun emptyMatrix(): Matrix =
     Matrix(arrayOf())
-
-fun randomMatrix(w: Int, h: Int): Matrix =
-    Matrix(w, h) { randomFloat() }
-
-fun outer(a: Vector, b: Vector): Matrix =
-    Matrix(a.size, b.size) { i, j -> a[i] * b[j] }
-
-fun transposeDot(m: Matrix, v: Vector): Vector {
-    if (v.size != m.rows) throw IllegalArgumentException("nn.Matrix row count must equal vector size")
-    return Vector(m.cols) { j ->
-        (0 until m.rows).sumOf { i -> m[i][j] * v[i] }
-    }
-}
-
-inline fun <T> Iterable<T>.sumOfMatrix(selector: (T) -> Matrix): Matrix {
-    val first = this.firstOrNull() ?: return emptyMatrix()
-    val sum = selector(first)
-    this.forEachIndexed { i, el ->
-        if (i > 0) sum += selector(el)
-    }
-    return sum
-}
-
-fun Iterable<Matrix>.sum(): Matrix {
-    val sum = this.firstOrNull() ?: return emptyMatrix()
-    this.forEachIndexed { i, matrix ->
-        if (i > 0) sum += matrix
-    }
-    return sum
-}
-
-operator fun Float.times(matrix: Matrix): Matrix = matrix * this
-
-operator fun Vector.times(m: Matrix): Vector {
-    if (size != m.rows) throw IllegalArgumentException("Vector size must equal row count")
-    val res = Vector(m.cols)
-    for (i in 0 until m.rows)
-        for (j in 0 until m.cols)
-            res[j] += m[i][j] * this[i]
-    return res
-}
