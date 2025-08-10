@@ -52,8 +52,10 @@ value class Vector(val elements: FloatArray) : Tensor {
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
     override operator fun plus(tensor: Tensor): Vector {
-        val v = assertVectorOfEqualDimensions(tensor)
-        return Vector(size) { i -> this[i] + v[i] }
+        if (tensor !is Vector)
+            throw UnsupportedTensorOperation("Cannot add non-vector to vector")
+
+        return zip(tensor) { x, y -> x + y }
     }
 
     /**
@@ -64,8 +66,10 @@ value class Vector(val elements: FloatArray) : Tensor {
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
     override operator fun minus(tensor: Tensor): Vector {
-        val v = assertVectorOfEqualDimensions(tensor)
-        return Vector(size) { i -> this[i] - v[i] }
+        if (tensor !is Vector)
+            throw UnsupportedTensorOperation("Cannot subtract non-vector from vector")
+
+        return zip(tensor) { x, y -> x - y }
     }
 
     /**
@@ -92,8 +96,10 @@ value class Vector(val elements: FloatArray) : Tensor {
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
     override operator fun plusAssign(tensor: Tensor) {
-        val v = assertVectorOfEqualDimensions(tensor)
-        for (i in 0 until size) this[i] += v[i]
+        if (tensor !is Vector)
+            throw UnsupportedTensorOperation("Cannot add non-vector to vector")
+
+        zipAssign(tensor) { x, y -> x + y }
     }
 
     /**
@@ -104,8 +110,10 @@ value class Vector(val elements: FloatArray) : Tensor {
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
     override operator fun minusAssign(tensor: Tensor) {
-        val v = assertVectorOfEqualDimensions(tensor)
-        for (i in 0 until size) this[i] -= v[i]
+        if (tensor !is Vector)
+            throw UnsupportedTensorOperation("Cannot subtract non-vector from vector")
+
+        zipAssign(tensor) { x, y -> x - y }
     }
 
     /**
@@ -114,7 +122,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      * @param scalar Scalar value to multiple by
      */
     override operator fun timesAssign(scalar: Float) {
-        reassign { it * scalar }
+        assign { it * scalar }
     }
 
     /**
@@ -123,7 +131,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      * @param scalar Scalar value to multiple by
      */
     override operator fun divAssign(scalar: Float) {
-        reassign { it / scalar }
+        assign { it / scalar }
     }
 
     /**
@@ -145,18 +153,22 @@ value class Vector(val elements: FloatArray) : Tensor {
      *
      * @param [function] Function to apply
      */
-    override fun reassign(function: (Float) -> Float) {
-        for (i in 0 until size) this[i] = function(this[i])
+    override fun assign(function: (Float) -> Float) {
+        for (i in 0 until size)
+            this[i] = function(this[i])
     }
 
     // TODO: doc
     // TODO: generalize to tensor
     operator fun times(m: Matrix): Vector {
-        if (size != m.rows) throw IllegalArgumentException("Vector size must equal matrix row count")
+        if (size != m.rows)
+            throw IllegalArgumentException("Vector size must equal matrix row count")
+
         val res = Vector(m.cols) { 0f }
         for (i in 0 until m.rows)
             for (j in 0 until m.cols)
                 res[j] += m[i][j] * this[i]
+
         return res
     }
 
@@ -173,10 +185,34 @@ value class Vector(val elements: FloatArray) : Tensor {
         elements.max()
 
     // TODO: doc
-    private fun assertVectorOfEqualDimensions(t: Tensor): Vector {
-        if (t !is Vector) throw UnsupportedTensorOperation("Cannot add non-vectors to a vector")
-        if (t.size != this.size) throw UnsupportedTensorOperation("Cannot subtract vectors of different sizes")
-        return t
+    inline fun zip(other: Vector, crossinline combine: (left: Float, right: Float) -> Float): Vector {
+        if (other.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        return Vector(size) { i ->
+            combine(this[i], other[i])
+        }
+    }
+
+    // TODO: doc
+    inline fun zipAssign(other: Vector, crossinline combine: (left: Float, right: Float) -> Float) {
+        if (other.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        for (i in 0 until size)
+            this[i] = combine(this[i], other[i])
+    }
+
+    // TODO: doc
+    inline fun zipSumOf(other: Vector, crossinline function: (Float, Float) -> Float): Float {
+        if (other.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        var accumulator = 0f
+        for (i in 0 until size)
+            accumulator += function(this[i], other[i])
+
+        return accumulator
     }
 }
 
@@ -206,14 +242,6 @@ fun hadamard(a: Vector, b: Vector): Vector = // TODO: verify same size
 // TODO: doc
 fun outer(a: Vector, b: Vector): Matrix =
     Matrix(rows = a.size, cols = b.size) { i, j -> a[i] * b[j] }
-
-// TODO: doc
-inline fun Vector.zipSumOf(v: Vector, crossinline function: (Float, Float) -> Float): Float {
-    // TODO: verify same size
-    var sum = 0f
-    for (i in 0 until size) sum += function(this[i], v[i])
-    return sum
-}
 
 /**
  * Thrown when attempting to access [Vector.slices]

@@ -50,18 +50,18 @@ value class CompositeTensor(override val slices: Array<Tensor>) : Tensor {
     }
 
     override operator fun timesAssign(scalar: Float) {
-        reassign { it * scalar }
+        assign { it * scalar }
     }
 
     override operator fun divAssign(scalar: Float) {
-        reassign { it / scalar }
+        assign { it / scalar }
     }
 
     override fun transform(function: (Float) -> Float): CompositeTensor =
         CompositeTensor(size) { i -> this[i].transform(function) }
 
-    override fun reassign(function: (Float) -> Float) {
-        for (i in 0 until size) this[i].reassign(function)
+    override fun assign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i].assign(function)
     }
 
     override fun copy(): CompositeTensor =

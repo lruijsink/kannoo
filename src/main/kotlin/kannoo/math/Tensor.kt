@@ -110,7 +110,7 @@ sealed interface Tensor {
      *
      * @param [function] Function to apply
      */
-    fun reassign(function: (Float) -> Float)
+    fun assign(function: (Float) -> Float)
 }
 
 // TODO: doc

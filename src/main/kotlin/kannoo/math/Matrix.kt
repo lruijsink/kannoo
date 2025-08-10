@@ -56,18 +56,18 @@ value class Matrix(val rowVectors: Array<Vector>) : Tensor {
     }
 
     override operator fun timesAssign(scalar: Float) {
-        reassign { it * scalar }
+        assign { it * scalar }
     }
 
     override operator fun divAssign(scalar: Float) {
-        reassign { it / scalar }
+        assign { it / scalar }
     }
 
     override fun transform(function: (Float) -> Float): Matrix =
         Matrix(rows) { i -> this[i].transform(function) }
 
-    override fun reassign(function: (Float) -> Float) {
-        for (i in 0 until size) this[i].reassign(function)
+    override fun assign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i].assign(function)
     }
 
     override fun copy(): Tensor =
