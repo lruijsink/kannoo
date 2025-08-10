@@ -104,6 +104,12 @@ sealed interface Tensor<T : Tensor<T>> {
      * @param [function] Function to apply
      */
     fun assign(function: (Float) -> Float)
+
+    // TODO: doc
+    fun zip(other: T, combine: (left: Float, right: Float) -> Float): T
+
+    // TODO: doc
+    fun zipAssign(other: T, combine: (left: Float, right: Float) -> Float)
 }
 
 // TODO: doc

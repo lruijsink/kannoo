@@ -5,9 +5,9 @@ sealed interface Composite<T : Tensor<T>, S : Tensor<S>> : Tensor<T> {
     /**
      * The slices that this tensor is composed of, which are themselves tensors of rank [rank]` - 1`
      *
-     * NOTE: This is an [Array] for memory efficiency reasons but it is NOT safe to write this to array!
+     * NOTE: This is an [Array] for memory efficiency reasons and therefore writeable.
      */
-    val slices: List<S>
+    val slices: Array<S>
 
     operator fun get(index: Int): S
 

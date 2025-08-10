@@ -1,9 +1,7 @@
 package kannoo.math
 
-class NTensor<S : Tensor<S>>(slices: List<S>) : Composite<NTensor<S>, S> {
-
-    private val _slices = slices.toMutableList()
-    override val slices = _slices
+@JvmInline
+value class NTensor<S : Tensor<S>>(override val slices: Array<S>) : Composite<NTensor<S>, S> {
 
     override val rank: Int get() = slices[0].rank + 1
 
@@ -25,21 +23,21 @@ class NTensor<S : Tensor<S>>(slices: List<S>) : Composite<NTensor<S>, S> {
         if (tensor.rank != this.rank || tensor.size != this.size)
             throw IllegalArgumentException("Incompatible dimensions")
 
-        return NTensor(size) { i -> this[i] + tensor[i] }
+        return transformIndexed { i -> this[i] + tensor[i] }
     }
 
     override operator fun minus(tensor: NTensor<S>): NTensor<S> {
         if (tensor.rank != this.rank || tensor.size != this.size)
             throw IllegalArgumentException("Incompatible dimensions")
 
-        return NTensor(size) { i -> this[i] - tensor[i] }
+        return transformIndexed { i -> this[i] - tensor[i] }
     }
 
     override operator fun times(scalar: Float): NTensor<S> =
-        NTensor(size) { i -> this[i] * scalar }
+        transformIndexed { i -> this[i] * scalar }
 
     override operator fun div(scalar: Float): NTensor<S> =
-        NTensor(size) { i -> this[i] / scalar }
+        transformIndexed { i -> this[i] / scalar }
 
     override operator fun plusAssign(tensor: NTensor<S>) {
         if (tensor.size != this.size) throw IllegalArgumentException("Incompatible")
@@ -60,18 +58,40 @@ class NTensor<S : Tensor<S>>(slices: List<S>) : Composite<NTensor<S>, S> {
     }
 
     override fun transform(function: (Float) -> Float): NTensor<S> =
-        NTensor(size) { i -> this[i].transform(function) }
+        transformIndexed { i -> this[i].transform(function) }
 
     override fun assign(function: (Float) -> Float) {
         for (i in 0 until size) this[i].assign(function)
     }
 
-    override fun copy(): NTensor<S> =
-        NTensor(size) { i -> this[i].copy() }
+    override fun copy(): NTensor<S> {
+        val slicesCopy = slices.copyOf()
+        for (i in 0 until size)
+            slicesCopy[i] = slices[i].copy()
+        return NTensor(slicesCopy)
+    }
+
+    override fun zip(other: NTensor<S>, combine: (Float, Float) -> Float): NTensor<S> =
+        transformIndexed { i -> this[i].zip(other[i], combine) }
+
+    override fun zipAssign(other: NTensor<S>, combine: (Float, Float) -> Float) {
+        for (i in 0 until size)
+            this[i].zipAssign(other[i], combine)
+    }
+
+    private inline fun assignIndexed(crossinline function: (Int) -> S) {
+        for (i in 0 until size)
+            this[i] = function(i)
+    }
+
+    private inline fun transformIndexed(crossinline function: (Int) -> S): NTensor<S> {
+        val res = copy()
+        res.assignIndexed(function)
+        return res
+    }
 }
 
-inline fun <S : Tensor<S>> NTensor(size: Int, init: (index: Int) -> S): NTensor<S> =
-    NTensor(List(size) { init(it) })
-
-fun <S, T : Composite<T, S>> tensor(vararg tensors: T) =
-    NTensor(tensors.toList())
+fun <S, T : Composite<T, S>> tensor(vararg tensors: T): NTensor<T> {
+    @Suppress("KotlinConstantConditions")
+    return NTensor(tensors as Array<T>)
+}

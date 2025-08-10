@@ -165,7 +165,7 @@ value class Vector(val elements: FloatArray) : Tensor<Vector> {
         elements.max()
 
     // TODO: doc
-    inline fun zip(other: Vector, crossinline combine: (left: Float, right: Float) -> Float): Vector {
+    override fun zip(other: Vector, combine: (left: Float, right: Float) -> Float): Vector {
         if (other.size != this.size)
             throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
 
@@ -175,7 +175,7 @@ value class Vector(val elements: FloatArray) : Tensor<Vector> {
     }
 
     // TODO: doc
-    inline fun zipAssign(other: Vector, crossinline combine: (left: Float, right: Float) -> Float) {
+    override fun zipAssign(other: Vector, combine: (left: Float, right: Float) -> Float) {
         if (other.size != this.size)
             throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
 
