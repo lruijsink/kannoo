@@ -1,5 +1,5 @@
-import kannoo.example.ticTacToeSelfLearn
+import kannoo.example.backPropPerformanceTest
 
 fun main() {
-    ticTacToeSelfLearn()
+    backPropPerformanceTest()
 }

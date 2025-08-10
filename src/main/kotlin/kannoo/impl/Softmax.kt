@@ -10,7 +10,7 @@ import kotlin.math.exp
 object Softmax : ActivationFunction {
     override fun compute(v: Vector): Vector {
         val vMax = v.max()
-        val vExp = v.transform { exp(it - vMax) }
+        val vExp = v.map { exp(it - vMax) }
         val vExpSum = vExp.sum()
         return vExp / vExpSum
     }

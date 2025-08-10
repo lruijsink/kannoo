@@ -6,12 +6,13 @@ package kannoo.math
  */
 @JvmInline
 value class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
+
     /**
      * Matrices are tensors of rank 2.
      */
     override val rank get() = 2
 
-    override val size: Int get() = slices.size
+    override val shape get() = listOf(rows, cols)
 
     val rows: Int get() = slices.size
 
@@ -19,18 +20,11 @@ value class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vecto
 
     val rowVectors get() = slices
 
-    override operator fun get(index: Int): Vector =
-        slices[index]
+    override fun map(function: (Float) -> Float): Matrix =
+        Matrix(rows) { i -> this[i].map(function) }
 
-    override operator fun set(index: Int, slice: Vector) {
-        slices[index] = slice
-    }
-
-    override fun transform(function: (Float) -> Float): Matrix =
-        Matrix(rows) { i -> this[i].transform(function) }
-
-    override fun assign(function: (Float) -> Float) {
-        for (i in 0 until size) this[i].assign(function)
+    override fun mapAssign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i].mapAssign(function)
     }
 
     override fun copy(): Matrix =

@@ -18,6 +18,11 @@ value class Vector(val elements: FloatArray) : Tensor<Vector> {
     override val size: Int get() = elements.size
 
     /**
+     * Tensor shape, for vectors this is just a single dimension: its [size].
+     */
+    override val shape: List<Int> get() = listOf(size)
+
+    /**
      * @param index The index of the element to get
      *
      * @return The element at index [index]
@@ -47,7 +52,7 @@ value class Vector(val elements: FloatArray) : Tensor<Vector> {
      *
      * @return A copy of this vector with [function] applied to each element
      */
-    override fun transform(function: (Float) -> Float): Vector =
+    override fun map(function: (Float) -> Float): Vector =
         Vector(size) { i -> function(this[i]) }
 
     /**
@@ -55,7 +60,7 @@ value class Vector(val elements: FloatArray) : Tensor<Vector> {
      *
      * @param [function] Function to apply
      */
-    override fun assign(function: (Float) -> Float) {
+    override fun mapAssign(function: (Float) -> Float) {
         for (i in 0 until size)
             this[i] = function(this[i])
     }

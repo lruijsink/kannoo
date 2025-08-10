@@ -21,6 +21,12 @@ sealed interface Tensor<T : Tensor<T>> {
     val size: Int
 
     /**
+     * The tensor's shape, from highest dimension to lowest, so an [NTensor] of 2 [Matrix] slices, containing 3
+     * [Vector]s with 4 scalar elements each, would have shape (2, 3, 4).
+     */
+    val shape: List<Int>
+
+    /**
      * @return A deep copy of this tensor, with equal rank, dimensions, and element values
      */
     fun copy(): T
@@ -51,7 +57,7 @@ sealed interface Tensor<T : Tensor<T>> {
      * @return A new tensor `T` where `T[i]` = `this[i] * scalar`
      */
     operator fun times(scalar: Float): T =
-        transform { it * scalar }
+        map { it * scalar }
 
     /**
      * @param scalar Scalar value to divide by
@@ -59,7 +65,7 @@ sealed interface Tensor<T : Tensor<T>> {
      * @return A new tensor `T` where `T[i]` = `this[i] / scalar`
      */
     operator fun div(scalar: Float): T =
-        transform { it / scalar }
+        map { it / scalar }
 
     /**
      * Add each element in [tensor] to the corresponding element in this tensor, in-place.
@@ -89,7 +95,7 @@ sealed interface Tensor<T : Tensor<T>> {
      * @param scalar Scalar value to multiple by
      */
     operator fun timesAssign(scalar: Float) {
-        assign { it * scalar }
+        mapAssign { it * scalar }
     }
 
     /**
@@ -98,7 +104,7 @@ sealed interface Tensor<T : Tensor<T>> {
      * @param scalar Scalar value to divide by
      */
     operator fun divAssign(scalar: Float) {
-        assign { it / scalar }
+        mapAssign { it / scalar }
     }
 
     /**
@@ -106,14 +112,14 @@ sealed interface Tensor<T : Tensor<T>> {
      *
      * @return A new tensor with `function` applied elementwise to this tensor
      */
-    fun transform(function: (Float) -> Float): T
+    fun map(function: (Float) -> Float): T
 
     /**
      * Applies [function] to all scalar elements in this tensor, in place.
      *
      * @param [function] Function to apply
      */
-    fun assign(function: (Float) -> Float)
+    fun mapAssign(function: (Float) -> Float)
 
     // TODO: doc
     fun zip(other: T, combine: (left: Float, right: Float) -> Float): T
@@ -124,7 +130,7 @@ sealed interface Tensor<T : Tensor<T>> {
 
 // TODO: doc
 operator fun <T : Tensor<T>> Float.times(tensor: T) =
-    tensor.transform { it * this }
+    tensor.map { it * this }
 
 // TODO: doc
 inline fun <V, T : Tensor<T>> Iterable<V>.sumOfTensor(crossinline selector: (V) -> T): T {

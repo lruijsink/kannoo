@@ -3,11 +3,11 @@ package kannoo.math
 @JvmInline
 value class NTensor<S : Tensor<S>>(override val slices: Array<S>) : Composite<NTensor<S>, S> {
 
-    override fun transform(function: (Float) -> Float): NTensor<S> =
-        transformIndexed { i -> this[i].transform(function) }
+    override fun map(function: (Float) -> Float): NTensor<S> =
+        transformIndexed { i -> this[i].map(function) }
 
-    override fun assign(function: (Float) -> Float) {
-        for (i in 0 until size) this[i].assign(function)
+    override fun mapAssign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i].mapAssign(function)
     }
 
     override fun copy(): NTensor<S> {
