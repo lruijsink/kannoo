@@ -8,18 +8,11 @@ package kannoo.math
  *
  * Currently only 32-bit floating point ([Float]) arithmetic is supported.
  */
-sealed interface Tensor {
+sealed interface Tensor<T : Tensor<T>> {
     /**
      * The rank (dimensions) of this tensor. For example, a [Vector] is rank 1 and a [Matrix] is rank 2.
      */
     val rank: Int
-
-    /**
-     * The slices that this tensor is composed of, which are themselves tensors of rank [rank]` - 1`
-     *
-     * NOTE: This is an [Array] for memory efficiency reasons but it is NOT safe to write this to array!
-     */
-    val slices: Array<Tensor>
 
     /**
      * The tensor's size in its highest dimension. For example: a 3D tensor of 5 matrices has size 5, regardless of the
@@ -30,7 +23,7 @@ sealed interface Tensor {
     /**
      * @return A deep copy of this tensor, with equal rank, dimensions, and element values
      */
-    fun copy(): Tensor
+    fun copy(): T
 
     /**
      * @param tensor The tensor to sum with, must be a tensor of equal rank and dimensions
@@ -39,7 +32,7 @@ sealed interface Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a tensor of equal rank and dimensions
      */
-    operator fun plus(tensor: Tensor): Tensor
+    operator fun plus(tensor: T): T
 
     /**
      * @param tensor The tensor to subtract, must be a tensor of equal rank and dimensions
@@ -48,21 +41,21 @@ sealed interface Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a tensor of equal rank and dimensions
      */
-    operator fun minus(tensor: Tensor): Tensor
+    operator fun minus(tensor: T): T
 
     /**
      * @param scalar Scalar value to multiply by
      *
      * @return A new tensor `T` where `T[i]` = `this[i] * scalar`
      */
-    operator fun times(scalar: Float): Tensor
+    operator fun times(scalar: Float): T
 
     /**
      * @param scalar Scalar value to divide by
      *
      * @return A new tensor `T` where `T[i]` = `this[i] / scalar`
      */
-    operator fun div(scalar: Float): Tensor
+    operator fun div(scalar: Float): T
 
     /**
      * Add each element in [tensor] to the corresponding element in this tensor, in-place.
@@ -71,7 +64,7 @@ sealed interface Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not of equal rank or dimensions
      */
-    operator fun plusAssign(tensor: Tensor)
+    operator fun plusAssign(tensor: T)
 
     /**
      * Subtract each element in [tensor] from the corresponding element in this tensor, in-place.
@@ -80,7 +73,7 @@ sealed interface Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not of equal rank or dimensions
      */
-    operator fun minusAssign(tensor: Tensor)
+    operator fun minusAssign(tensor: T)
 
     /**
      * Multiplies all values in this tensor by [scalar], in place.
@@ -103,7 +96,7 @@ sealed interface Tensor {
      *
      * Note: Use [transformGeneric] to preserve type information
      */
-    fun transform(function: (Float) -> Float): Tensor
+    fun transform(function: (Float) -> Float): T
 
     /**
      * Applies [function] to all scalar elements in this tensor, in place.
@@ -114,11 +107,11 @@ sealed interface Tensor {
 }
 
 // TODO: doc
-operator fun <T : Tensor> Float.times(tensor: T) =
-    tensor.transformGeneric { it * this }
+operator fun <T : Tensor<T>> Float.times(tensor: T) =
+    tensor.transform { it * this }
 
 // TODO: doc
-inline fun <V, T : Tensor> Iterable<V>.sumOfTensor(crossinline selector: (V) -> T): T {
+inline fun <V, T : Tensor<T>> Iterable<V>.sumOfTensor(crossinline selector: (V) -> T): T {
     val itr = iterator()
     if (!itr.hasNext()) throw UnsupportedTensorOperation("Cannot sum over empty collection of tensors")
 

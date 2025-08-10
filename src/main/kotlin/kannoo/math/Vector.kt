@@ -5,20 +5,12 @@ package kannoo.math
  * inaccessible.
  */
 @JvmInline
-value class Vector(val elements: FloatArray) : Tensor {
+value class Vector(val elements: FloatArray) : Tensor<Vector> {
 
     /**
      * Tensor rank, always equal to `1` for vectors.
      */
     override val rank get() = 1
-
-    /**
-     * A vector tensor cannot be further subdivided into rank 0 slices (its individual elements). This field should not
-     * be accessed.
-     *
-     * @throws VectorSlicesAccessException
-     */
-    override val slices get() = throw VectorSlicesAccessException()
 
     /**
      * Number of elements in this vector.
@@ -51,10 +43,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun plus(tensor: Tensor): Vector {
-        if (tensor !is Vector)
-            throw UnsupportedTensorOperation("Cannot add non-vector to vector")
-
+    override operator fun plus(tensor: Vector): Vector {
         return zip(tensor) { x, y -> x + y }
     }
 
@@ -65,10 +54,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun minus(tensor: Tensor): Vector {
-        if (tensor !is Vector)
-            throw UnsupportedTensorOperation("Cannot subtract non-vector from vector")
-
+    override operator fun minus(tensor: Vector): Vector {
         return zip(tensor) { x, y -> x - y }
     }
 
@@ -95,10 +81,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun plusAssign(tensor: Tensor) {
-        if (tensor !is Vector)
-            throw UnsupportedTensorOperation("Cannot add non-vector to vector")
-
+    override operator fun plusAssign(tensor: Vector) {
         zipAssign(tensor) { x, y -> x + y }
     }
 
@@ -109,10 +92,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun minusAssign(tensor: Tensor) {
-        if (tensor !is Vector)
-            throw UnsupportedTensorOperation("Cannot subtract non-vector from vector")
-
+    override operator fun minusAssign(tensor: Vector) {
         zipAssign(tensor) { x, y -> x - y }
     }
 
@@ -235,6 +215,10 @@ fun vector(vararg elements: Float): Vector =
     Vector(elements)
 
 // TODO: doc
+fun tensor(vararg elements: Float): Vector =
+    Vector(elements)
+
+// TODO: doc
 // TODO: generalize to tensor
 fun hadamard(a: Vector, b: Vector): Vector = // TODO: verify same size
     Vector(a.size) { i -> a[i] * b[i] }
@@ -242,9 +226,3 @@ fun hadamard(a: Vector, b: Vector): Vector = // TODO: verify same size
 // TODO: doc
 fun outer(a: Vector, b: Vector): Matrix =
     Matrix(rows = a.size, cols = b.size) { i, j -> a[i] * b[j] }
-
-/**
- * Thrown when attempting to access [Vector.slices]
- */
-class VectorSlicesAccessException :
-    IllegalAccessException("Attempted to access slices of a vector, this operation is not supported")

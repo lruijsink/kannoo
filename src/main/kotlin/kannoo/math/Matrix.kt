@@ -5,7 +5,7 @@ package kannoo.math
  * matrix element `M[i][j]` refers to the element in row `i` and column `j`.
  */
 @JvmInline
-value class Matrix(val rowVectors: Array<Vector>) : Tensor {
+value class Matrix(val rowVectors: Array<Vector>) : Composite<Matrix, Vector> {
     /**
      * Matrices are tensors of rank 2.
      */
@@ -16,7 +16,7 @@ value class Matrix(val rowVectors: Array<Vector>) : Tensor {
      * (and no other [Tensor] subtype) elements may be written to it.
      */
     @Suppress("UNCHECKED_CAST")
-    override val slices get() = rowVectors as Array<Tensor>
+    override val slices get() = rowVectors.toList()
 
     override val size: Int get() = rowVectors.size
 
@@ -24,19 +24,19 @@ value class Matrix(val rowVectors: Array<Vector>) : Tensor {
 
     val cols: Int get() = rowVectors[0].size
 
-    operator fun get(index: Int): Vector =
+    override operator fun get(index: Int): Vector =
         rowVectors[index]
 
-    operator fun set(index: Int, vector: Vector) {
-        rowVectors[index] = vector
+    override operator fun set(index: Int, slice: Vector) {
+        rowVectors[index] = slice
     }
 
-    override operator fun plus(tensor: Tensor): Matrix =
-        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+    override operator fun plus(tensor: Matrix): Matrix =
+        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
         else Matrix(rows) { i -> rowVectors[i] + tensor.rowVectors[i] }
 
-    override operator fun minus(tensor: Tensor): Matrix =
-        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+    override operator fun minus(tensor: Matrix): Matrix =
+        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
         else Matrix(rows) { i -> rowVectors[i] - tensor.rowVectors[i] }
 
     override operator fun times(scalar: Float): Matrix =
@@ -45,13 +45,13 @@ value class Matrix(val rowVectors: Array<Vector>) : Tensor {
     override operator fun div(scalar: Float): Matrix =
         transform { it / scalar }
 
-    override operator fun plusAssign(tensor: Tensor) {
-        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+    override operator fun plusAssign(tensor: Matrix) {
+        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
         for (i in 0 until size) this[i].plusAssign(tensor[i])
     }
 
-    override operator fun minusAssign(tensor: Tensor) {
-        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+    override operator fun minusAssign(tensor: Matrix) {
+        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
         for (i in 0 until size) this[i].minusAssign(tensor[i])
     }
 
@@ -70,7 +70,7 @@ value class Matrix(val rowVectors: Array<Vector>) : Tensor {
         for (i in 0 until size) this[i].assign(function)
     }
 
-    override fun copy(): Tensor =
+    override fun copy(): Matrix =
         Matrix(rows) { this[it].copy() }
 
     // TODO: doc
@@ -104,6 +104,12 @@ inline fun Matrix(rows: Int, cols: Int, crossinline init: (row: Int, col: Int) -
 
 @Suppress("FINAL_UPPER_BOUND") // varargs of value classes are not normally allowed, hacky workaround
 fun <T : Vector> matrix(vararg rowVectors: T): Matrix {
+    @Suppress("UNCHECKED_CAST", "KotlinConstantConditions")
+    return Matrix(rowVectors as Array<Vector>)
+}
+
+@Suppress("FINAL_UPPER_BOUND") // varargs of value classes are not normally allowed, hacky workaround
+fun <T : Vector> tensor(vararg rowVectors: T): Matrix {
     @Suppress("UNCHECKED_CAST", "KotlinConstantConditions")
     return Matrix(rowVectors as Array<Vector>)
 }
