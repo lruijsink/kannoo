@@ -26,38 +26,6 @@ value class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vecto
         slices[index] = slice
     }
 
-    override operator fun plus(tensor: Matrix): Matrix =
-        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        else Matrix(rows) { i -> slices[i] + tensor.slices[i] }
-
-    override operator fun minus(tensor: Matrix): Matrix =
-        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        else Matrix(rows) { i -> slices[i] - tensor.slices[i] }
-
-    override operator fun times(scalar: Float): Matrix =
-        transform { it * scalar }
-
-    override operator fun div(scalar: Float): Matrix =
-        transform { it / scalar }
-
-    override operator fun plusAssign(tensor: Matrix) {
-        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        for (i in 0 until size) this[i].plusAssign(tensor[i])
-    }
-
-    override operator fun minusAssign(tensor: Matrix) {
-        if (tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        for (i in 0 until size) this[i].minusAssign(tensor[i])
-    }
-
-    override operator fun timesAssign(scalar: Float) {
-        assign { it * scalar }
-    }
-
-    override operator fun divAssign(scalar: Float) {
-        assign { it / scalar }
-    }
-
     override fun transform(function: (Float) -> Float): Matrix =
         Matrix(rows) { i -> this[i].transform(function) }
 

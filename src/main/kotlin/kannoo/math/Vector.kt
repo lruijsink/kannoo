@@ -37,84 +37,6 @@ value class Vector(val elements: FloatArray) : Tensor<Vector> {
     }
 
     /**
-     * @param tensor The tensor to sum with, must be a [Vector] of equal size
-     *
-     * @return A new vector `V` where `V[i]` = `this[i] + tensor[i]`
-     *
-     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
-     */
-    override operator fun plus(tensor: Vector): Vector {
-        return zip(tensor) { x, y -> x + y }
-    }
-
-    /**
-     * @param tensor The tensor to subtract, must be a [Vector] of equal size
-     *
-     * @return A new vector `V` where `V[i]` = `this[i] - tensor[i]`
-     *
-     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
-     */
-    override operator fun minus(tensor: Vector): Vector {
-        return zip(tensor) { x, y -> x - y }
-    }
-
-    /**
-     * @param scalar Scalar value to multiple by
-     *
-     * @return A new vector V where `V[i]` = `this[i] * scalar`
-     */
-    override operator fun times(scalar: Float): Vector =
-        transform { it * scalar }
-
-    /**
-     * @param scalar Scalar value to divide by
-     *
-     * @return A new vector V where `V[i]` = `this[i] / scalar`
-     */
-    override operator fun div(scalar: Float): Vector =
-        transform { it / scalar }
-
-    /**
-     * Add each element in [tensor] to the corresponding element in this vector, in-place.
-     *
-     * @param tensor The tensor to sum with, must be a [Vector] of equal size
-     *
-     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
-     */
-    override operator fun plusAssign(tensor: Vector) {
-        zipAssign(tensor) { x, y -> x + y }
-    }
-
-    /**
-     * Subtract each element in [tensor] from the corresponding element in this vector, in-place.
-     *
-     * @param tensor The tensor to subtract, must be a [Vector] of equal size
-     *
-     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
-     */
-    override operator fun minusAssign(tensor: Vector) {
-        zipAssign(tensor) { x, y -> x - y }
-    }
-
-    /**
-     * Multiplies all values in this vector by [scalar], in place.
-     *
-     * @param scalar Scalar value to multiple by
-     */
-    override operator fun timesAssign(scalar: Float) {
-        assign { it * scalar }
-    }
-
-    /**
-     * Divides all values in this vector by [scalar], in place.
-     *
-     * @param scalar Scalar value to multiple by
-     */
-    override operator fun divAssign(scalar: Float) {
-        assign { it / scalar }
-    }
-
-    /**
      * @return A deep copy of this vector
      */
     override fun copy(): Vector =
@@ -217,11 +139,6 @@ fun vector(vararg elements: Float): Vector =
 // TODO: doc
 fun tensor(vararg elements: Float): Vector =
     Vector(elements)
-
-// TODO: doc
-// TODO: generalize to tensor
-fun hadamard(a: Vector, b: Vector): Vector = // TODO: verify same size
-    Vector(a.size) { i -> a[i] * b[i] }
 
 // TODO: doc
 fun outer(a: Vector, b: Vector): Matrix =

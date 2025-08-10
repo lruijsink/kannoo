@@ -32,7 +32,8 @@ sealed interface Tensor<T : Tensor<T>> {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a tensor of equal rank and dimensions
      */
-    operator fun plus(tensor: T): T
+    operator fun plus(tensor: T): T =
+        zip(tensor) { x, y -> x + y }
 
     /**
      * @param tensor The tensor to subtract, must be a tensor of equal rank and dimensions
@@ -41,21 +42,24 @@ sealed interface Tensor<T : Tensor<T>> {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not a tensor of equal rank and dimensions
      */
-    operator fun minus(tensor: T): T
+    operator fun minus(tensor: T): T =
+        zip(tensor) { x, y -> x - y }
 
     /**
      * @param scalar Scalar value to multiply by
      *
      * @return A new tensor `T` where `T[i]` = `this[i] * scalar`
      */
-    operator fun times(scalar: Float): T
+    operator fun times(scalar: Float): T =
+        transform { it * scalar }
 
     /**
      * @param scalar Scalar value to divide by
      *
      * @return A new tensor `T` where `T[i]` = `this[i] / scalar`
      */
-    operator fun div(scalar: Float): T
+    operator fun div(scalar: Float): T =
+        transform { it / scalar }
 
     /**
      * Add each element in [tensor] to the corresponding element in this tensor, in-place.
@@ -64,7 +68,9 @@ sealed interface Tensor<T : Tensor<T>> {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not of equal rank or dimensions
      */
-    operator fun plusAssign(tensor: T)
+    operator fun plusAssign(tensor: T) {
+        zipAssign(tensor) { x, y -> x + y }
+    }
 
     /**
      * Subtract each element in [tensor] from the corresponding element in this tensor, in-place.
@@ -73,28 +79,32 @@ sealed interface Tensor<T : Tensor<T>> {
      *
      * @throws UnsupportedTensorOperation if [tensor] is not of equal rank or dimensions
      */
-    operator fun minusAssign(tensor: T)
+    operator fun minusAssign(tensor: T) {
+        zipAssign(tensor) { x, y -> x - y }
+    }
 
     /**
      * Multiplies all values in this tensor by [scalar], in place.
      *
      * @param scalar Scalar value to multiple by
      */
-    operator fun timesAssign(scalar: Float)
+    operator fun timesAssign(scalar: Float) {
+        assign { it * scalar }
+    }
 
     /**
      * Divides all values in this tensor by [scalar], in place.
      *
      * @param scalar Scalar value to divide by
      */
-    operator fun divAssign(scalar: Float)
+    operator fun divAssign(scalar: Float) {
+        assign { it / scalar }
+    }
 
     /**
      * @param [function] Function to apply
      *
      * @return A new tensor with `function` applied elementwise to this tensor
-     *
-     * Note: Use [transformGeneric] to preserve type information
      */
     fun transform(function: (Float) -> Float): T
 
@@ -127,6 +137,10 @@ inline fun <V, T : Tensor<T>> Iterable<V>.sumOfTensor(crossinline selector: (V) 
 
     return accumulator
 }
+
+// TODO: doc
+fun <T : Tensor<T>> hadamard(a: T, b: T): T =
+    a.zip(b) { x, y -> x * y }
 
 // TODO: doc
 class UnsupportedTensorOperation(message: String) :

@@ -9,7 +9,16 @@ sealed interface Composite<T : Tensor<T>, S : Tensor<S>> : Tensor<T> {
      */
     val slices: Array<S>
 
-    operator fun get(index: Int): S
+    override val rank: Int
+        get() = slices[0].rank + 1
 
-    operator fun set(index: Int, slice: S)
+    override val size: Int
+        get() = slices.size
+
+    operator fun get(index: Int): S =
+        slices[index]
+
+    operator fun set(index: Int, slice: S) {
+        slices[index] = slice
+    }
 }
