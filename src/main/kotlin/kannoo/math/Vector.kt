@@ -133,9 +133,9 @@ value class Vector(val elements: FloatArray) : Tensor {
         Vector(elements.copyOf())
 
     /**
-     * @param [transform] Function to apply
+     * @param [function] Function to apply
      *
-     * @return A copy of this vector with [transform] applied to each element
+     * @return A copy of this vector with [function] applied to each element
      */
     override fun transform(function: (Float) -> Float): Vector =
         Vector(size) { i -> function(this[i]) }

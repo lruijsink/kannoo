@@ -21,8 +21,8 @@ fun Float.clip(minValue: Float, maxValue: Float) =
     max(minValue, min(this, maxValue))
 
 // TODO: doc
-fun <T> Iterable<T>.sumOf(fn: (T) -> Float): Float {
+fun <T> Iterable<T>.sumOf(function: (T) -> Float): Float {
     var acc = 0f
-    for (el in this) acc += fn(el)
+    for (el in this) acc += function(el)
     return acc
 }
