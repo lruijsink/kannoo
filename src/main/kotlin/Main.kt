@@ -1,5 +1,6 @@
-import kannoo.example.MNIST
+
+import kannoo.example.ticTacToeSelfLearn
 
 fun main() {
-    MNIST()
+    ticTacToeSelfLearn()
 }
