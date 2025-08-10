@@ -44,9 +44,9 @@ fun Vector.scoreOf(eval: Eval): Float =
 
 fun Eval.toTarget(): Vector =
     when (this) {
-        Eval.XWin -> vector(1, 0, 0)
-        Eval.Draw -> vector(0, 1, 0)
-        Eval.OWin -> vector(0, 0, 1)
+        Eval.XWin -> vector(1f, 0f, 0f)
+        Eval.Draw -> vector(0f, 1f, 0f)
+        Eval.OWin -> vector(0f, 0f, 1f)
     }
 
 fun Board.toPlay(): Square {

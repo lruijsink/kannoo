@@ -102,30 +102,9 @@ sealed interface Tensor {
 operator fun <T : Tensor> Float.times(tensor: T) =
     tensor.transformGeneric { it * this }
 
-// TODO: doc
-operator fun <T : Tensor> Number.times(tensor: T): T =
-    tensor * this
 
 // TODO: doc
-operator fun <T : Tensor> T.times(s: Number): T =
-    s.toFloat() * this
-
-// TODO: doc
-operator fun <T : Tensor> T.timesAssign(s: Number) {
-    timesAssign(s.toFloat())
-}
-
-// TODO: doc
-operator fun <T : Tensor> T.div(s: Number): T =
-    this.transformGeneric { it / s.toFloat() }
-
-// TODO: doc
-operator fun <T : Tensor> T.divAssign(s: Number) {
-    timesAssign(s.toFloat())
-}
-
-// TODO: doc
-inline fun <E, T : Tensor> Iterable<E>.sumOfTensor(crossinline selector: (E) -> T): T {
+inline fun <V, T : Tensor> Iterable<V>.sumOfTensor(crossinline selector: (V) -> T): T {
     val itr = iterator()
     if (!itr.hasNext()) throw UnsupportedTensorOperation("Cannot sum over empty collection of tensors")
 

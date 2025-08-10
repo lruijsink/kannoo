@@ -179,16 +179,6 @@ inline fun Vector(size: Int, crossinline init: (index: Int) -> Float): Vector =
 fun vector(vararg elements: Float): Vector =
     Vector(elements)
 
-/**
- * @param elements Elements of the new vector, will be converted to [Float] with [Number.toFloat]
- * @return A new [Vector] containing the given elements
- */
-fun vector(vararg elements: Number): Vector =
-    Vector(elements.size) { elements[it].toFloat() }
-
-fun emptyVector(): Vector =
-    Vector(floatArrayOf())
-
 // TODO: doc
 // TODO: generalize to tensor
 fun hadamard(a: Vector, b: Vector): Vector = // TODO: verify same size
