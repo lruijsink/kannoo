@@ -31,43 +31,43 @@ value class Matrix(val rowVectors: Array<Vector>) : Tensor {
         rowVectors[index] = vector
     }
 
-    override operator fun plus(t: Tensor): Matrix =
-        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        else Matrix(rows) { i -> rowVectors[i] + t.rowVectors[i] }
+    override operator fun plus(tensor: Tensor): Matrix =
+        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        else Matrix(rows) { i -> rowVectors[i] + tensor.rowVectors[i] }
 
-    override operator fun minus(t: Tensor): Matrix =
-        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        else Matrix(rows) { i -> rowVectors[i] - t.rowVectors[i] }
+    override operator fun minus(tensor: Tensor): Matrix =
+        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        else Matrix(rows) { i -> rowVectors[i] - tensor.rowVectors[i] }
 
-    override operator fun times(s: Float): Matrix =
-        transform { it * s }
+    override operator fun times(scalar: Float): Matrix =
+        transform { it * scalar }
 
-    override operator fun div(s: Float): Matrix =
-        transform { it / s }
+    override operator fun div(scalar: Float): Matrix =
+        transform { it / scalar }
 
-    override operator fun plusAssign(t: Tensor) {
-        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        for (i in 0 until size) this[i].plusAssign(t[i])
+    override operator fun plusAssign(tensor: Tensor) {
+        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        for (i in 0 until size) this[i].plusAssign(tensor[i])
     }
 
-    override operator fun minusAssign(t: Tensor) {
-        if (t !is Matrix || t.rows != this.rows || t.cols != this.cols) throw IllegalArgumentException("Incompatible")
-        for (i in 0 until size) this[i].minusAssign(t[i])
+    override operator fun minusAssign(tensor: Tensor) {
+        if (tensor !is Matrix || tensor.rows != this.rows || tensor.cols != this.cols) throw IllegalArgumentException("Incompatible")
+        for (i in 0 until size) this[i].minusAssign(tensor[i])
     }
 
-    override operator fun timesAssign(s: Float) {
-        reassign { it * s }
+    override operator fun timesAssign(scalar: Float) {
+        reassign { it * scalar }
     }
 
-    override operator fun divAssign(s: Float) {
-        reassign { it / s }
+    override operator fun divAssign(scalar: Float) {
+        reassign { it / scalar }
     }
 
     override fun transform(function: (Float) -> Float): Matrix =
         Matrix(rows) { i -> this[i].transform(function) }
 
-    override fun reassign(transform: (Float) -> Float) {
-        for (i in 0 until size) this[i].reassign(transform)
+    override fun reassign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i].reassign(function)
     }
 
     override fun copy(): Tensor =

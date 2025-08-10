@@ -27,6 +27,7 @@ value class Vector(val elements: FloatArray) : Tensor {
 
     /**
      * @param index The index of the element to get
+     *
      * @return The element at index [index]
      */
     operator fun get(index: Int): Float =
@@ -36,6 +37,7 @@ value class Vector(val elements: FloatArray) : Tensor {
      * Set the element at index [index] to [value]
      *
      * @param index The index to modify
+     *
      * @param value The value to set the element to
      */
     operator fun set(index: Int, value: Float) {
@@ -43,73 +45,85 @@ value class Vector(val elements: FloatArray) : Tensor {
     }
 
     /**
-     * @param t The tensor to sum with, must be a [Vector] of equal size
-     * @return A new vector `V` where `V[i]` = `this[i] + t[i]`
-     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     * @param tensor The tensor to sum with, must be a [Vector] of equal size
+     *
+     * @return A new vector `V` where `V[i]` = `this[i] + tensor[i]`
+     *
+     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun plus(t: Tensor): Vector {
-        val v = assertVectorOfEqualDimensions(t)
+    override operator fun plus(tensor: Tensor): Vector {
+        val v = assertVectorOfEqualDimensions(tensor)
         return Vector(size) { i -> this[i] + v[i] }
     }
 
     /**
-     * @param t The tensor to subtract, must be a [Vector] of equal size
-     * @return A new vector `V` where `V[i]` = `this[i] - t[i]`
-     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     * @param tensor The tensor to subtract, must be a [Vector] of equal size
+     *
+     * @return A new vector `V` where `V[i]` = `this[i] - tensor[i]`
+     *
+     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun minus(t: Tensor): Vector {
-        val v = assertVectorOfEqualDimensions(t)
+    override operator fun minus(tensor: Tensor): Vector {
+        val v = assertVectorOfEqualDimensions(tensor)
         return Vector(size) { i -> this[i] - v[i] }
     }
 
     /**
-     * @param s Scalar value to multiple by
-     * @return A new vector V where `V[i]` = `this[i] * s`
+     * @param scalar Scalar value to multiple by
+     *
+     * @return A new vector V where `V[i]` = `this[i] * scalar`
      */
-    override operator fun times(s: Float): Vector =
-        transform { it * s }
+    override operator fun times(scalar: Float): Vector =
+        transform { it * scalar }
 
     /**
-     * @param s Scalar value to divide by
-     * @return A new vector V where `V[i]` = `this[i] / s`
+     * @param scalar Scalar value to divide by
+     *
+     * @return A new vector V where `V[i]` = `this[i] / scalar`
      */
-    override operator fun div(s: Float): Vector =
-        transform { it / s }
+    override operator fun div(scalar: Float): Vector =
+        transform { it / scalar }
 
     /**
-     * Add each element in [t] to the corresponding element in this vector, in-place.
-     * @param t The tensor to sum with, must be a [Vector] of equal size
-     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     * Add each element in [tensor] to the corresponding element in this vector, in-place.
+     *
+     * @param tensor The tensor to sum with, must be a [Vector] of equal size
+     *
+     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun plusAssign(t: Tensor) {
-        val v = assertVectorOfEqualDimensions(t)
+    override operator fun plusAssign(tensor: Tensor) {
+        val v = assertVectorOfEqualDimensions(tensor)
         for (i in 0 until size) this[i] += v[i]
     }
 
     /**
-     * Subtract each element in [t] from the corresponding element in this vector, in-place.
-     * @param t The tensor to subtract, must be a [Vector] of equal size
-     * @throws UnsupportedTensorOperation if [t] is not a [Vector] of equal size
+     * Subtract each element in [tensor] from the corresponding element in this vector, in-place.
+     *
+     * @param tensor The tensor to subtract, must be a [Vector] of equal size
+     *
+     * @throws UnsupportedTensorOperation if [tensor] is not a [Vector] of equal size
      */
-    override operator fun minusAssign(t: Tensor) {
-        val v = assertVectorOfEqualDimensions(t)
+    override operator fun minusAssign(tensor: Tensor) {
+        val v = assertVectorOfEqualDimensions(tensor)
         for (i in 0 until size) this[i] -= v[i]
     }
 
     /**
-     * Multiplies all values in this vector by [s], in place.
-     * @param s Scalar value to multiple by
+     * Multiplies all values in this vector by [scalar], in place.
+     *
+     * @param scalar Scalar value to multiple by
      */
-    override operator fun timesAssign(s: Float) {
-        reassign { it * s }
+    override operator fun timesAssign(scalar: Float) {
+        reassign { it * scalar }
     }
 
     /**
-     * Divides all values in this vector by [s], in place.
-     * @param s Scalar value to multiple by
+     * Divides all values in this vector by [scalar], in place.
+     *
+     * @param scalar Scalar value to multiple by
      */
-    override operator fun divAssign(s: Float) {
-        reassign { it / s }
+    override operator fun divAssign(scalar: Float) {
+        reassign { it / scalar }
     }
 
     /**
@@ -120,17 +134,19 @@ value class Vector(val elements: FloatArray) : Tensor {
 
     /**
      * @param [transform] Function to apply
+     *
      * @return A copy of this vector with [transform] applied to each element
      */
     override fun transform(function: (Float) -> Float): Vector =
         Vector(size) { i -> function(this[i]) }
 
     /**
-     * Applies [transform] to all elements in this vector, in place.
-     * @param [transform] Function to apply
+     * Applies [function] to all elements in this vector, in place.
+     *
+     * @param [function] Function to apply
      */
-    override fun reassign(transform: (Float) -> Float) {
-        for (i in 0 until size) this[i] = transform(this[i])
+    override fun reassign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i] = function(this[i])
     }
 
     // TODO: doc
@@ -166,7 +182,9 @@ value class Vector(val elements: FloatArray) : Tensor {
 
 /**
  * @param size The size of the new vector
+ *
  * @param init Initialization callback
+ *
  * @return A new [Vector] of size [size] initialized by [init]
  */
 inline fun Vector(size: Int, crossinline init: (index: Int) -> Float): Vector =
@@ -174,6 +192,7 @@ inline fun Vector(size: Int, crossinline init: (index: Int) -> Float): Vector =
 
 /**
  * @param elements Elements of the new vector
+ *
  * @return A new [Vector] containing the given elements
  */
 fun vector(vararg elements: Float): Vector =

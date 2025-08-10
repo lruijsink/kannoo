@@ -16,9 +16,11 @@ fun randomVector(size: Int): Vector =
 fun randomMatrix(rows: Int, cols: Int): Matrix =
     Matrix(rows = rows, cols = cols) { randomSignedFloat() }
 
+// TODO: doc
 fun Float.clip(minValue: Float, maxValue: Float) =
     max(minValue, min(this, maxValue))
 
+// TODO: doc
 fun <T> Iterable<T>.sumOf(fn: (T) -> Float): Float {
     var acc = 0f
     for (el in this) acc += fn(el)

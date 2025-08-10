@@ -19,49 +19,49 @@ value class CompositeTensor(override val slices: Array<Tensor>) : Tensor {
         slices[index] = tensor
     }
 
-    override operator fun plus(t: Tensor): CompositeTensor {
-        if (t !is CompositeTensor || t.rank != this.rank || t.size != this.size)
+    override operator fun plus(tensor: Tensor): CompositeTensor {
+        if (tensor !is CompositeTensor || tensor.rank != this.rank || tensor.size != this.size)
             throw IllegalArgumentException("Incompatible dimensions")
 
-        return CompositeTensor(size) { i -> this[i] + t[i] }
+        return CompositeTensor(size) { i -> this[i] + tensor[i] }
     }
 
-    override operator fun minus(t: Tensor): CompositeTensor {
-        if (t !is CompositeTensor || t.rank != this.rank || t.size != this.size)
+    override operator fun minus(tensor: Tensor): CompositeTensor {
+        if (tensor !is CompositeTensor || tensor.rank != this.rank || tensor.size != this.size)
             throw IllegalArgumentException("Incompatible dimensions")
 
-        return CompositeTensor(size) { i -> this[i] - t[i] }
+        return CompositeTensor(size) { i -> this[i] - tensor[i] }
     }
 
-    override operator fun times(s: Float): CompositeTensor =
-        CompositeTensor(size) { i -> this[i] * s }
+    override operator fun times(scalar: Float): CompositeTensor =
+        CompositeTensor(size) { i -> this[i] * scalar }
 
-    override operator fun div(s: Float): CompositeTensor =
-        CompositeTensor(size) { i -> this[i] / s }
+    override operator fun div(scalar: Float): CompositeTensor =
+        CompositeTensor(size) { i -> this[i] / scalar }
 
-    override operator fun plusAssign(t: Tensor) {
-        if (t !is Matrix || t.size != this.size) throw IllegalArgumentException("Incompatible")
-        for (i in 0 until size) this[i].plusAssign(t[i])
+    override operator fun plusAssign(tensor: Tensor) {
+        if (tensor !is Matrix || tensor.size != this.size) throw IllegalArgumentException("Incompatible")
+        for (i in 0 until size) this[i].plusAssign(tensor[i])
     }
 
-    override operator fun minusAssign(t: Tensor) {
-        if (t !is Matrix || t.size != this.size) throw IllegalArgumentException("Incompatible")
-        for (i in 0 until size) this[i].minusAssign(t[i])
+    override operator fun minusAssign(tensor: Tensor) {
+        if (tensor !is Matrix || tensor.size != this.size) throw IllegalArgumentException("Incompatible")
+        for (i in 0 until size) this[i].minusAssign(tensor[i])
     }
 
-    override operator fun timesAssign(s: Float) {
-        reassign { it * s }
+    override operator fun timesAssign(scalar: Float) {
+        reassign { it * scalar }
     }
 
-    override operator fun divAssign(s: Float) {
-        reassign { it / s }
+    override operator fun divAssign(scalar: Float) {
+        reassign { it / scalar }
     }
 
     override fun transform(function: (Float) -> Float): CompositeTensor =
         CompositeTensor(size) { i -> this[i].transform(function) }
 
-    override fun reassign(transform: (Float) -> Float) {
-        for (i in 0 until size) this[i].reassign(transform)
+    override fun reassign(function: (Float) -> Float) {
+        for (i in 0 until size) this[i].reassign(function)
     }
 
     override fun copy(): CompositeTensor =
