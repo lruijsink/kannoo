@@ -40,6 +40,42 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
         elements[index] = value
     }
 
+    override fun plus(tensor: Vector): Vector {
+        if (tensor.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        return Vector(size) { i -> this[i] + tensor[i] }
+    }
+
+    override fun minus(tensor: Vector): Vector {
+        if (tensor.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        return Vector(size) { i -> this[i] - tensor[i] }
+    }
+
+    override fun times(scalar: Float): Vector =
+        Vector(size) { i -> this[i] * scalar }
+
+    override fun div(scalar: Float): Vector =
+        Vector(size) { i -> this[i] / scalar }
+
+    override fun plusAssign(tensor: Vector) {
+        if (tensor.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        for (i in 0 until size)
+            this[i] += tensor[i]
+    }
+
+    override fun minusAssign(tensor: Vector) {
+        if (tensor.size != this.size)
+            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+
+        for (i in 0 until size)
+            this[i] -= tensor[i]
+    }
+
     /**
      * @return A deep copy of this vector
      */

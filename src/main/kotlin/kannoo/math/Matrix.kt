@@ -19,6 +19,21 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
 
     val rowVectors get() = slices
 
+    override fun times(scalar: Float): Matrix =
+        Matrix(rows, cols) { i, j -> this[i][j] * scalar }
+
+    override fun plusAssign(tensor: Matrix) {
+        for (i in 0 until rows)
+            for (j in 0 until cols)
+                this[i][j] += tensor[i][j]
+    }
+
+    override fun minusAssign(tensor: Matrix) {
+        for (i in 0 until rows)
+            for (j in 0 until cols)
+                this[i][j] -= tensor[i][j]
+    }
+
     override fun map(function: (Float) -> Float): Matrix =
         Matrix(rows) { i -> this[i].map(function) }
 
