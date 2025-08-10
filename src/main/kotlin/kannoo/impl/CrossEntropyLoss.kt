@@ -3,7 +3,6 @@ package kannoo.impl
 import kannoo.core.CostFunction
 import kannoo.math.Vector
 import kannoo.math.clip
-import kannoo.math.zipSumOf
 import kotlin.math.ln
 
 /**
