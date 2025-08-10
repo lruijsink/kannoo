@@ -1,7 +1,6 @@
 package kannoo.math
 
-@JvmInline
-value class NTensor<S : Tensor<S>>(override val slices: Array<S>) : Composite<NTensor<S>, S> {
+class NTensor<S : Tensor<S>>(override val slices: Array<S>) : Composite<NTensor<S>, S> {
 
     override fun map(function: (Float) -> Float): NTensor<S> =
         transformIndexed { i -> this[i].map(function) }

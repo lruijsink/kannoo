@@ -14,7 +14,7 @@ fun randomVector(size: Int): Vector =
 
 // TODO: doc
 fun randomMatrix(rows: Int, cols: Int): Matrix =
-    Matrix(rows = rows, cols = cols) { randomSignedFloat() }
+    Matrix(rows = rows, cols = cols) { _, _ -> randomSignedFloat() }
 
 // TODO: doc
 fun Float.clip(minValue: Float, maxValue: Float) =

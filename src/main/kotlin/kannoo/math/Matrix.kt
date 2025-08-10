@@ -4,8 +4,7 @@ package kannoo.math
  * 2-dimensional [Tensor] composed of of [Vector] slices. By convention, the slices are stored row-first, meaning the
  * matrix element `M[i][j]` refers to the element in row `i` and column `j`.
  */
-@JvmInline
-value class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
+class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
 
     /**
      * Matrices are tensors of rank 2.
@@ -60,9 +59,6 @@ value class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vecto
 
 inline fun Matrix(rows: Int, crossinline init: (row: Int) -> Vector): Matrix =
     Matrix(Array(rows) { row -> init(row) })
-
-inline fun Matrix(rows: Int, cols: Int, crossinline init: () -> Float): Matrix =
-    Matrix(Array(rows) { Vector(cols) { init() } })
 
 inline fun Matrix(rows: Int, cols: Int, crossinline init: (row: Int, col: Int) -> Float): Matrix =
     Matrix(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })

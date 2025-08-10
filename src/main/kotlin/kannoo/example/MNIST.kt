@@ -19,6 +19,8 @@ import kannoo.math.Vector
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.math.round
+import kotlin.math.roundToInt
+import kotlin.system.measureTimeMillis
 
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
@@ -126,7 +128,14 @@ fun MNIST() {
         trainingSet.shuffled().chunked(subsetSize).forEachIndexed { i, subSet ->
 
             println("Training round $n, subset ${i + 1} / ${trainingSet.size / subsetSize}")
-            sgd.apply(subSet)
+            val elapsed = measureTimeMillis {
+                sgd.apply(subSet)
+            }
+            println(
+                "Took ${rnd(elapsed.toFloat() / 1000)} seconds " +
+                        "(${(subSet.size.toFloat() * 1000 / elapsed).roundToInt()} samples per second"
+            )
+
             writeModelToFile(model, MNIST_MODEL_FILE)
             model.layers.forEachIndexed { i, layer ->
                 FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])

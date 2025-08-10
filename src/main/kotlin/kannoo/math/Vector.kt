@@ -4,8 +4,7 @@ package kannoo.math
  * 1-dimensional [Tensor] of elements (scalars). This is the lowest supported rank of [Tensor] and so [slices] is
  * inaccessible.
  */
-@JvmInline
-value class Vector(val elements: FloatArray) : Tensor<Vector> {
+class Vector(val elements: FloatArray) : Tensor<Vector> {
 
     /**
      * Tensor rank, always equal to `1` for vectors.

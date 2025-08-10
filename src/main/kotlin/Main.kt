@@ -1,5 +1,5 @@
-import kannoo.example.backPropPerformanceTest
+import kannoo.example.MNIST
 
 fun main() {
-    backPropPerformanceTest()
+    MNIST()
 }
