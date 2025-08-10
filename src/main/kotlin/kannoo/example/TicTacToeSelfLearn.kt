@@ -80,39 +80,44 @@ fun meanCostAgainstPerfect(model: Model, perfectPlays: List<Pair<Vector, Vector>
     return totalCost / cache.size
 }
 
+fun playGame(model: Model): List<Board> {
+    var board = emptyBoard
+    var play = Square.X
+    val moves = mutableListOf<Board>()
+    while (board.eval() == null) {
+        board = ponder(board, play) { next, eval ->
+            model.compute(inputOf(next)).scoreOf(eval)
+        }
+        play = play.opponent
+        moves += board
+    }
+    return moves
+}
+
 fun ticTacToeSelfLearn() {
     solve(emptyBoard, Square.X)
     val perfectPlays = cache.map { (board, eval) -> Pair(eval.toTarget(), inputOf(board)) }
 
     val model = Model(
         InputLayer(2 * 9 + 2),
-        DenseLayer(3 * 3 * 50, Logistic),
+        DenseLayer(3 * 3 * 20, Logistic),
         DenseLayer(3, Softmax)
     )
-    val sgd = MiniBatchSGD(model, CrossEntropyLoss, 1, 0.1f)
+    val sgd = MiniBatchSGD(model, CrossEntropyLoss, 10, 0.1f)
 
     repeat(100) { i ->
         println("Round ${i + 1}:")
 
-        repeat(1000) { j ->
-            var board = emptyBoard
-            var play = Square.X
-            val moves = mutableListOf<Board>()
-            while (board.eval() == null) {
-                board = ponder(board, play) { next, eval ->
-                    model.compute(inputOf(next)).scoreOf(eval)
-                }
-                play = play.opponent
-                moves += board
+        repeat(100) { j ->
+            val trainingData = List(100) {
+                val moves = playGame(model)
+                trainingDataOf(moves, moves.last().eval()!!)
             }
-
-            sgd.apply(trainingDataOf(moves, board.eval()!!))
-
-            if (j == 0) {
-                printBoards(moves)
-                println("Mean cost w.r.t. perfect: ${meanCostAgainstPerfect(model, perfectPlays)}")
-                println()
-            }
+            sgd.apply(trainingData.flatten())
         }
+
+        printBoards(playGame(model))
+        println("Mean cost w.r.t. perfect: ${meanCostAgainstPerfect(model, perfectPlays)}")
+        println()
     }
 }
