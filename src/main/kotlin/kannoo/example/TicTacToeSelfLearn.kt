@@ -5,13 +5,15 @@ import kannoo.core.Model
 import kannoo.core.Sample
 import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.DenseLayer
-import kannoo.impl.Logistic
+import kannoo.impl.MTMiniBatchSGD
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
+import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.math.Vector
 import kannoo.math.sumOf
 import kannoo.math.vector
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.random.Random
 
 fun <T> chooseDistributed(choices: List<T>, weight: (T) -> Float): T {
@@ -100,20 +102,35 @@ fun ticTacToeSelfLearn() {
 
     val model = Model(
         InputLayer(2 * 9 + 2),
-        DenseLayer(3 * 3 * 20, Logistic),
+        DenseLayer(3 * 3 * 20, ReLU),
+        DenseLayer(3 * 3 * 10, ReLU),
+        DenseLayer(3 * 3 * 5, ReLU),
+        DenseLayer(3 * 3 * 2, ReLU),
         DenseLayer(3, Softmax)
     )
-    val sgd = MiniBatchSGD(model, CrossEntropyLoss, 10, 0.1f)
+    val sgd = MTMiniBatchSGD(model, CrossEntropyLoss, 0.1f, 100, 10)
 
     repeat(100) { i ->
         println("Round ${i + 1}:")
 
         repeat(100) { j ->
-            val trainingData = List(100) {
-                val moves = playGame(model)
-                trainingDataOf(moves, moves.last().eval()!!)
+            val trainingData = mutableListOf<Sample>()
+            val tdl = ReentrantLock()
+            val threads = List(20) {
+                Thread {
+                    val g = List(50) {
+                        val moves = playGame(model)
+                        trainingDataOf(moves, moves.last().eval()!!)
+                    }.flatten()
+                    tdl.withLock {
+                        trainingData += g
+                    }
+                }
             }
-            sgd.apply(trainingData.flatten())
+            threads.forEach { it.start() }
+            threads.forEach { it.join() }
+
+            sgd.apply(trainingData)
         }
 
         printBoards(playGame(model))

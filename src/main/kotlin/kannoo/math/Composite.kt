@@ -1,27 +1,31 @@
 package kannoo.math
 
+/**
+ * Tensor composed of [slices] with [rank] N - 1. There are two types of composite tensor: [Matrix] and [NTensor]. The
+ * only non-[Composite] tensor type is [Vector], and those together make up all possible [Tensor] types.
+ *
+ * @param T Composite tensor type
+ *
+ * @param S Slice tensor type
+ */
 sealed interface Composite<T : Tensor<T>, S : Tensor<S>> : Tensor<T> {
 
     /**
-     * The slices that this tensor is composed of, which are themselves tensors of rank [rank]` - 1`
-     *
-     * NOTE: This is an [Array] for memory efficiency reasons and therefore writeable.
+     * Slices that make up this tensor, themselves tensors of rank [rank]` - 1`
      */
     val slices: Array<S>
 
-    override val rank: Int
-        get() = slices[0].rank + 1
+    /**
+     * @param index Slice index to get
+     *
+     * @return Slice at index [index]
+     */
+    operator fun get(index: Int): S
 
-    override val size: Int
-        get() = slices.size
-
-    override val shape: List<Int>
-        get() = listOf(size) + slices[0].shape
-
-    operator fun get(index: Int): S =
-        slices[index]
-
-    operator fun set(index: Int, slice: S) {
-        slices[index] = slice
-    }
+    /**
+     * @param index Slice index to set
+     *
+     * @param slice New slice value
+     */
+    operator fun set(index: Int, slice: S)
 }

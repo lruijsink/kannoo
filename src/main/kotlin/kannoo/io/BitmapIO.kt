@@ -33,7 +33,7 @@ fun BufferedImage.drawMatrix(m: Matrix, offsetX: Int = 0, offsetY: Int = 0) {
     fun Float.colorize(): Color =
         if (this < 0) negative * (this / wMin) else positive * (this / wMax)
 
-    m.forEachIndexed { row, col -> setRGB(col + offsetX, row + offsetY, m[row][col].colorize().rgb) }
+    m.forEachIndexed { row, col -> setRGB(col + offsetX, row + offsetY, m[row, col].colorize().rgb) }
 }
 
 fun OutputStream.writeMatricesAsRGB(matrices: List<Matrix>, padding: Int = 0) {

@@ -9,10 +9,10 @@ import kannoo.example.Eval.XWin
 import kannoo.example.Square.Empty
 import kannoo.example.Square.O
 import kannoo.example.Square.X
+import kannoo.impl.BatchSGD
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.Vector
 import kannoo.math.sumOf
@@ -191,7 +191,7 @@ fun ticTacToeExample() {
         DenseLayer(3 * 3 * 20, ReLU),
         DenseLayer(3 * 3, Logistic),
     )
-    val sgd = MiniBatchSGD(model, cost, 25, 0.1f)
+    val sgd = BatchSGD(model = model, cost = cost, learningRate = 0.1f, batchSize = 25)
 
     (1..100).forEach { n ->
         println()

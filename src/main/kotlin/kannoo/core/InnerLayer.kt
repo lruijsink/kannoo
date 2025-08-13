@@ -1,5 +1,6 @@
 package kannoo.core
 
+import kannoo.math.Matrix
 import kannoo.math.Vector
 
 abstract class InnerLayer(
@@ -8,12 +9,11 @@ abstract class InnerLayer(
 ) {
     abstract fun initialize(previousLayerSize: Int)
 
-    abstract fun backPropagate(forwardPass: ForwardPass, deltaPreActivation: Vector): BackPropagation
+    abstract fun forward(x: Vector): Vector
 
-    protected abstract fun computePreActivation(input: Vector): Vector
+    abstract fun forward(x: Vector, update: (z: Vector, a: Vector) -> Unit)
 
-    fun forwardPass(input: Vector): ForwardPass {
-        val preActivation = computePreActivation(input)
-        return ForwardPass(input, preActivation, activationFunction.compute(preActivation))
-    }
+    abstract fun back(dz: Vector, x: Vector, update: (dW: Matrix, db: Vector) -> Unit): Vector
+
+    abstract fun backLast(dz: Vector, x: Vector, update: (dW: Matrix, db: Vector) -> Unit)
 }

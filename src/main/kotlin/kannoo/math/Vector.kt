@@ -1,8 +1,10 @@
 package kannoo.math
 
 /**
- * 1-dimensional [Tensor] of elements (scalars). This is the lowest supported rank of [Tensor] and so [slices] is
- * inaccessible.
+ * 1-dimensional [Tensor] of elements (scalars). This is the lowest supported rank of [Tensor].
+ *
+ * @param elements Element array to initialize the vector with. This array is part of the public API of this class and
+ * may be written to.
  */
 class Vector(val elements: FloatArray) : Tensor<Vector> {
 
@@ -20,6 +22,12 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
      * Tensor shape, for vectors this is just a single dimension: its [size].
      */
     override val shape: List<Int> get() = listOf(size)
+
+    /**
+     * @return A deep copy of this vector
+     */
+    override fun copy(): Vector =
+        Vector(elements.copyOf())
 
     /**
      * @param index The index of the element to get
@@ -40,47 +48,99 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
         elements[index] = value
     }
 
-    override fun plus(tensor: Vector): Vector {
-        if (tensor.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+    /**
+     * @param other Vector to sum with
+     *
+     * @return New vector `V` where `V[i]` = `this[i] + other[i]`
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
+     */
+    override fun plus(other: Vector): Vector {
+        if (other.size != this.size)
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
 
-        return Vector(size) { i -> this[i] + tensor[i] }
-    }
-
-    override fun minus(tensor: Vector): Vector {
-        if (tensor.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
-
-        return Vector(size) { i -> this[i] - tensor[i] }
-    }
-
-    override fun times(scalar: Float): Vector =
-        Vector(size) { i -> this[i] * scalar }
-
-    override fun div(scalar: Float): Vector =
-        Vector(size) { i -> this[i] / scalar }
-
-    override fun plusAssign(tensor: Vector) {
-        if (tensor.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
-
-        for (i in 0 until size)
-            this[i] += tensor[i]
-    }
-
-    override fun minusAssign(tensor: Vector) {
-        if (tensor.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
-
-        for (i in 0 until size)
-            this[i] -= tensor[i]
+        return Vector(size) { i -> this[i] + other[i] }
     }
 
     /**
-     * @return A deep copy of this vector
+     * @param other Vector to subtract
+     *
+     * @return New vector `V` where `V[i]` = `this[i] - other[i]`
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
      */
-    override fun copy(): Vector =
-        Vector(elements.copyOf())
+    override fun minus(other: Vector): Vector {
+        if (other.size != this.size)
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
+
+        return Vector(size) { i -> this[i] - other[i] }
+    }
+
+    /**
+     * @param scalar Scalar value to multiply by
+     *
+     * @return New vector `V` where `V[i]` = `this[i] * scalar`
+     */
+    override fun times(scalar: Float): Vector =
+        Vector(size) { i -> this[i] * scalar }
+
+    /**
+     * @param scalar Scalar value to divide by
+     *
+     * @return New vector `V` where `V[i]` = `this[i] / scalar`
+     */
+    override fun div(scalar: Float): Vector =
+        Vector(size) { i -> this[i] / scalar }
+
+    /**
+     * Add each element in [other] to the corresponding element in this vector, in-place.
+     *
+     * @param other Vector to sum with
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
+     */
+    override fun plusAssign(other: Vector) {
+        if (other.size != this.size)
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
+
+        for (i in 0 until size)
+            this[i] += other[i]
+    }
+
+    /**
+     * Subtract each element in [other] from the corresponding element in this vector, in-place.
+     *
+     * @param other Vector to subtract
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
+     */
+    override fun minusAssign(other: Vector) {
+        if (other.size != this.size)
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
+
+        for (i in 0 until size)
+            this[i] -= other[i]
+    }
+
+    /**
+     * Multiplies all values in this vector by [scalar], in-place.
+     *
+     * @param scalar Scalar value to multiple by
+     */
+    override fun timesAssign(scalar: Float) {
+        for (i in 0 until size)
+            this[i] *= scalar
+    }
+
+    /**
+     * Divides all values in this vector by [scalar], in-place.
+     *
+     * @param scalar Scalar value to divide by
+     */
+    override fun divAssign(scalar: Float) {
+        for (i in 0 until size)
+            this[i] /= scalar
+    }
 
     /**
      * @param [function] Function to apply
@@ -100,86 +160,171 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
             this[i] = function(this[i])
     }
 
-    // TODO: doc
-    // TODO: generalize to tensor
-    operator fun times(m: Matrix): Vector {
-        if (size != m.rows)
-            throw IllegalArgumentException("Vector size must equal matrix row count")
-
-        val res = Vector(m.cols) { 0f }
-        for (i in 0 until m.rows)
-            for (j in 0 until m.cols)
-                res[j] += m[i][j] * this[i]
-
-        return res
-    }
-
-    // TODO: doc
-    fun sum(): Float =
-        elements.sum()
-
-    // TODO: doc
-    fun min(): Float =
-        elements.min()
-
-    // TODO: doc
-    fun max(): Float =
-        elements.max()
-
-    // TODO: doc
+    /**
+     * Zips this vector with another and applies the combining operation over each (element, element) pair in both
+     * vectors.
+     *
+     * @param other Vector to zip with
+     *
+     * @param combine Operation to apply to each zipped (element, element) pair
+     *
+     * @return New vector `V` where for each element `i`:
+     *
+     * `V[i]` = `combine(this[i], other[i])`
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
+     */
     override fun zip(other: Vector, combine: (left: Float, right: Float) -> Float): Vector {
         if (other.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
 
         return Vector(size) { i ->
             combine(this[i], other[i])
         }
     }
 
-    // TODO: doc
+    /**
+     * Zips this vector with another and applies the combining operation over each (element, element) pair in-place,
+     * such that for each element `i`:
+     *
+     * `this[i]` = `combine(this[i], other[i])`
+     *
+     * @param other Vector to zip with
+     *
+     * @param combine Operation to apply to each zipped (element, element) pair
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
+     */
     override fun zipAssign(other: Vector, combine: (left: Float, right: Float) -> Float) {
         if (other.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
 
         for (i in 0 until size)
             this[i] = combine(this[i], other[i])
     }
 
-    // TODO: doc
-    inline fun zipSumOf(other: Vector, crossinline function: (Float, Float) -> Float): Float {
+    /**
+     * Calls [operation] with each element in the vector, in order.
+     *
+     * @param operation Function to call
+     */
+    override fun forEachElement(operation: (element: Float) -> Unit) {
+        elements.forEach(operation)
+    }
+
+    /**
+     * Calls [operation] with each element in the vector, and its respective index, in order.
+     *
+     * @param operation Function to call
+     */
+    inline fun forEachIndexed(crossinline operation: (index: Int, element: Float) -> Unit) {
+        elements.forEachIndexed(operation)
+    }
+
+    /**
+     * Computes the sum of applying [combine] to every (element, element) pair from this vector and [other].
+     *
+     * Equivalent to [zip]`(other, function).sum()` but without allocating the intermediate vector that [zip] would.
+     *
+     * @param other Vector to zip with
+     *
+     * @param combine Operation to apply to each zipped (element, element) pair
+     *
+     * @return sum over `compute(this[i], other[i])` for all `i`
+     *
+     * @throws IncompatibleShapeException if the vectors do not have the same [size]
+     */
+    inline fun zipSumOf(other: Vector, crossinline combine: (Float, Float) -> Float): Float {
         if (other.size != this.size)
-            throw UnsupportedTensorOperation("Cannot combine vectors of different sizes")
+            throw IncompatibleShapeException("Cannot combine vectors of different sizes")
 
         var accumulator = 0f
         for (i in 0 until size)
-            accumulator += function(this[i], other[i])
+            accumulator += combine(this[i], other[i])
 
         return accumulator
     }
+
+    // TODO: generalize this to any Tensor * Tensor
+    /**
+     * Computes the vector-matrix multiplication of this vector and [matrix]. Note that this is equivalent to
+     * [matrix]`.transpose() * this`
+     *
+     * @param matrix The matrix to multiply with
+     *
+     * @return New vector `V` where for each element (i = row, j = column) in [matrix]:
+     *
+     * `V[j]` = `this[i] * matrix[i, j]`
+     *
+     * @throws IncompatibleShapeException if the matrix does not have row count [size]
+     */
+    operator fun times(matrix: Matrix): Vector {
+        if (size != matrix.rows)
+            throw IncompatibleShapeException("Vector size must equal matrix row count")
+
+        val res = Vector(matrix.cols)
+        for (i in 0 until matrix.rows)
+            for (j in 0 until matrix.cols)
+                res[j] += matrix[i, j] * this[i]
+
+        return res
+    }
+
+    /**
+     * Computes the outer product of this vector and [other].
+     *
+     * @param other Vector to take the cross-product of
+     *
+     * @return Matrix `M` of `this.`[size] rows and `other.size` columns, defined as:
+     *
+     * `M[i, j] = this[i] * other[j]`
+     */
+    infix fun outer(other: Vector): Matrix =
+        Matrix(rows = this.size, cols = other.size) { i, j -> this[i] * other[j] }
 }
 
 /**
- * @param size The size of the new vector
+ * @param size Size of the new vector
  *
  * @param init Initialization callback
  *
- * @return A new [Vector] of size [size] initialized by [init]
+ * @return New Vector V defined as:
+ *
+ * `V[i] = `[init]`(i)`
  */
 inline fun Vector(size: Int, crossinline init: (index: Int) -> Float): Vector =
     Vector(FloatArray(size) { i -> init(i) })
 
 /**
+ * @param size Size of the new vector
+ *
+ * @return New Vector V of size [size] with all elements set to `0.0f`
+ */
+fun Vector(size: Int): Vector =
+    Vector(FloatArray(size))
+
+/**
  * @param elements Elements of the new vector
  *
- * @return A new [Vector] containing the given elements
+ * @return New [Vector] containing all [elements] in the given order
  */
 fun vector(vararg elements: Float): Vector =
     Vector(elements)
 
-// TODO: doc
+/**
+ * [Vector] overload of [tensor]`(...)`
+ *
+ * @param elements Elements of the new vector (tensor)
+ *
+ * @return New [Vector] containing all [elements] in the given order
+ */
 fun tensor(vararg elements: Float): Vector =
     Vector(elements)
 
-// TODO: doc
-fun outer(a: Vector, b: Vector): Matrix =
-    Matrix(rows = a.size, cols = b.size) { i, j -> a[i] * b[j] }
+/**
+ * @return Empty vector
+ *
+ * WARNING: Some operations do not support empty vectors
+ */
+fun emptyVector(): Vector =
+    Vector(floatArrayOf())

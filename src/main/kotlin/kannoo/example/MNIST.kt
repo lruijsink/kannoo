@@ -4,11 +4,11 @@ import kannoo.core.CostFunction
 import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.impl.BatchSGD
 import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
 import kannoo.impl.Softmax
 import kannoo.io.readModelFromFile
 import kannoo.io.writeLayerAsRGB
@@ -22,6 +22,7 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
+const val showFullError = false
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
 fun rnd(d: Float): String {
@@ -30,7 +31,7 @@ fun rnd(d: Float): String {
 }
 
 fun targetOf(digit: String): Vector {
-    val v = Vector(10) { 0f }
+    val v = Vector(10)
     v[digit.toInt()] = 1f
     return v
 }
@@ -103,7 +104,7 @@ fun MNIST() {
     }
 
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model, cost, 64, 0.1f * (1 + n))
+        val sgd = BatchSGD(model = model, cost = cost, batchSize = 10, learningRate = 0.1f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")
@@ -120,10 +121,13 @@ fun MNIST() {
         println("=====================================")
         println("               ROUND $n")
         println()
-        println("Calculating error over full test set:")
-        println()
-        showTestSetError(fullTestSet, model, cost)
-        println()
+
+        if (showFullError) {
+            println("Calculating error over full test set:")
+            println()
+            showTestSetError(fullTestSet, model, cost)
+            println()
+        }
 
         trainingSet.shuffled().chunked(subsetSize).forEachIndexed { i, subSet ->
 
@@ -133,7 +137,7 @@ fun MNIST() {
             }
             println(
                 "Took ${rnd(elapsed.toFloat() / 1000)} seconds " +
-                        "(${(subSet.size.toFloat() * 1000 / elapsed).roundToInt()} samples per second"
+                        "(${(subSet.size.toFloat() * 1000 / elapsed).roundToInt()} samples per second)"
             )
 
             writeModelToFile(model, MNIST_MODEL_FILE)

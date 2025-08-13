@@ -3,10 +3,10 @@ package kannoo.example
 import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.impl.BatchSGD
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
 import kannoo.math.sumOf
 import kannoo.math.vector
 import kotlin.math.round
@@ -18,7 +18,7 @@ fun booleanFunctionsExample() {
         DenseLayer(4, Logistic),
         DenseLayer(1, Logistic),
     )
-    val sgd = MiniBatchSGD(model, MeanSquaredError, 4, 0.3f)
+    val sgd = BatchSGD(model, MeanSquaredError, 0.3f, 4)
 
     val trainingData = listOf(
         // 0, 0 = and
