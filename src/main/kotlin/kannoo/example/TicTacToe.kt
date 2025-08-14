@@ -9,10 +9,10 @@ import kannoo.example.Eval.XWin
 import kannoo.example.Square.Empty
 import kannoo.example.Square.O
 import kannoo.example.Square.X
+import kannoo.impl.BatchSGD
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.Vector
 import kannoo.math.sumOf
@@ -159,27 +159,27 @@ fun Vector.toMoves(): List<Pair<Int, Int>> =
         if (this[8] > 0.5) Pair(2, 2) else null,
     )
 
+fun printBoards(boards: List<Board>) {
+    for (i in 0 until 3) {
+        boards.forEach { board -> print(board[i].joinToString(" ") { if (it == Empty) "." else it.name } + "   ") }
+        print("\n")
+    }
+}
+
+fun printMoves(moveLists: List<List<Pair<Int, Int>>>) {
+    for (i in 0 until 3) {
+        for (b in 0 until moveLists.size) {
+            for (j in 0 until 3) {
+                print(if (Pair(i, j) in moveLists[b]) "# " else ". ")
+            }
+            print("  ")
+        }
+        print("\n")
+    }
+}
+
 fun ticTacToeExample() {
     solve(emptyBoard, startingPlayer)
-
-    fun draw(boards: List<Board>) {
-        for (i in 0 until 3) {
-            boards.forEach { board -> print(board[i].joinToString(" ") { if (it == Empty) "." else it.name } + "   ") }
-            print("\n")
-        }
-    }
-
-    fun draw(moveLists: List<List<Pair<Int, Int>>>) {
-        for (i in 0 until 3) {
-            for (b in 0 until moveLists.size) {
-                for (j in 0 until 3) {
-                    print(if (Pair(i, j) in moveLists[b]) "# " else ". ")
-                }
-                print("  ")
-            }
-            print("\n")
-        }
-    }
 
     val trainingData: List<Sample> = bestMoves.map { (board, bestMoves) ->
         Sample(input = board.toInput(), target = bestMoves.toTarget())
@@ -191,7 +191,7 @@ fun ticTacToeExample() {
         DenseLayer(3 * 3 * 20, ReLU),
         DenseLayer(3 * 3, Logistic),
     )
-    val sgd = MiniBatchSGD(model, cost, 25, 0.1f)
+    val sgd = BatchSGD(model = model, cost = cost, learningRate = 0.1f, batchSize = 25)
 
     (1..100).forEach { n ->
         println()
@@ -202,16 +202,16 @@ fun ticTacToeExample() {
 
         println("Sparse examples:")
         val sparse = bestMoves.keys.filter { it.emptySquares > 4 }.shuffled().take(20)
-        draw(sparse)
+        printBoards(sparse)
         println()
-        draw(sparse.map { model.compute(it.toInput()).toMoves() })
+        printMoves(sparse.map { model.compute(it.toInput()).toMoves() })
         println()
 
         println("Dense examples:")
         val dense = bestMoves.keys.filter { it.emptySquares <= 4 }.shuffled().take(20)
-        draw(dense)
+        printBoards(dense)
         println()
-        draw(dense.map { model.compute(it.toInput()).toMoves() })
+        printMoves(dense.map { model.compute(it.toInput()).toMoves() })
         println()
 
         val costSum = trainingData.sumOf { (input, target) ->

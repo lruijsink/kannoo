@@ -15,5 +15,5 @@ class Model(
     }
 
     fun compute(input: Vector): Vector =
-        layers.fold(input) { v, layer -> layer.forwardPass(v).output }
+        layers.fold(input) { v, layer -> layer.forward(v) }
 }

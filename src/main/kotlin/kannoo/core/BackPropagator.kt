@@ -1,46 +1,38 @@
 package kannoo.core
 
-import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.Softmax
-import kannoo.math.hadamard
+import kannoo.math.Matrix
+import kannoo.math.Vector
 
 class BackPropagator(
-    private val model: Model,
-    private val cost: CostFunction,
+    val model: Model,
+    val cost: CostFunction,
 ) {
-    init {
-        if (model.layers.dropLast(1).any { it.activationFunction is Softmax })
-            throw IllegalStateException("Softmax is only supported in the output layer")
+    val z = model.layers.map { Vector(it.size) }.toMutableList()
+    val a = model.layers.map { Vector(it.size) }.toMutableList()
 
-        if ((model.layers.last().activationFunction is Softmax) xor (cost is CrossEntropyLoss))
-            throw IllegalArgumentException("Cross-entropy loss requires Softmax and vice-versa")
-    }
-
-    fun backPropagate(sample: Sample): List<ParameterDeltas> {
-        val parameterDeltas = mutableListOf<ParameterDeltas>()
-        val forward = forwardPass(sample)
-        var deltaOutput = cost.derivative(target = sample.target, actual = forward.last().output)
-
-        for (i in model.layers.size - 1 downTo 0) {
-            val deltaPreActivation =
-                if (model.layers[i].activationFunction == Softmax) deltaOutput // Combined into one operation
-                else hadamard(deltaOutput, model.layers[i].activationFunction.derivative(forward[i].preActivation))
-
-            val backPropagation = model.layers[i].backPropagate(forward[i], deltaPreActivation)
-            parameterDeltas += backPropagation.parameterDeltas
-            deltaOutput = backPropagation.deltaInput
+    inline fun calculatePartials(sample: Sample, crossinline update: (i: Int, dW: Matrix, db: Vector) -> Unit) {
+        // Forward pass:
+        var o = sample.input
+        model.layers.forEachIndexed { i, layer ->
+            layer.forward(o) { z, a ->
+                this.z[i] = z
+                this.a[i] = a
+                o = this.a[i]
+            }
         }
-        return parameterDeltas
-    }
 
-    private fun forwardPass(example: Sample): List<ForwardPass> {
-        var input = example.input
-        val results = mutableListOf<ForwardPass>()
-        for (layer in model.layers) {
-            val result = layer.forwardPass(input)
-            results += result
-            input = result.output
+        // Backward pass:
+        var da = cost.derivative(sample.target, a[model.layers.size - 1])
+        for (i in (model.layers.size - 1) downTo 0) {
+            val dz =
+                if (model.layers[i].activationFunction == Softmax) da // Combined into one operation
+                else da.hadamard(model.layers[i].activationFunction.derivative(z[i]))
+
+            if (i > 0)
+                da = model.layers[i].back(dz = dz, x = a[i - 1]) { dW, db -> update(i, dW, db) }
+            else
+                model.layers[i].backLast(dz = dz, x = sample.input) { dW, db -> update(i, dW, db) }
         }
-        return results
     }
 }

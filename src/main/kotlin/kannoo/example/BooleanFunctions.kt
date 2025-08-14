@@ -3,12 +3,12 @@ package kannoo.example
 import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.impl.BatchSGD
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
 import kannoo.math.sumOf
-import kannoo.math.vectorOf
+import kannoo.math.vector
 import kotlin.math.round
 
 fun booleanFunctionsExample() {
@@ -18,32 +18,32 @@ fun booleanFunctionsExample() {
         DenseLayer(4, Logistic),
         DenseLayer(1, Logistic),
     )
-    val sgd = MiniBatchSGD(model, MeanSquaredError, 4, 0.3f)
+    val sgd = BatchSGD(model, MeanSquaredError, 0.3f, 4)
 
     val trainingData = listOf(
         // 0, 0 = and
-        Sample(input = vectorOf(0f, 0f, 0f, 0f), target = vectorOf(0f)),
-        Sample(input = vectorOf(0f, 0f, 1f, 0f), target = vectorOf(0f)),
-        Sample(input = vectorOf(0f, 0f, 0f, 1f), target = vectorOf(0f)),
-        Sample(input = vectorOf(0f, 0f, 1f, 1f), target = vectorOf(1f)),
+        Sample(input = vector(0f, 0f, 0f, 0f), target = vector(0f)),
+        Sample(input = vector(0f, 0f, 1f, 0f), target = vector(0f)),
+        Sample(input = vector(0f, 0f, 0f, 1f), target = vector(0f)),
+        Sample(input = vector(0f, 0f, 1f, 1f), target = vector(1f)),
 
         // 0, 1 = or
-        Sample(input = vectorOf(0f, 1f, 0f, 0f), target = vectorOf(0f)),
-        Sample(input = vectorOf(0f, 1f, 1f, 0f), target = vectorOf(1f)),
-        Sample(input = vectorOf(0f, 1f, 0f, 1f), target = vectorOf(1f)),
-        Sample(input = vectorOf(0f, 1f, 1f, 1f), target = vectorOf(1f)),
+        Sample(input = vector(0f, 1f, 0f, 0f), target = vector(0f)),
+        Sample(input = vector(0f, 1f, 1f, 0f), target = vector(1f)),
+        Sample(input = vector(0f, 1f, 0f, 1f), target = vector(1f)),
+        Sample(input = vector(0f, 1f, 1f, 1f), target = vector(1f)),
 
         // 1, 0 = xor
-        Sample(input = vectorOf(1f, 0f, 0f, 0f), target = vectorOf(0f)),
-        Sample(input = vectorOf(1f, 0f, 1f, 0f), target = vectorOf(1f)),
-        Sample(input = vectorOf(1f, 0f, 0f, 1f), target = vectorOf(1f)),
-        Sample(input = vectorOf(1f, 0f, 1f, 1f), target = vectorOf(0f)),
+        Sample(input = vector(1f, 0f, 0f, 0f), target = vector(0f)),
+        Sample(input = vector(1f, 0f, 1f, 0f), target = vector(1f)),
+        Sample(input = vector(1f, 0f, 0f, 1f), target = vector(1f)),
+        Sample(input = vector(1f, 0f, 1f, 1f), target = vector(0f)),
 
         // 1, 1 = eq
-        Sample(input = vectorOf(1f, 1f, 0f, 0f), target = vectorOf(1f)),
-        Sample(input = vectorOf(1f, 1f, 1f, 0f), target = vectorOf(0f)),
-        Sample(input = vectorOf(1f, 1f, 0f, 1f), target = vectorOf(0f)),
-        Sample(input = vectorOf(1f, 1f, 1f, 1f), target = vectorOf(1f)),
+        Sample(input = vector(1f, 1f, 0f, 0f), target = vector(1f)),
+        Sample(input = vector(1f, 1f, 1f, 0f), target = vector(0f)),
+        Sample(input = vector(1f, 1f, 0f, 1f), target = vector(0f)),
+        Sample(input = vector(1f, 1f, 1f, 1f), target = vector(1f)),
     )
 
     fun rnd(d: Float): String {
@@ -61,7 +61,7 @@ fun booleanFunctionsExample() {
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->
-                        t.scalars.map { it.toInt() }.joinToString("") to rnd(model.compute(t)[0])
+                        t.elements.map { it.toInt() }.joinToString("") to rnd(model.compute(t)[0])
                     }
         )
         n++
@@ -71,8 +71,8 @@ fun booleanFunctionsExample() {
 
     model.layers.forEachIndexed { i, layer ->
         val l = layer as DenseLayer
-        println("   Bias $i: " + l.bias.scalars.map(::rnd))
-        println("Weights $i: " + l.weights.rowVectors.map { it.scalars.map(::rnd) })
+        println("   Bias $i: " + l.bias.elements.map(::rnd))
+        println("Weights $i: " + l.weights.rowVectors.map { it.elements.map(::rnd) })
     }
 
     println()

@@ -3,10 +3,10 @@ package kannoo.example
 import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.impl.BatchSGD
 import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
-import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.math.randomVector
 import kotlin.system.measureTimeMillis
@@ -28,7 +28,7 @@ fun backPropPerformanceTest() {
         DenseLayer(hiddenLayerSize, hiddenLayerActivationFunction),
         DenseLayer(outputLayerSize, outputLayerActivationFunction),
     )
-    val sgd = MiniBatchSGD(model, costFunction, batchSize, learningRate)
+    val sgd = BatchSGD(model = model, cost = costFunction, learningRate = learningRate, batchSize = batchSize)
     val trainingDataNew = List(trainingDataSize) {
         Sample(input = randomVector(inputLayerSize), target = randomVector(outputLayerSize))
     }
@@ -36,5 +36,6 @@ fun backPropPerformanceTest() {
     repeat(rounds) { n ->
         println("Round ${n + 1}:")
         val elapsed = measureTimeMillis { sgd.apply(trainingDataNew) }
-        println("$elapsed ms")    }
+        println("$elapsed ms")
+    }
 }
