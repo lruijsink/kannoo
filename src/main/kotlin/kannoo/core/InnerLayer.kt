@@ -7,9 +7,7 @@ abstract class InnerLayer(
     val size: Int,
     val activationFunction: ActivationFunction,
 ) {
-    abstract val learnableParameters: List<Tensor<*>>
-
-    abstract fun initialize(previousLayerSize: Int)
+    abstract val learnable: List<Tensor<*>>
 
     abstract fun preActivation(input: Vector): Vector
 

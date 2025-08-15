@@ -3,8 +3,8 @@ package kannoo.core
 import kannoo.math.Tensor
 
 class GradientReceiver(model: Model) {
-    private val gradients: Map<Tensor<*>, Tensor<*>> = model.layers
-        .flatMap { it.learnableParameters }
+    val gradients: Map<Tensor<*>, Tensor<*>> = model.layers
+        .flatMap { it.learnable }
         .associateWith { param -> param.copyZero() }
 
     operator fun invoke(param: Tensor<*>, delta: Tensor<*>) {

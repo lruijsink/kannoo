@@ -51,6 +51,8 @@ import kotlin.math.min
  *
  * This interface provides a default implementation for many operations, [Vector] and [Matrix] largely override these in
  * favor of more efficient implementations.
+ *
+ * Writes to this class are NOT thread-safe, nor are any of its modifying operations.
  */
 sealed interface Tensor<T : Tensor<T>> : TensorBase {
 

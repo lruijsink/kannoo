@@ -3,26 +3,18 @@ package kannoo.impl
 import kannoo.core.ActivationFunction
 import kannoo.core.GradientReceiver
 import kannoo.core.InnerLayer
+import kannoo.core.InnerLayerInitializer
 import kannoo.math.Matrix
-import kannoo.math.Tensor
 import kannoo.math.Vector
-import kannoo.math.emptyMatrix
-import kannoo.math.randomMatrix
 
-class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: ActivationFunction) :
+class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: ActivationFunction) :
     InnerLayer(bias.size, activationFunction) {
 
-    constructor(size: Int, activationFunction: ActivationFunction) :
-            this(weights = emptyMatrix(), bias = Vector(size), activationFunction = activationFunction)
+    constructor(inputs: Int, outputs: Int, activationFunction: ActivationFunction) :
+            this(weights = Matrix(outputs, inputs), bias = Vector(outputs), activationFunction = activationFunction)
 
-    override val learnableParameters: List<Tensor<*>> get() = listOf(weights, bias)
-
-    val initialized get() = weights.rows > 0
-
-    override fun initialize(previousLayerSize: Int) {
-        if (!initialized)
-            weights = randomMatrix(size, previousLayerSize)
-    }
+    override val learnable =
+        listOf(weights, bias)
 
     override fun preActivation(input: Vector): Vector =
         weights * input + bias
@@ -35,3 +27,6 @@ class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: Acti
         gradient(bias, deltaPreActivation)
     }
 }
+
+fun denseLayer(outputs: Int, activation: ActivationFunction) =
+    InnerLayerInitializer { inputs -> DenseLayer(inputs, outputs, activation) }
