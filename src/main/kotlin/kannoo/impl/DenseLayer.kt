@@ -6,12 +6,13 @@ import kannoo.core.InnerLayer
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Matrix
 import kannoo.math.Vector
+import kannoo.math.randomMatrix
 
 class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: ActivationFunction) :
     InnerLayer(bias.size, activationFunction) {
 
     constructor(inputs: Int, outputs: Int, activationFunction: ActivationFunction) :
-            this(weights = Matrix(outputs, inputs), bias = Vector(outputs), activationFunction = activationFunction)
+            this(randomMatrix(outputs, inputs), Vector(outputs), activationFunction)
 
     override val learnable =
         listOf(weights, bias)

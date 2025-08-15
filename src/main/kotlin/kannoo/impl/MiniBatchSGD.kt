@@ -4,12 +4,14 @@ import kannoo.core.CostFunction
 import kannoo.core.GradientComputer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.math.euclideanNorm
 
 class MiniBatchSGD(
     model: Model,
     cost: CostFunction,
     private val learningRate: Float,
     private val batchSize: Int,
+    private val maxNorm: Float = 1.0f,
 ) {
     private val gradientComputer = GradientComputer(model, cost)
 
@@ -18,7 +20,13 @@ class MiniBatchSGD(
     }
 
     private fun batch(samples: List<Sample>) {
-        for ((param, gradient) in gradientComputer.computeGradients(samples))
-            param -= gradient * (learningRate / samples.size)
+        val gradients = gradientComputer.computeGradients(samples)
+        val norm = euclideanNorm(gradients.values)
+        val scale =
+            if (norm < maxNorm) learningRate / samples.size
+            else learningRate / (samples.size * norm)
+
+        for ((param, gradient) in gradients)
+            param -= gradient * scale
     }
 }

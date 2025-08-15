@@ -2,6 +2,7 @@ package kannoo.math
 
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
@@ -51,3 +52,19 @@ fun <T> Iterable<T>.sumOf(function: (T) -> Float): Float {
     for (el in this) acc += function(el)
     return acc
 }
+
+/**
+ * Convenience function, computes the square of [x]
+ *
+ * @param x The number to square
+ *
+ * @return x * x
+ */
+fun square(x: Float): Float =
+    x * x
+
+/**
+ * Get the Euclidean norm (2-norm / square norm) over a
+ */
+fun euclideanNorm(tensors: Iterable<Tensor<*>>): Float =
+    sqrt(tensors.sumOf { square(it.sum()) })
