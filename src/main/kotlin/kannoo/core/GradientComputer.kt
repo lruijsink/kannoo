@@ -36,6 +36,10 @@ class GradientComputer(
         }
         combined.reset()
         futures.forEach { it.get() }
+
+        for ((_, gradient) in combined.gradients)
+            gradient.mapAssign { x -> if (x.isNaN() || x.isInfinite()) 0.0f else x }
+
         return combined.gradients
     }
 }

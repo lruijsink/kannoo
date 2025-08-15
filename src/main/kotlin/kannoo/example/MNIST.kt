@@ -6,9 +6,9 @@ import kannoo.core.Model
 import kannoo.core.Sample
 import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.DenseLayer
-import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
+import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.impl.denseLayer
 import kannoo.io.readModelFromFile
@@ -99,14 +99,15 @@ fun MNIST() {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
             InputLayer(28 * 28),
-            denseLayer(400, Logistic),
-            denseLayer(100, Logistic),
+            denseLayer(256, ReLU),
+            denseLayer(64, ReLU),
+            denseLayer(16, ReLU),
             denseLayer(10, Softmax),
         )
     }
 
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 1024, learningRate = 0.1f)
+        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 256, learningRate = 0.01f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")

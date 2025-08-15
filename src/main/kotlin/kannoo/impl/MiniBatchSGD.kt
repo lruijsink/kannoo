@@ -22,7 +22,8 @@ class MiniBatchSGD(
     private fun batch(samples: List<Sample>) {
         val gradients = gradientComputer.computeGradients(samples)
         val norm = euclideanNorm(gradients.values)
-        val scale =
+
+        val scale = learningRate / samples.size
             if (norm < maxNorm) learningRate / samples.size
             else learningRate / (samples.size * norm)
 
