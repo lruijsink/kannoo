@@ -213,6 +213,15 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
     }
 
     /**
+     * Vectors are already flat so this produces the vector as-is, but note that this produces a copy rather than
+     * returning the same object.
+     *
+     * @return Copy of this vector
+     */
+    override fun flatten(): Vector =
+        copy()
+
+    /**
      * Calls [operation] with each element in the vector, and its respective index, in order.
      *
      * @param operation Function to call

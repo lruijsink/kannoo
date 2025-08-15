@@ -9,8 +9,6 @@ package kannoo.math
  * @param T Slice tensor type, must be [Composite]
  *
  * @param S Nested slice tensor type; the slice type of [T]
- *
- * @param slices The slices to initialize this tensor with
  */
 class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where T : Composite<T, *> {
 
@@ -141,6 +139,26 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
     }
 
     /**
+     * Flattens the tensor down to a [Vector], in row-major order (recursively from highest to lowest rank). For
+     * example, given the following 3D tensor:
+     *
+     * ```text
+     * [ [1  2]   [5  6]
+     *   [3  4]   [7  8] ]
+     * ```
+     *
+     * It would flatten to (1, 2, 3, 4, 5, 6, 7, 8)
+     *
+     * @return Vector containing all tensor elements
+     */
+    override fun flatten(): Vector {
+        val res = Vector(totalElements)
+        var c = 0
+        forEachElement { res[c++] = it }
+        return res
+    }
+
+    /**
      * @param function Produces slice values
      *
      * @return New Tensor T of equal [shape] as this, and slices set to `T[i]` = [function]`(T[i])`
@@ -175,3 +193,7 @@ fun <T : Composite<T, S>, S : Tensor<S>> tensor(vararg slices: T): NTensor<T> {
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }
+
+// TODO: doc
+inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
+    NTensor(Array(size) { i -> initialize(i) })

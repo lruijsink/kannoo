@@ -80,6 +80,13 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
     val shape: List<Int>
 
     /**
+     * Total number of elements in the tensor, across all ranks. Equivalent to multiplying the size of each slice. For
+     * example: a tensor of 3 matrix slices with dimensions 2 x 5 has 3 x 2 x 5 = 30 total elements.
+     */
+    val totalElements: Int get() =
+        shape.reduce { x, y -> x * y }
+
+    /**
      * @return A deep copy of this tensor, with equal shape and element values
      */
     fun copy(): T
@@ -253,8 +260,8 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
     }
 
     /**
-     * Calls [operation] with each element in the tensor, recursively from highest to lowest rank. For example, given
-     * the following 3D tensor:
+     * Calls [operation] with each element in the tensor, in row-major order (recursively from highest to lowest rank).
+     * For example, given the following 3D tensor:
      *
      * ```text
      * [ [1  2]   [5  6]
@@ -336,6 +343,21 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      */
     infix fun hadamard(other: TensorBase): T =
         hadamard(castUnsafe(other))
+
+    /**
+     * Flattens the tensor down to a [Vector], in row-major order (recursively from highest to lowest rank). For
+     * example, given the following 3D tensor:
+     *
+     * ```text
+     * [ [1  2]   [5  6]
+     *   [3  4]   [7  8] ]
+     * ```
+     *
+     * It would flatten to (1, 2, 3, 4, 5, 6, 7, 8)
+     *
+     * @return Vector containing all tensor elements
+     */
+    fun flatten(): Vector
 
     /**
      * Casts any [TensorBase] to [T] as long as it has the same shape. This cast is guaranteed to be valid because every

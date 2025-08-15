@@ -246,6 +246,25 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
                 operation(this[i, j])
     }
 
+    /**
+     * Flattens the tensor down to a [Vector], in row-major order. For example, given the following matrix:
+     *
+     * ```text
+     * [1  2, 3]
+     * [4, 5, 6]
+     * ```
+     *
+     * It would flatten to (1, 2, 3, 4, 5, 6)
+     *
+     * @return Vector containing all tensor elements
+     */
+    override fun flatten(): Vector {
+        val res = Vector(rows * cols)
+        var c = 0
+        forEachIndexed { i, j -> res[c++] = this[i, j] }
+        return res
+    }
+
     // TODO: generalize this to any Tensor * Tensor
     /**
      * Computes the matrix-vector multiplication of this matrix and [vector]. Note that this is equivalent to
@@ -271,7 +290,7 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
     }
 
     /**
-     * Calls [operation] with each element in the matrix, and its respective index pair, in order.
+     * Calls [operation] with each element in the matrix, and its respective index pair, in row-major order.
      *
      * @param operation Function to call
      */
