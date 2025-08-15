@@ -1,8 +1,10 @@
 package kannoo.impl
 
 import kannoo.core.ActivationFunction
+import kannoo.core.GradientReceiver
 import kannoo.core.InnerLayer
 import kannoo.math.Matrix
+import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.emptyMatrix
 import kannoo.math.randomMatrix
@@ -13,6 +15,8 @@ class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: Acti
     constructor(size: Int, activationFunction: ActivationFunction) :
             this(weights = emptyMatrix(), bias = Vector(size), activationFunction = activationFunction)
 
+    override val learnableParameters: List<Tensor<*>> get() = listOf(weights, bias)
+
     val initialized get() = weights.rows > 0
 
     override fun initialize(previousLayerSize: Int) {
@@ -20,22 +24,14 @@ class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: Acti
             weights = randomMatrix(size, previousLayerSize)
     }
 
-    override fun forward(x: Vector): Vector {
-        return activationFunction.compute(weights * x + bias)
-    }
+    override fun preActivation(input: Vector): Vector =
+        weights * input + bias
 
-    override fun forward(x: Vector, update: (z: Vector, a: Vector) -> Unit) {
-        val z = weights * x + bias
-        update(z, activationFunction.compute(z))
-    }
+    override fun deltaInput(deltaPreActivation: Vector, input: Vector): Vector =
+        deltaPreActivation * weights
 
-    override fun back(dz: Vector, x: Vector, update: (dW: Matrix, db: Vector) -> Unit): Vector {
-        val da = dz * weights
-        update(dz.outer(x), dz)
-        return da
-    }
-
-    override fun backLast(dz: Vector, x: Vector, update: (dW: Matrix, db: Vector) -> Unit) {
-        update(dz.outer(x), dz)
+    override fun gradients(deltaPreActivation: Vector, input: Vector, gradient: GradientReceiver) {
+        gradient(weights, deltaPreActivation.outer(input))
+        gradient(bias, deltaPreActivation)
     }
 }

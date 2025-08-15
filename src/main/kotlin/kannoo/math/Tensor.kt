@@ -52,7 +52,7 @@ import kotlin.math.min
  * This interface provides a default implementation for many operations, [Vector] and [Matrix] largely override these in
  * favor of more efficient implementations.
  */
-sealed interface Tensor<T : Tensor<T>> {
+sealed interface Tensor<T : Tensor<T>> : TensorBase {
 
     /**
      * The rank (dimensions) of this tensor. For example, a [Vector] is rank 1 and a [Matrix] is rank 2.
@@ -83,6 +83,12 @@ sealed interface Tensor<T : Tensor<T>> {
     fun copy(): T
 
     /**
+     * Generic (unsafe) overload of [plus]
+     */
+    operator fun plus(other: TensorBase): T =
+        plus(castUnsafe(other))
+
+    /**
      * @param other Tensor to sum with
      *
      * @return New tensor `T` where `T[i]` = `this[i] + other[i]`
@@ -91,6 +97,12 @@ sealed interface Tensor<T : Tensor<T>> {
      */
     operator fun plus(other: T): T =
         zip(other) { x, y -> x + y }
+
+    /**
+     * Generic (unsafe) overload of [minus]
+     */
+    operator fun minus(other: TensorBase) =
+        minus(castUnsafe(other))
 
     /**
      * @param other Tensor to subtract
@@ -119,6 +131,13 @@ sealed interface Tensor<T : Tensor<T>> {
         map { it / scalar }
 
     /**
+     * Generic (unsafe) overload of [plusAssign]
+     */
+    operator fun plusAssign(other: TensorBase) {
+        plusAssign(castUnsafe(other))
+    }
+
+    /**
      * Add each element in [other] to the corresponding element in this tensor, in-place.
      *
      * @param other Tensor to sum with
@@ -127,6 +146,13 @@ sealed interface Tensor<T : Tensor<T>> {
      */
     operator fun plusAssign(other: T) {
         zipAssign(other) { x, y -> x + y }
+    }
+
+    /**
+     * Generic (unsafe) overload of [minusAssign]
+     */
+    operator fun minusAssign(other: TensorBase) {
+        minusAssign(castUnsafe(other))
     }
 
     /**
@@ -189,6 +215,12 @@ sealed interface Tensor<T : Tensor<T>> {
     fun zip(other: T, combine: (left: Float, right: Float) -> Float): T
 
     /**
+     * Generic (unsafe) overload of [zip]
+     */
+    fun zip(other: TensorBase, combine: (left: Float, right: Float) -> Float): T =
+        zip(castUnsafe(other), combine)
+
+    /**
      * Zips this tensor with another and applies the combining operation over each (element, element) pair in-place,
      * such that for each element `i`:
      *
@@ -201,6 +233,13 @@ sealed interface Tensor<T : Tensor<T>> {
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
     fun zipAssign(other: T, combine: (left: Float, right: Float) -> Float)
+
+    /**
+     * Generic (unsafe) overload of [zipAssign]
+     */
+    fun zipAssign(other: TensorBase, combine: (left: Float, right: Float) -> Float) {
+        zipAssign(castUnsafe(other), combine)
+    }
 
     /**
      * Calls [operation] with each element in the tensor, recursively from highest to lowest rank. For example, given
@@ -280,6 +319,25 @@ sealed interface Tensor<T : Tensor<T>> {
      */
     infix fun hadamard(other: T): T =
         zip(other) { x, y -> x * y }
+
+    /**
+     * Generic (unsafe) overload of [hadamard]
+     */
+    infix fun hadamard(other: TensorBase): T =
+        hadamard(castUnsafe(other))
+
+    /**
+     * Casts any [TensorBase] to [T] as long as it has the same shape.
+     *
+     * TODO: Explain this better
+     */
+    private fun castUnsafe(other: TensorBase): T {
+        if (this.shape != (other as Tensor<*>).shape)
+            throw IncompatibleShapeException("Cannot combine tensors with different shapes")
+
+        @Suppress("UNCHECKED_CAST")
+        return other as T
+    }
 }
 
 /**
@@ -326,9 +384,9 @@ abstract class TensorOperationException(message: String) : IllegalArgumentExcept
 /**
  * Thrown by operations that require both tensors to have the same shape (see [Tensor.shape]).
  */
-open class IncompatibleShapeException(message: String): TensorOperationException(message)
+open class IncompatibleShapeException(message: String) : TensorOperationException(message)
 
 /**
  * Thrown by operations that require a non-empty tensor. In general, tensors should not be empty.
  */
-open class EmptyTensorException(message: String): TensorOperationException(message)
+open class EmptyTensorException(message: String) : TensorOperationException(message)

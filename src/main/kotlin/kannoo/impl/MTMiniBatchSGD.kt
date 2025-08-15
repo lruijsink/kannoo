@@ -6,9 +6,6 @@ import kannoo.core.Model
 import kannoo.core.Sample
 import kannoo.math.Matrix
 import kannoo.math.Vector
-import kannoo.math.square
-import kannoo.math.sumOfTensor
-import kotlin.math.sqrt
 
 /**
  * Multi-threaded mini-batch SGD
@@ -39,7 +36,7 @@ class MTMiniBatchSGD(
         samples.shuffled().chunked(batchSize).forEach(this::batch)
     }
 
-    private fun batch(samples: List<Sample>) {
+    private fun batch(samples: List<Sample>): Unit = TODO() /*{
         val threads = samples.chunked(batchSize / threadCount).mapIndexed { t, chunk ->
             Thread {
                 deltaWeights[t].forEach { it.zero() }
@@ -66,5 +63,5 @@ class MTMiniBatchSGD(
             l.weights.minusAssign(dW * learningRate)
             l.bias.minusAssign(db * learningRate)
         }
-    }
+    }*/
 }

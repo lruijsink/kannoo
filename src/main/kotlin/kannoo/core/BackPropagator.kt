@@ -1,38 +1,45 @@
 package kannoo.core
 
 import kannoo.impl.Softmax
-import kannoo.math.Matrix
 import kannoo.math.Vector
 
 class BackPropagator(
     val model: Model,
     val cost: CostFunction,
 ) {
-    val z = model.layers.map { Vector(it.size) }.toMutableList()
-    val a = model.layers.map { Vector(it.size) }.toMutableList()
+    private val preActivations = model.layers.map { Vector(it.size) }.toMutableList()
+    private val activations = model.layers.map { Vector(it.size) }.toMutableList()
 
-    inline fun calculatePartials(sample: Sample, crossinline update: (i: Int, dW: Matrix, db: Vector) -> Unit) {
-        // Forward pass:
-        var o = sample.input
+    fun calculatePartials(sample: Sample, gradientReceiver: GradientReceiver) {
+        forwardPass(sample)
+        backPropagate(sample, gradientReceiver)
+    }
+
+    private fun forwardPass(sample: Sample) {
+        var input = sample.input
         model.layers.forEachIndexed { i, layer ->
-            layer.forward(o) { z, a ->
-                this.z[i] = z
-                this.a[i] = a
-                o = this.a[i]
-            }
+            preActivations[i] = layer.preActivation(input)
+            activations[i] = layer.activationFunction.compute(preActivations[i])
+            input = activations[i]
         }
+    }
 
-        // Backward pass:
-        var da = cost.derivative(sample.target, a[model.layers.size - 1])
+    private fun backPropagate(sample: Sample, gradientReceiver: GradientReceiver) {
+        var deltaActivation = cost.derivative(sample.target, activations[model.layers.size - 1])
+
         for (i in (model.layers.size - 1) downTo 0) {
-            val dz =
-                if (model.layers[i].activationFunction == Softmax) da // Combined into one operation
-                else da.hadamard(model.layers[i].activationFunction.derivative(z[i]))
+            val deltaPreActivation =
+                if (model.layers[i].activationFunction == Softmax) deltaActivation // Combined into one operation
+                else deltaActivation.hadamard(model.layers[i].activationFunction.derivative(preActivations[i]))
+
+            val input =
+                if (i == 0) sample.input
+                else activations[i - 1]
 
             if (i > 0)
-                da = model.layers[i].back(dz = dz, x = a[i - 1]) { dW, db -> update(i, dW, db) }
-            else
-                model.layers[i].backLast(dz = dz, x = sample.input) { dW, db -> update(i, dW, db) }
+                deltaActivation = model.layers[i].deltaInput(deltaPreActivation, input)
+
+            model.layers[i].gradients(deltaPreActivation, input, gradientReceiver)
         }
     }
 }

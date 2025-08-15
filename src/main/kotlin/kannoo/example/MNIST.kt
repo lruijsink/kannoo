@@ -22,7 +22,7 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
-const val showFullError = false
+const val showFullError = true
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
 fun rnd(d: Float): String {
