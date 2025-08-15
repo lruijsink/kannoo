@@ -1,41 +1,32 @@
 package kannoo.impl
 
 import kannoo.core.ActivationFunction
+import kannoo.core.GradientReceiver
 import kannoo.core.InnerLayer
+import kannoo.core.InnerLayerInitializer
 import kannoo.math.Matrix
 import kannoo.math.Vector
-import kannoo.math.emptyMatrix
-import kannoo.math.randomMatrix
 
-class DenseLayer(var weights: Matrix, var bias: Vector, activationFunction: ActivationFunction) :
+class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: ActivationFunction) :
     InnerLayer(bias.size, activationFunction) {
 
-    constructor(size: Int, activationFunction: ActivationFunction) :
-            this(weights = emptyMatrix(), bias = Vector(size), activationFunction = activationFunction)
+    constructor(inputs: Int, outputs: Int, activationFunction: ActivationFunction) :
+            this(weights = Matrix(outputs, inputs), bias = Vector(outputs), activationFunction = activationFunction)
 
-    val initialized get() = weights.rows > 0
+    override val learnable =
+        listOf(weights, bias)
 
-    override fun initialize(previousLayerSize: Int) {
-        if (!initialized)
-            weights = randomMatrix(size, previousLayerSize)
-    }
+    override fun preActivation(input: Vector): Vector =
+        weights * input + bias
 
-    override fun forward(x: Vector): Vector {
-        return activationFunction.compute(weights * x + bias)
-    }
+    override fun deltaInput(deltaPreActivation: Vector, input: Vector): Vector =
+        deltaPreActivation * weights
 
-    override fun forward(x: Vector, update: (z: Vector, a: Vector) -> Unit) {
-        val z = weights * x + bias
-        update(z, activationFunction.compute(z))
-    }
-
-    override fun back(dz: Vector, x: Vector, update: (dW: Matrix, db: Vector) -> Unit): Vector {
-        val da = dz * weights
-        update(dz.outer(x), dz)
-        return da
-    }
-
-    override fun backLast(dz: Vector, x: Vector, update: (dW: Matrix, db: Vector) -> Unit) {
-        update(dz.outer(x), dz)
+    override fun gradients(deltaPreActivation: Vector, input: Vector, gradient: GradientReceiver) {
+        gradient(weights, deltaPreActivation.outer(input))
+        gradient(bias, deltaPreActivation)
     }
 }
+
+fun denseLayer(outputs: Int, activation: ActivationFunction) =
+    InnerLayerInitializer { inputs -> DenseLayer(inputs, outputs, activation) }

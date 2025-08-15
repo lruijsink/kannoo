@@ -4,11 +4,11 @@ import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
 import kannoo.impl.CrossEntropyLoss
-import kannoo.impl.DenseLayer
-import kannoo.impl.MTMiniBatchSGD
 import kannoo.impl.MeanSquaredError
+import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.impl.Softmax
+import kannoo.impl.denseLayer
 import kannoo.math.Vector
 import kannoo.math.sumOf
 import kannoo.math.vector
@@ -102,13 +102,18 @@ fun ticTacToeSelfLearn() {
 
     val model = Model(
         InputLayer(2 * 9 + 2),
-        DenseLayer(3 * 3 * 20, ReLU),
-        DenseLayer(3 * 3 * 10, ReLU),
-        DenseLayer(3 * 3 * 5, ReLU),
-        DenseLayer(3 * 3 * 2, ReLU),
-        DenseLayer(3, Softmax)
+        denseLayer(3 * 3 * 20, ReLU),
+        denseLayer(3 * 3 * 10, ReLU),
+        denseLayer(3 * 3 * 5, ReLU),
+        denseLayer(3 * 3 * 2, ReLU),
+        denseLayer(3, Softmax)
     )
-    val sgd = MTMiniBatchSGD(model, CrossEntropyLoss, 0.1f, 100, 10)
+    val sgd = MiniBatchSGD(
+        model = model,
+        cost = CrossEntropyLoss,
+        learningRate = 0.1f,
+        batchSize = 100,
+    )
 
     repeat(100) { i ->
         println("Round ${i + 1}:")

@@ -2,9 +2,9 @@ package kannoo.example
 
 import kannoo.core.InputLayer
 import kannoo.core.Model
-import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.ReLU
+import kannoo.impl.denseLayer
 import kannoo.math.randomVector
 import kotlin.system.measureTimeMillis
 
@@ -18,8 +18,11 @@ fun computePerformanceTest() {
 
     val model = Model(
         InputLayer(inputLayerSize),
-        innerLayerSizes.map { DenseLayer(it, innerLayerActivationFunction) } +
-                DenseLayer(outputLayerSize, outputLayerActivationFunction),
+        denseLayer(innerLayerSizes[0], innerLayerActivationFunction),
+        denseLayer(innerLayerSizes[1], innerLayerActivationFunction),
+        denseLayer(innerLayerSizes[2], innerLayerActivationFunction),
+        denseLayer(innerLayerSizes[3], innerLayerActivationFunction),
+        denseLayer(outputLayerSize, outputLayerActivationFunction),
     )
 
     repeat(rounds) {

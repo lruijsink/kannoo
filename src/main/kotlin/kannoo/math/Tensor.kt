@@ -51,8 +51,10 @@ import kotlin.math.min
  *
  * This interface provides a default implementation for many operations, [Vector] and [Matrix] largely override these in
  * favor of more efficient implementations.
+ *
+ * Writes to this class are NOT thread-safe, nor are any of its modifying operations.
  */
-sealed interface Tensor<T : Tensor<T>> {
+sealed interface Tensor<T : Tensor<T>> : TensorBase {
 
     /**
      * The rank (dimensions) of this tensor. For example, a [Vector] is rank 1 and a [Matrix] is rank 2.
@@ -78,9 +80,24 @@ sealed interface Tensor<T : Tensor<T>> {
     val shape: List<Int>
 
     /**
-     * @return A deep copy of this tensor, with equal rank, dimensions, and element values
+     * @return A deep copy of this tensor, with equal shape and element values
      */
     fun copy(): T
+
+    /**
+     * @return A zeroed-out copy of this tensor, with equal shape.
+     */
+    fun copyZero(): T {
+        val copy = copy()
+        copy.zero()
+        return copy
+    }
+
+    /**
+     * Generic (unsafe) overload of [plus]
+     */
+    operator fun plus(other: TensorBase): T =
+        plus(castUnsafe(other))
 
     /**
      * @param other Tensor to sum with
@@ -91,6 +108,12 @@ sealed interface Tensor<T : Tensor<T>> {
      */
     operator fun plus(other: T): T =
         zip(other) { x, y -> x + y }
+
+    /**
+     * Generic (unsafe) overload of [minus]
+     */
+    operator fun minus(other: TensorBase) =
+        minus(castUnsafe(other))
 
     /**
      * @param other Tensor to subtract
@@ -119,6 +142,13 @@ sealed interface Tensor<T : Tensor<T>> {
         map { it / scalar }
 
     /**
+     * Generic (unsafe) overload of [plusAssign]
+     */
+    operator fun plusAssign(other: TensorBase) {
+        plusAssign(castUnsafe(other))
+    }
+
+    /**
      * Add each element in [other] to the corresponding element in this tensor, in-place.
      *
      * @param other Tensor to sum with
@@ -127,6 +157,13 @@ sealed interface Tensor<T : Tensor<T>> {
      */
     operator fun plusAssign(other: T) {
         zipAssign(other) { x, y -> x + y }
+    }
+
+    /**
+     * Generic (unsafe) overload of [minusAssign]
+     */
+    operator fun minusAssign(other: TensorBase) {
+        minusAssign(castUnsafe(other))
     }
 
     /**
@@ -189,6 +226,12 @@ sealed interface Tensor<T : Tensor<T>> {
     fun zip(other: T, combine: (left: Float, right: Float) -> Float): T
 
     /**
+     * Generic (unsafe) overload of [zip]
+     */
+    fun zip(other: TensorBase, combine: (left: Float, right: Float) -> Float): T =
+        zip(castUnsafe(other), combine)
+
+    /**
      * Zips this tensor with another and applies the combining operation over each (element, element) pair in-place,
      * such that for each element `i`:
      *
@@ -201,6 +244,13 @@ sealed interface Tensor<T : Tensor<T>> {
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
     fun zipAssign(other: T, combine: (left: Float, right: Float) -> Float)
+
+    /**
+     * Generic (unsafe) overload of [zipAssign]
+     */
+    fun zipAssign(other: TensorBase, combine: (left: Float, right: Float) -> Float) {
+        zipAssign(castUnsafe(other), combine)
+    }
 
     /**
      * Calls [operation] with each element in the tensor, recursively from highest to lowest rank. For example, given
@@ -280,6 +330,32 @@ sealed interface Tensor<T : Tensor<T>> {
      */
     infix fun hadamard(other: T): T =
         zip(other) { x, y -> x * y }
+
+    /**
+     * Generic (unsafe) overload of [hadamard]
+     */
+    infix fun hadamard(other: TensorBase): T =
+        hadamard(castUnsafe(other))
+
+    /**
+     * Casts any [TensorBase] to [T] as long as it has the same shape. This cast is guaranteed to be valid because every
+     * possible rank of tensor always corresponds to the same class:
+     *
+     * 1 = [Vector], 2 = [Matrix], 3+ = [NTensor]
+     *
+     * @param other Tensor to cast to [T]
+     *
+     * @return [other] cast to [T]
+     *
+     * @throws IncompatibleGenericTensorException If the tensors do not have the same shape
+     */
+    private fun castUnsafe(other: TensorBase): T {
+        if (this.shape != (other as Tensor<*>).shape)
+            throw IncompatibleGenericTensorException("Cannot cast a generic tensor to a tensor with different shape")
+
+        @Suppress("UNCHECKED_CAST")
+        return other as T
+    }
 }
 
 /**
@@ -326,9 +402,17 @@ abstract class TensorOperationException(message: String) : IllegalArgumentExcept
 /**
  * Thrown by operations that require both tensors to have the same shape (see [Tensor.shape]).
  */
-open class IncompatibleShapeException(message: String): TensorOperationException(message)
+open class IncompatibleShapeException(message: String) : TensorOperationException(message)
 
 /**
  * Thrown by operations that require a non-empty tensor. In general, tensors should not be empty.
  */
-open class EmptyTensorException(message: String): TensorOperationException(message)
+open class EmptyTensorException(message: String) : TensorOperationException(message)
+
+/**
+ * Thrown by [Tensor.castUnsafe], and methods which call it, when attempting to convert an incompatible generic
+ * [TensorBase] to that specific [Tensor] type.
+ *
+ * Only tensors with equal [Tensor.shape] are compatible.
+ */
+open class IncompatibleGenericTensorException(message: String) : TensorOperationException(message)

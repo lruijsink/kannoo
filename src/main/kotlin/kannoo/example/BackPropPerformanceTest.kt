@@ -3,11 +3,11 @@ package kannoo.example
 import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
-import kannoo.impl.BatchSGD
-import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
+import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
+import kannoo.impl.denseLayer
 import kannoo.math.randomVector
 import kotlin.system.measureTimeMillis
 
@@ -19,16 +19,16 @@ fun backPropPerformanceTest() {
     val outputLayerActivationFunction = Logistic
     val costFunction = MeanSquaredError
     val learningRate = 0.1f
-    val batchSize = 10
-    val trainingDataSize = 1000
+    val batchSize = 1024
+    val trainingDataSize = 1024 * 100
     val rounds = 10
 
     val model = Model(
         InputLayer(inputLayerSize),
-        DenseLayer(hiddenLayerSize, hiddenLayerActivationFunction),
-        DenseLayer(outputLayerSize, outputLayerActivationFunction),
+        denseLayer(hiddenLayerSize, hiddenLayerActivationFunction),
+        denseLayer(outputLayerSize, outputLayerActivationFunction),
     )
-    val sgd = BatchSGD(model = model, cost = costFunction, learningRate = learningRate, batchSize = batchSize)
+    val sgd = MiniBatchSGD(model = model, cost = costFunction, learningRate = learningRate, batchSize = batchSize)
     val trainingDataNew = List(trainingDataSize) {
         Sample(input = randomVector(inputLayerSize), target = randomVector(outputLayerSize))
     }
