@@ -80,9 +80,18 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
     val shape: List<Int>
 
     /**
-     * @return A deep copy of this tensor, with equal rank, dimensions, and element values
+     * @return A deep copy of this tensor, with equal shape and element values
      */
     fun copy(): T
+
+    /**
+     * @return A zeroed-out copy of this tensor, with equal shape.
+     */
+    fun copyZero(): T {
+        val copy = copy()
+        copy.zero()
+        return copy
+    }
 
     /**
      * Generic (unsafe) overload of [plus]
@@ -329,13 +338,20 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
         hadamard(castUnsafe(other))
 
     /**
-     * Casts any [TensorBase] to [T] as long as it has the same shape.
+     * Casts any [TensorBase] to [T] as long as it has the same shape. This cast is guaranteed to be valid because every
+     * possible rank of tensor always corresponds to the same class:
      *
-     * TODO: Explain this better
+     * 1 = [Vector], 2 = [Matrix], 3+ = [NTensor]
+     *
+     * @param other Tensor to cast to [T]
+     *
+     * @return [other] cast to [T]
+     *
+     * @throws IncompatibleGenericTensorException If the tensors do not have the same shape
      */
     private fun castUnsafe(other: TensorBase): T {
         if (this.shape != (other as Tensor<*>).shape)
-            throw IncompatibleShapeException("Cannot combine tensors with different shapes")
+            throw IncompatibleGenericTensorException("Cannot cast a generic tensor to a tensor with different shape")
 
         @Suppress("UNCHECKED_CAST")
         return other as T
@@ -392,3 +408,11 @@ open class IncompatibleShapeException(message: String) : TensorOperationExceptio
  * Thrown by operations that require a non-empty tensor. In general, tensors should not be empty.
  */
 open class EmptyTensorException(message: String) : TensorOperationException(message)
+
+/**
+ * Thrown by [Tensor.castUnsafe], and methods which call it, when attempting to convert an incompatible generic
+ * [TensorBase] to that specific [Tensor] type.
+ *
+ * Only tensors with equal [Tensor.shape] are compatible.
+ */
+open class IncompatibleGenericTensorException(message: String) : TensorOperationException(message)

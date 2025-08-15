@@ -8,7 +8,10 @@ class GradientReceiver(model: Model) {
         .associateWith { param -> param.copyZero() }
 
     operator fun invoke(param: Tensor<*>, delta: Tensor<*>) {
-        gradients[param]!! += delta // TODO: handle possible NPE better
+        val gradient = gradients[param]
+            ?: throw IllegalArgumentException("Can only apply gradients to params which are in InnerLayer.learnable")
+
+        gradient += delta
     }
 
     fun apply(application: (param: Tensor<*>, gradient: Tensor<*>) -> Unit) {
@@ -17,12 +20,5 @@ class GradientReceiver(model: Model) {
 
     fun reset() {
         gradients.forEach { it.value.zero() }
-    }
-
-    // TODO: Make this a function on [Tensor]
-    private fun Tensor<*>.copyZero(): Tensor<*> {
-        val c = copy()
-        c.zero()
-        return c
     }
 }
