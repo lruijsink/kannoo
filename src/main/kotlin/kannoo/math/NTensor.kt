@@ -12,13 +12,13 @@ package kannoo.math
  *
  * @param slices The slices to initialize this tensor with
  */
-class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>) : Composite<NTensor<T, S>, T> {
+class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where T : Composite<T, *> {
 
     init {
         if (slices.any { it.size != slices[0].size })
             throw IncompatibleShapeException("All slices in an NTensor must have the same size")
     }
-    
+
     /**
      * The rank (dimensions) of this tensor, min. 3 for an [NTensor]
      */
@@ -48,7 +48,7 @@ class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>)
     /**
      * @return A deep copy of this tensor, with equal rank, dimensions, and element values
      */
-    override fun copy(): NTensor<T, S> {
+    override fun copy(): NTensor<T> {
         val slicesCopy = slices.copyOf()
         for (i in 0 until size)
             slicesCopy[i] = slices[i].copy()
@@ -77,7 +77,7 @@ class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>)
      *
      * @return A new tensor with `function` applied elementwise to this tensor
      */
-    override fun map(function: (Float) -> Float): NTensor<T, S> =
+    override fun map(function: (Float) -> Float): NTensor<T> =
         mapIndexed { i -> this[i].map(function) }
 
     /**
@@ -103,7 +103,7 @@ class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>)
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    override fun zip(other: NTensor<T, S>, combine: (Float, Float) -> Float): NTensor<T, S> =
+    override fun zip(other: NTensor<T>, combine: (Float, Float) -> Float): NTensor<T> =
         mapIndexed { i -> this[i].zip(other[i], combine) }
 
     /**
@@ -118,7 +118,7 @@ class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>)
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    override fun zipAssign(other: NTensor<T, S>, combine: (Float, Float) -> Float) {
+    override fun zipAssign(other: NTensor<T>, combine: (Float, Float) -> Float) {
         for (i in 0 until size)
             this[i].zipAssign(other[i], combine)
     }
@@ -145,8 +145,8 @@ class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>)
      *
      * @return New Tensor T of equal [shape] as this, and slices set to `T[i]` = [function]`(T[i])`
      */
-    private inline fun mapIndexed(crossinline function: (Int) -> T): NTensor<T, S> {
-        val res = copy() // Can't construct a new Array<NTensor<T, S>> due to type erasure, but we can copy the existing
+    private inline fun mapIndexed(crossinline function: (Int) -> T): NTensor<T> {
+        val res = copy() // Can't construct a new Array<NTensor<T>> due to type erasure, but we can copy the existing
         res.assignIndexed(function)
         return res
     }
@@ -171,7 +171,7 @@ class NTensor<T : Composite<T, S>, S : Tensor<S>>(override val slices: Array<T>)
  *
  * @return Rank N + 1 tensor, where N = [T]'s rank, containing [slices]
  */
-fun <T : Composite<T, S>, S : Tensor<S>> tensor(vararg slices: T): NTensor<T, S> {
+fun <T : Composite<T, S>, S : Tensor<S>> tensor(vararg slices: T): NTensor<T> {
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }
