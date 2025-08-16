@@ -26,7 +26,7 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
      *
      * The matrix has [rows] slices (row vectors) which are each [cols] elements wide.
      */
-    override val shape get(): List<Int> = listOf(rows, cols)
+    override val shape: Shape get() = Shape(rows, cols)
 
     /**
      * Number of rows in this matrix. Equivalent to the number of [slices], or [rowVectors].

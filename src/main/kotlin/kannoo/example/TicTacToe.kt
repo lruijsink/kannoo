@@ -15,6 +15,7 @@ import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.impl.denseLayer
 import kannoo.math.Vector
+import kannoo.math.mean
 import kannoo.math.sumOf
 
 enum class Square { X, O, Empty }
@@ -181,7 +182,7 @@ fun printMoves(moveLists: List<List<Pair<Int, Int>>>) {
 fun ticTacToeExample() {
     solve(emptyBoard, startingPlayer)
 
-    val trainingData: List<Sample> = bestMoves.map { (board, bestMoves) ->
+    val trainingData: List<Sample<Vector>> = bestMoves.map { (board, bestMoves) ->
         Sample(input = board.toInput(), target = bestMoves.toTarget())
     }
 
@@ -215,7 +216,7 @@ fun ticTacToeExample() {
         println()
 
         val costSum = trainingData.sumOf { (input, target) ->
-            cost.compute(target, model.compute(input))
+            cost.compute(target, model.compute(input)).mean()
         }
         println("Error: " + rnd(costSum / trainingData.size.toFloat()))
         println()

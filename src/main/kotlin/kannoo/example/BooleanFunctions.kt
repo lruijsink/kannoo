@@ -8,6 +8,7 @@ import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.denseLayer
+import kannoo.math.mean
 import kannoo.math.sumOf
 import kannoo.math.vector
 import kotlin.math.round
@@ -58,7 +59,7 @@ fun booleanFunctionsExample() {
         repeat(10000) {
             sgd.apply(trainingData)
         }
-        e = trainingData.sumOf { (input, target) -> cost.compute(target, model.compute(input)) }
+        e = trainingData.sumOf { (input, target) -> cost.compute(target, model.compute(input)).mean() }
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->

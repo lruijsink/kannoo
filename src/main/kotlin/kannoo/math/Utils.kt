@@ -75,3 +75,9 @@ fun euclideanNorm(tensors: Iterable<Tensor<*>>): Float {
     }
     return maxElement * sqrt(scaledSumSquared)
 }
+
+/**
+ * @return Mean average value over all elements in the tensor
+ */
+fun TensorBase.mean(): Float =
+    (this as Tensor<*>).sum() / totalElements

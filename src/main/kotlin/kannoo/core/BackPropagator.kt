@@ -1,31 +1,32 @@
 package kannoo.core
 
 import kannoo.impl.Softmax
+import kannoo.math.Tensor
 import kannoo.math.Vector
 
 class BackPropagator(
     val model: Model,
     val cost: CostFunction,
 ) {
-    private val preActivations = model.layers.map { Vector(it.size) }.toMutableList()
-    private val activations = model.layers.map { Vector(it.size) }.toMutableList()
+    private val preActivations = model.layers.map { it.outputShape.createTensor() }.toMutableList()
+    private val activations = model.layers.map { it.outputShape.createTensor() }.toMutableList()
 
-    fun calculatePartials(sample: Sample, gradientReceiver: GradientReceiver) {
+    fun calculatePartials(sample: Sample<*>, gradientReceiver: GradientReceiver) {
         forwardPass(sample)
         backPropagate(sample, gradientReceiver)
     }
 
-    private fun forwardPass(sample: Sample) {
+    private fun forwardPass(sample: Sample<*>) {
         var input = sample.input
         model.layers.forEachIndexed { i, layer ->
             preActivations[i] = layer.preActivation(input)
             activations[i] = layer.activationFunction.compute(preActivations[i])
-            input = activations[i]
+            input = activations[i] as Vector /* TODO: Generalize Sample.input to any tensor */
         }
     }
 
-    private fun backPropagate(sample: Sample, gradientReceiver: GradientReceiver) {
-        var deltaActivation = cost.derivative(sample.target, activations[model.layers.size - 1])
+    private fun backPropagate(sample: Sample<*>, gradientReceiver: GradientReceiver) {
+        var deltaActivation: Tensor<*> = cost.derivative(sample.target, activations[model.layers.size - 1])
 
         for (i in (model.layers.size - 1) downTo 0) {
             val deltaPreActivation =

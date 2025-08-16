@@ -1,8 +1,19 @@
 package kannoo.core
 
-import kannoo.math.Vector
+import kannoo.math.Tensor
+import kannoo.math.TensorBase
 
 interface ActivationFunction {
-    fun compute(v: Vector): Vector
-    fun derivative(v: Vector): Vector
+    fun compute(tensor: TensorBase): Tensor<*>
+    fun derivative(tensor: TensorBase): Tensor<*>
+
+    fun <T : Tensor<T>> compute(tensor: T): T {
+        @Suppress("UNCHECKED_CAST")
+        return compute(tensor as TensorBase) as T
+    }
+
+    fun <T : Tensor<T>> derivative(tensor: T): T {
+        @Suppress("UNCHECKED_CAST")
+        return derivative(tensor as TensorBase) as T
+    }
 }

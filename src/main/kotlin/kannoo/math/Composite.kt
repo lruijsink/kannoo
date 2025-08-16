@@ -1,8 +1,11 @@
 package kannoo.math
 
 /**
- * Tensor composed of [slices] with [rank] N - 1. There are two types of composite tensor: [Matrix] and [NTensor]. The
- * only non-[Composite] tensor type is [Vector], and those together make up all possible [Tensor] types.
+ * Tensor composed of [slices] with [rank] N - 1. There are two types of composite tensor:
+ * - [Matrix] (rank 2)
+ * - [NTensor] (rank 3+)
+ *
+ * The only non-[Composite] tensor type is [Vector].
  *
  * @param T Composite tensor type
  *

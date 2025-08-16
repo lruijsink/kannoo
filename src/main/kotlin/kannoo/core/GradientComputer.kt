@@ -17,7 +17,7 @@ class GradientComputer(
     private val combinedLock = ReentrantLock()
     private val executorService = Executors.newFixedThreadPool(threadCount)
 
-    fun computeGradients(samples: List<Sample>): Map<Tensor<*>, Tensor<*>> {
+    fun computeGradients(samples: List<Sample<*>>): Map<Tensor<*>, Tensor<*>> {
         val q = AtomicInteger(0)
         val futures = List(threadCount) { t ->
             executorService.submit {

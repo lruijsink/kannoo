@@ -11,7 +11,7 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
     /**
      * Tensor rank, always equal to `1` for vectors.
      */
-    override val rank get() = 1
+    override val rank: Int get() = 1
 
     /**
      * Number of elements in this vector.
@@ -21,7 +21,7 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
     /**
      * Tensor shape, for vectors this is just a single dimension: its [size].
      */
-    override val shape: List<Int> get() = listOf(size)
+    override val shape: Shape get() = Shape(size)
 
     /**
      * @return A deep copy of this vector

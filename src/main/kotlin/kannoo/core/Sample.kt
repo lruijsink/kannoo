@@ -1,8 +1,8 @@
 package kannoo.core
 
-import kannoo.math.Vector
+import kannoo.math.Tensor
 
-data class Sample(
-    val input: Vector,
-    val target: Vector,
+data class Sample<T : Tensor<T>>(
+    val input: T,
+    val target: T,
 )

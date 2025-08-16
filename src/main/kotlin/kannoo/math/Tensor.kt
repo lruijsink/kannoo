@@ -77,14 +77,14 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *   [9  0  1  2]   [1  2  3  4] ]
      * ```
      */
-    val shape: List<Int>
+    val shape: Shape
 
     /**
      * Total number of elements in the tensor, across all ranks. Equivalent to multiplying the size of each slice. For
      * example: a tensor of 3 matrix slices with dimensions 2 x 5 has 3 x 2 x 5 = 30 total elements.
      */
     val totalElements: Int get() =
-        shape.reduce { x, y -> x * y }
+        shape.dimensions.reduce { x, y -> x * y }
 
     /**
      * @return A deep copy of this tensor, with equal shape and element values
@@ -99,6 +99,12 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
         copy.zero()
         return copy
     }
+
+    /**
+     * @return New tensor `T` where `T[i]` = `-this[i]`
+     */
+    operator fun unaryMinus(): T =
+        map { -it }
 
     /**
      * Generic (unsafe) overload of [plus]

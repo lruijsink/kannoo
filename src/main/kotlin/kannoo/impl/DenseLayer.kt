@@ -5,14 +5,18 @@ import kannoo.core.GradientReceiver
 import kannoo.core.InnerLayer
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Matrix
+import kannoo.math.Shape
 import kannoo.math.Vector
 import kannoo.math.randomMatrix
 
 class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: ActivationFunction) :
-    InnerLayer(bias.size, activationFunction) {
+    InnerLayer<Vector, Vector>(
+        outputShape = Shape(bias.size),
+        activationFunction = activationFunction,
+    ) {
 
-    constructor(inputs: Int, outputs: Int, activationFunction: ActivationFunction) :
-            this(randomMatrix(outputs, inputs), Vector(outputs), activationFunction)
+    constructor(inputShape: Shape, outputs: Int, activationFunction: ActivationFunction) :
+            this(randomMatrix(outputs, inputShape.totalElements), Vector(outputs), activationFunction)
 
     override val learnable =
         listOf(weights, bias)
@@ -30,4 +34,6 @@ class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: Acti
 }
 
 fun denseLayer(outputs: Int, activation: ActivationFunction) =
-    InnerLayerInitializer { inputs -> DenseLayer(inputs, outputs, activation) }
+    InnerLayerInitializer { inputShape ->
+        DenseLayer(inputShape, outputs, activation)
+    }

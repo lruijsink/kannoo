@@ -40,8 +40,8 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
      *   [9  0  1  2]   [1  2  3  4] ]
      * ```
      */
-    override val shape: List<Int>
-        get() = listOf(size) + slices[0].shape
+    override val shape: Shape
+        get() = Shape(compositeSize = size, sliceShape = slices[0].shape)
 
     /**
      * @return A deep copy of this tensor, with equal rank, dimensions, and element values
