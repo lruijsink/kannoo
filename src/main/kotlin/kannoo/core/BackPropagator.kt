@@ -2,7 +2,6 @@ package kannoo.core
 
 import kannoo.impl.Softmax
 import kannoo.math.Tensor
-import kannoo.math.Vector
 
 class BackPropagator(
     val model: Model,
@@ -21,7 +20,7 @@ class BackPropagator(
         model.layers.forEachIndexed { i, layer ->
             preActivations[i] = layer.preActivation(input)
             activations[i] = layer.activationFunction.compute(preActivations[i])
-            input = activations[i] as Vector /* TODO: Generalize Sample.input to any tensor */
+            input = activations[i]
         }
     }
 

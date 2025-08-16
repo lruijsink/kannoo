@@ -3,7 +3,9 @@ package kannoo.core
 import kannoo.math.Tensor
 import kannoo.math.TensorBase
 
-abstract class CostFunction {
+interface CostFunction {
+    fun compute(target: TensorBase, actual: TensorBase): Tensor<*>
+    fun derivative(target: TensorBase, actual: TensorBase): Tensor<*>
 
     fun <T : Tensor<T>> compute(target: T, actual: T): T {
         @Suppress("UNCHECKED_CAST")
@@ -14,7 +16,4 @@ abstract class CostFunction {
         @Suppress("UNCHECKED_CAST")
         return derivative(target as TensorBase, actual as TensorBase) as T
     }
-
-    abstract fun compute(target: TensorBase, actual: TensorBase): Tensor<*>
-    abstract fun derivative(target: TensorBase, actual: TensorBase): Tensor<*>
 }

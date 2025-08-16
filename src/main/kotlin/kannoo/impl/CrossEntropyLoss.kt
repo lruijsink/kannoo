@@ -10,7 +10,7 @@ import kotlin.math.ln
 /**
  * NOTE: Only supported with [Softmax] as the output activation layer.
  */
-object CrossEntropyLoss : CostFunction() {
+object CrossEntropyLoss : CostFunction {
     const val EPSILON = 1e-15f
 
     override fun compute(target: TensorBase, actual: TensorBase): Tensor<*> =
