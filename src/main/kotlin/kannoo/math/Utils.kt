@@ -66,7 +66,7 @@ fun square(x: Float): Float =
 /**
  * Get the Euclidean norm (2-norm / square norm) over a
  */
-fun euclideanNorm(tensors: Iterable<Tensor<*>>): Float {
+fun euclideanNorm(tensors: Iterable<TensorBase>): Float {
     val maxElement = tensors.maxOf { it.max() }
     val scaledSumSquared = tensors.sumOf {
         it.reduce { acc, element ->
@@ -80,4 +80,4 @@ fun euclideanNorm(tensors: Iterable<Tensor<*>>): Float {
  * @return Mean average value over all elements in the tensor
  */
 fun TensorBase.mean(): Float =
-    (this as Tensor<*>).sum() / totalElements
+    sum() / totalElements

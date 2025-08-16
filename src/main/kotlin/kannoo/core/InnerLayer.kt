@@ -8,7 +8,7 @@ abstract class InnerLayer<T : Tensor<T>, O : Tensor<O>>(
     val outputShape: Shape,
     val activationFunction: ActivationFunction,
 ) {
-    abstract val learnable: List<Tensor<*>>
+    abstract val learnable: List<TensorBase>
 
     abstract fun preActivation(input: T): O
 
@@ -26,6 +26,6 @@ abstract class InnerLayer<T : Tensor<T>, O : Tensor<O>>(
         gradients(deltaPreActivation as O, input as T, gradient) // TODO: cast same way as [Tensor.castUnsafe]
     }
 
-    fun compute(input: Tensor<*>): O =
+    fun compute(input: TensorBase): O =
         activationFunction.compute(preActivation(input))
 }

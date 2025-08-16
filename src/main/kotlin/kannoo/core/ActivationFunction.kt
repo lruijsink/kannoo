@@ -4,8 +4,8 @@ import kannoo.math.Tensor
 import kannoo.math.TensorBase
 
 interface ActivationFunction {
-    fun compute(tensor: TensorBase): Tensor<*>
-    fun derivative(tensor: TensorBase): Tensor<*>
+    fun compute(tensor: TensorBase): TensorBase
+    fun derivative(tensor: TensorBase): TensorBase
 
     fun <T : Tensor<T>> compute(tensor: T): T {
         @Suppress("UNCHECKED_CAST")

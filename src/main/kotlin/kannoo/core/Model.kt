@@ -2,6 +2,7 @@ package kannoo.core
 
 import kannoo.math.Shape
 import kannoo.math.Tensor
+import kannoo.math.TensorBase
 import kannoo.math.Vector
 
 class Model {
@@ -30,6 +31,6 @@ class Model {
     constructor(inputLayer: InputLayer, vararg layers: InnerLayer<*, *>) :
             this(inputLayer, layers.toList())
 
-    fun compute(input: Tensor<*>): Vector = // TODO: Generalize to any input tensor
+    fun compute(input: TensorBase): Vector = // TODO: Generalize to any input tensor
         layers.fold(input) { v, layer -> layer.compute(v) } as Vector /* TODO: Generalize to any output tensor */
 }

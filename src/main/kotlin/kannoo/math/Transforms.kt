@@ -24,5 +24,15 @@ fun <T : Tensor<T>> log2(tensor: T): T =
  *
  * @return A new tensor all scalar elements squared
  */
-fun <T : Tensor<T>> square(tensor: T): T =
+fun <T : Tensor<T>> square(tensor: T): T {
+    @Suppress("UNCHECKED_CAST")
+    return square(tensor as TensorBase) as T
+}
+
+/**
+ * @param tensor The tensor to transform
+ *
+ * @return A new tensor all scalar elements squared
+ */
+fun square(tensor: TensorBase): TensorBase =
     tensor.map { it * it }

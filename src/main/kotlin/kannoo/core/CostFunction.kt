@@ -4,8 +4,8 @@ import kannoo.math.Tensor
 import kannoo.math.TensorBase
 
 interface CostFunction {
-    fun compute(target: TensorBase, actual: TensorBase): Tensor<*>
-    fun derivative(target: TensorBase, actual: TensorBase): Tensor<*>
+    fun compute(target: TensorBase, actual: TensorBase): TensorBase
+    fun derivative(target: TensorBase, actual: TensorBase): TensorBase
 
     fun <T : Tensor<T>> compute(target: T, actual: T): T {
         @Suppress("UNCHECKED_CAST")

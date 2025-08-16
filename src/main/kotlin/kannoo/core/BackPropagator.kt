@@ -1,7 +1,7 @@
 package kannoo.core
 
 import kannoo.impl.Softmax
-import kannoo.math.Tensor
+import kannoo.math.TensorBase
 
 class BackPropagator(
     val model: Model,
@@ -16,7 +16,7 @@ class BackPropagator(
     }
 
     private fun forwardPass(sample: Sample<*>) {
-        var input = sample.input
+        var input = sample.input as TensorBase
         model.layers.forEachIndexed { i, layer ->
             preActivations[i] = layer.preActivation(input)
             activations[i] = layer.activationFunction.compute(preActivations[i])
@@ -25,7 +25,7 @@ class BackPropagator(
     }
 
     private fun backPropagate(sample: Sample<*>, gradientReceiver: GradientReceiver) {
-        var deltaActivation: Tensor<*> = cost.derivative(sample.target, activations[model.layers.size - 1])
+        var deltaActivation = cost.derivative(sample.target, activations[model.layers.size - 1])
 
         for (i in (model.layers.size - 1) downTo 0) {
             val deltaPreActivation =
