@@ -8,7 +8,7 @@ import kotlin.math.log2
  *
  * @return A new tensor with `exp` applied to all scalar elements
  */
-fun <T : Tensor<T>> exp(tensor: T): T =
+fun <T : BoundedTensor<T>> exp(tensor: T): T =
     tensor.map(::exp)
 
 /**
@@ -16,7 +16,7 @@ fun <T : Tensor<T>> exp(tensor: T): T =
  *
  * @return A new tensor with `log2` applied to all scalar elements
  */
-fun <T : Tensor<T>> log2(tensor: T): T =
+fun <T : BoundedTensor<T>> log2(tensor: T): T =
     tensor.map(::log2)
 
 /**
@@ -24,9 +24,9 @@ fun <T : Tensor<T>> log2(tensor: T): T =
  *
  * @return A new tensor all scalar elements squared
  */
-fun <T : Tensor<T>> square(tensor: T): T {
+fun <T : BoundedTensor<T>> square(tensor: T): T {
     @Suppress("UNCHECKED_CAST")
-    return square(tensor as TensorBase) as T
+    return square(tensor as Tensor) as T
 }
 
 /**
@@ -34,5 +34,5 @@ fun <T : Tensor<T>> square(tensor: T): T {
  *
  * @return A new tensor all scalar elements squared
  */
-fun square(tensor: TensorBase): TensorBase =
+fun square(tensor: Tensor): Tensor =
     tensor.map { it * it }

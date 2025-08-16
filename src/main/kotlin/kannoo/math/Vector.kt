@@ -6,7 +6,7 @@ package kannoo.math
  * @param elements Element array to initialize the vector with. This array is part of the public API of this class and
  * may be written to.
  */
-class Vector(val elements: FloatArray) : Tensor<Vector> {
+class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
 
     /**
      * Tensor rank, always equal to `1` for vectors.

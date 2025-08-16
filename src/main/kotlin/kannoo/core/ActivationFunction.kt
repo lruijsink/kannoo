@@ -1,19 +1,19 @@
 package kannoo.core
 
+import kannoo.math.BoundedTensor
 import kannoo.math.Tensor
-import kannoo.math.TensorBase
 
 interface ActivationFunction {
-    fun compute(tensor: TensorBase): TensorBase
-    fun derivative(tensor: TensorBase): TensorBase
+    fun compute(tensor: Tensor): Tensor
+    fun derivative(tensor: Tensor): Tensor
 
-    fun <T : Tensor<T>> compute(tensor: T): T {
+    fun <T : BoundedTensor<T>> compute(tensor: T): T {
         @Suppress("UNCHECKED_CAST")
-        return compute(tensor as TensorBase) as T
+        return compute(tensor as Tensor) as T
     }
 
-    fun <T : Tensor<T>> derivative(tensor: T): T {
+    fun <T : BoundedTensor<T>> derivative(tensor: T): T {
         @Suppress("UNCHECKED_CAST")
-        return derivative(tensor as TensorBase) as T
+        return derivative(tensor as Tensor) as T
     }
 }

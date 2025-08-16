@@ -189,7 +189,7 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
  *
  * @return Rank N + 1 tensor, where N = [T]'s rank, containing [slices]
  */
-fun <T : Composite<T, S>, S : Tensor<S>> tensor(vararg slices: T): NTensor<T> {
+fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTensor<T> {
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }

@@ -32,7 +32,7 @@ data class Shape(val dimensions: List<Int>) {
     /**
      * @return New tensor, with elements initialized to zero, with dimensions equal to this shape.
      */
-    fun createTensor(): TensorBase = when (dimensions.size) {
+    fun createTensor(): Tensor = when (dimensions.size) {
         1 -> Vector(dimensions[0])
         2 -> Matrix(dimensions[0], dimensions[1])
         3 -> NTensor(dimensions[0]) { Matrix(dimensions[1], dimensions[2]) }

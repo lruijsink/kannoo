@@ -1,7 +1,7 @@
 package kannoo.core
 
 import kannoo.impl.Softmax
-import kannoo.math.TensorBase
+import kannoo.math.Tensor
 
 class BackPropagator(
     val model: Model,
@@ -16,7 +16,7 @@ class BackPropagator(
     }
 
     private fun forwardPass(sample: Sample<*>) {
-        var input = sample.input as TensorBase
+        var input = sample.input as Tensor
         model.layers.forEachIndexed { i, layer ->
             preActivations[i] = layer.preActivation(input)
             activations[i] = layer.activationFunction.compute(preActivations[i])

@@ -1,7 +1,6 @@
 package kannoo.core
 
 import kannoo.math.Tensor
-import kannoo.math.TensorBase
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
@@ -18,7 +17,7 @@ class GradientComputer(
     private val combinedLock = ReentrantLock()
     private val executorService = Executors.newFixedThreadPool(threadCount)
 
-    fun computeGradients(samples: List<Sample<*>>): Map<TensorBase, TensorBase> {
+    fun computeGradients(samples: List<Sample<*>>): Map<Tensor, Tensor> {
         val q = AtomicInteger(0)
         val futures = List(threadCount) { t ->
             executorService.submit {

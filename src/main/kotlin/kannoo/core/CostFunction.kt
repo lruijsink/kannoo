@@ -1,19 +1,19 @@
 package kannoo.core
 
+import kannoo.math.BoundedTensor
 import kannoo.math.Tensor
-import kannoo.math.TensorBase
 
 interface CostFunction {
-    fun compute(target: TensorBase, actual: TensorBase): TensorBase
-    fun derivative(target: TensorBase, actual: TensorBase): TensorBase
+    fun compute(target: Tensor, actual: Tensor): Tensor
+    fun derivative(target: Tensor, actual: Tensor): Tensor
 
-    fun <T : Tensor<T>> compute(target: T, actual: T): T {
+    fun <T : BoundedTensor<T>> compute(target: T, actual: T): T {
         @Suppress("UNCHECKED_CAST")
-        return compute(target as TensorBase, actual as TensorBase) as T
+        return compute(target as Tensor, actual as Tensor) as T
     }
 
-    fun <T : Tensor<T>> derivative(target: T, actual: T): T {
+    fun <T : BoundedTensor<T>> derivative(target: T, actual: T): T {
         @Suppress("UNCHECKED_CAST")
-        return derivative(target as TensorBase, actual as TensorBase) as T
+        return derivative(target as Tensor, actual as Tensor) as T
     }
 }
