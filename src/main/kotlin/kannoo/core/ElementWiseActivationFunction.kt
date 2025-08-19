@@ -1,11 +1,14 @@
 package kannoo.core
 
-import kannoo.math.Vector
+import kannoo.math.Tensor
 
 abstract class ElementWiseActivationFunction : ActivationFunction {
     abstract fun compute(x: Float): Float
     abstract fun derivative(x: Float): Float
 
-    override fun compute(v: Vector): Vector = v.map(::compute)
-    override fun derivative(v: Vector): Vector = v.map(::derivative)
+    final override fun compute(tensor: Tensor): Tensor =
+        tensor.map(::compute)
+
+    final override fun derivative(tensor: Tensor): Tensor =
+        tensor.map(::derivative)
 }

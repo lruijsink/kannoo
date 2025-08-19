@@ -6,9 +6,9 @@ import kannoo.core.Model
 import kannoo.core.Sample
 import kannoo.impl.CrossEntropyLoss
 import kannoo.impl.DenseLayer
+import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
-import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.impl.denseLayer
 import kannoo.io.readModelFromFile
@@ -17,6 +17,7 @@ import kannoo.io.writeMatricesAsRGB
 import kannoo.io.writeModelToFile
 import kannoo.math.Matrix
 import kannoo.math.Vector
+import kannoo.math.mean
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import kotlin.math.round
@@ -40,7 +41,7 @@ fun targetOf(digit: String): Vector {
 fun inputOf(pixels: List<String>): Vector =
     Vector(pixels.map { it.toFloat() / 255f }.toFloatArray())
 
-fun readCSVs(fileName: String): List<Sample> =
+fun readCSVs(fileName: String): List<Sample<Vector>> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
@@ -49,7 +50,7 @@ fun readCSVs(fileName: String): List<Sample> =
         .map { it.split(',') }
         .map { ex -> Sample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
-fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, compact: Boolean = false) {
+fun showTestSetError(testSet: List<Sample<Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
     val count = MutableList(10) { 0 }
     val costSum = MutableList(10) { 0f }
     val mseSum = MutableList(10) { 0f }
@@ -60,8 +61,8 @@ fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, co
         val output = model.compute(input)
         count[digit]++
         outputSum[digit].plusAssign(output)
-        costSum[digit] += cost.compute(target, output)
-        mseSum[digit] += MeanSquaredError.compute(target, output)
+        costSum[digit] += cost.compute(target, output).mean()
+        mseSum[digit] += MeanSquaredError.compute(target, output).mean()
     }
 
     println(
@@ -99,15 +100,14 @@ fun MNIST() {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
             InputLayer(28 * 28),
-            denseLayer(256, ReLU),
-            denseLayer(64, ReLU),
-            denseLayer(16, ReLU),
+            denseLayer(400, Logistic),
+            denseLayer(100, Logistic),
             denseLayer(10, Softmax),
         )
     }
 
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 256, learningRate = 0.01f)
+        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 128, learningRate = 0.01f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")

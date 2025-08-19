@@ -1,20 +1,36 @@
 package kannoo.core
 
+import kannoo.math.BoundedTensor
+import kannoo.math.Shape
 import kannoo.math.Tensor
-import kannoo.math.Vector
 
-abstract class InnerLayer(
-    val size: Int,
+abstract class InnerLayer<T : BoundedTensor<T>, O : BoundedTensor<O>>(
+    val outputShape: Shape,
     val activationFunction: ActivationFunction,
 ) {
-    abstract val learnable: List<Tensor<*>>
+    abstract val learnable: List<Tensor>
 
-    abstract fun preActivation(input: Vector): Vector
+    abstract fun preActivation(input: T): O
 
-    abstract fun deltaInput(deltaPreActivation: Vector, input: Vector): Vector
+    abstract fun deltaInput(deltaPreActivation: O, input: T): T
 
-    abstract fun gradients(deltaPreActivation: Vector, input: Vector, gradient: GradientReceiver)
+    abstract fun gradients(deltaPreActivation: O, input: T, gradient: GradientReceiver)
 
-    fun compute(input: Vector): Vector =
+    fun preActivation(input: Tensor): O {
+        @Suppress("UNCHECKED_CAST") // TODO: see if this cast can checked with reified dense(...) etc.
+        return preActivation(input as T)
+    }
+
+    fun deltaInput(deltaPreActivation: Tensor, input: Tensor): T {
+        @Suppress("UNCHECKED_CAST") // TODO: see if this cast can checked with reified dense(...) etc.
+        return deltaInput(deltaPreActivation as O, input as T)
+    }
+
+    fun gradients(deltaPreActivation: Tensor, input: Tensor, gradient: GradientReceiver) {
+        @Suppress("UNCHECKED_CAST") // TODO: see if this cast can checked with reified dense(...) etc.
+        gradients(deltaPreActivation as O, input as T, gradient)
+    }
+
+    fun compute(input: Tensor): O =
         activationFunction.compute(preActivation(input))
 }

@@ -6,12 +6,12 @@ package kannoo.math
  * @param elements Element array to initialize the vector with. This array is part of the public API of this class and
  * may be written to.
  */
-class Vector(val elements: FloatArray) : Tensor<Vector> {
+class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
 
     /**
      * Tensor rank, always equal to `1` for vectors.
      */
-    override val rank get() = 1
+    override val rank: Int get() = 1
 
     /**
      * Number of elements in this vector.
@@ -21,7 +21,7 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
     /**
      * Tensor shape, for vectors this is just a single dimension: its [size].
      */
-    override val shape: List<Int> get() = listOf(size)
+    override val shape: Shape get() = Shape(size)
 
     /**
      * @return A deep copy of this vector
@@ -211,6 +211,15 @@ class Vector(val elements: FloatArray) : Tensor<Vector> {
     override fun forEachElement(operation: (element: Float) -> Unit) {
         elements.forEach(operation)
     }
+
+    /**
+     * Vectors are already flat so this produces the vector as-is, but note that this produces a copy rather than
+     * returning the same object.
+     *
+     * @return Copy of this vector
+     */
+    override fun flatten(): Vector =
+        copy()
 
     /**
      * Calls [operation] with each element in the vector, and its respective index, in order.

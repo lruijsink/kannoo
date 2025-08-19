@@ -1,8 +1,5 @@
 package kannoo.math
 
-import kotlin.math.max
-import kotlin.math.min
-
 /**
  * A tensor is a numeric data structure of dimensions equal to its [rank] which abstracts the concept of [Vector]
  * (rank 1) and [Matrix] (rank 2) to higher dimensions. Tensors are regular and rectangular, each slice shares the same
@@ -52,9 +49,9 @@ import kotlin.math.min
  * This interface provides a default implementation for many operations, [Vector] and [Matrix] largely override these in
  * favor of more efficient implementations.
  *
- * Writes to this class are NOT thread-safe, nor are any of its modifying operations.
+ * Writes to a tensor object are NOT thread-safe, nor are any of its modifying operations.
  */
-sealed interface Tensor<T : Tensor<T>> : TensorBase {
+sealed interface Tensor {
 
     /**
      * The rank (dimensions) of this tensor. For example, a [Vector] is rank 1 and a [Matrix] is rank 2.
@@ -77,27 +74,28 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *   [9  0  1  2]   [1  2  3  4] ]
      * ```
      */
-    val shape: List<Int>
+    val shape: Shape
+
+    /**
+     * Total number of elements in the tensor, across all ranks. Equivalent to multiplying the size of each slice. For
+     * example: a tensor of 3 matrix slices with dimensions 2 x 5 has 3 x 2 x 5 = 30 total elements.
+     */
+    val totalElements: Int
 
     /**
      * @return A deep copy of this tensor, with equal shape and element values
      */
-    fun copy(): T
+    fun copy(): Tensor
 
     /**
      * @return A zeroed-out copy of this tensor, with equal shape.
      */
-    fun copyZero(): T {
-        val copy = copy()
-        copy.zero()
-        return copy
-    }
+    fun copyZero(): Tensor
 
     /**
-     * Generic (unsafe) overload of [plus]
+     * @return New tensor `T` where `T[i]` = `-this[i]`
      */
-    operator fun plus(other: TensorBase): T =
-        plus(castUnsafe(other))
+    operator fun unaryMinus(): Tensor
 
     /**
      * @param other Tensor to sum with
@@ -106,14 +104,7 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    operator fun plus(other: T): T =
-        zip(other) { x, y -> x + y }
-
-    /**
-     * Generic (unsafe) overload of [minus]
-     */
-    operator fun minus(other: TensorBase) =
-        minus(castUnsafe(other))
+    operator fun plus(other: Tensor): Tensor
 
     /**
      * @param other Tensor to subtract
@@ -122,31 +113,21 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    operator fun minus(other: T): T =
-        zip(other) { x, y -> x - y }
+    operator fun minus(other: Tensor): Tensor
 
     /**
      * @param scalar Scalar value to multiply by
      *
      * @return New tensor `T` where `T[i]` = `this[i] * scalar`
      */
-    operator fun times(scalar: Float): T =
-        map { it * scalar }
+    operator fun times(scalar: Float): Tensor
 
     /**
      * @param scalar Scalar value to divide by
      *
      * @return New tensor `T` where `T[i]` = `this[i] / scalar`
      */
-    operator fun div(scalar: Float): T =
-        map { it / scalar }
-
-    /**
-     * Generic (unsafe) overload of [plusAssign]
-     */
-    operator fun plusAssign(other: TensorBase) {
-        plusAssign(castUnsafe(other))
-    }
+    operator fun div(scalar: Float): Tensor
 
     /**
      * Add each element in [other] to the corresponding element in this tensor, in-place.
@@ -155,16 +136,7 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    operator fun plusAssign(other: T) {
-        zipAssign(other) { x, y -> x + y }
-    }
-
-    /**
-     * Generic (unsafe) overload of [minusAssign]
-     */
-    operator fun minusAssign(other: TensorBase) {
-        minusAssign(castUnsafe(other))
-    }
+    operator fun plusAssign(other: Tensor)
 
     /**
      * Subtract each element in [other] from the corresponding element in this tensor, in-place.
@@ -173,34 +145,28 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    operator fun minusAssign(other: T) {
-        zipAssign(other) { x, y -> x - y }
-    }
+    operator fun minusAssign(other: Tensor)
 
     /**
      * Multiplies all values in this tensor by [scalar], in-place.
      *
      * @param scalar Scalar value to multiply by
      */
-    operator fun timesAssign(scalar: Float) {
-        mapAssign { it * scalar }
-    }
+    operator fun timesAssign(scalar: Float)
 
     /**
      * Divides all values in this tensor by [scalar], in-place.
      *
      * @param scalar Scalar value to divide by
      */
-    operator fun divAssign(scalar: Float) {
-        mapAssign { it / scalar }
-    }
+    operator fun divAssign(scalar: Float)
 
     /**
      * @param [function] Function to apply
      *
      * @return A new tensor with `function` applied elementwise to this tensor
      */
-    fun map(function: (Float) -> Float): T
+    fun map(function: (Float) -> Float): Tensor
 
     /**
      * Applies [function] to all scalar elements in this tensor, in-place.
@@ -223,13 +189,7 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    fun zip(other: T, combine: (left: Float, right: Float) -> Float): T
-
-    /**
-     * Generic (unsafe) overload of [zip]
-     */
-    fun zip(other: TensorBase, combine: (left: Float, right: Float) -> Float): T =
-        zip(castUnsafe(other), combine)
+    fun zip(other: Tensor, combine: (left: Float, right: Float) -> Float): Tensor
 
     /**
      * Zips this tensor with another and applies the combining operation over each (element, element) pair in-place,
@@ -243,18 +203,11 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    fun zipAssign(other: T, combine: (left: Float, right: Float) -> Float)
+    fun zipAssign(other: Tensor, combine: (left: Float, right: Float) -> Float)
 
     /**
-     * Generic (unsafe) overload of [zipAssign]
-     */
-    fun zipAssign(other: TensorBase, combine: (left: Float, right: Float) -> Float) {
-        zipAssign(castUnsafe(other), combine)
-    }
-
-    /**
-     * Calls [operation] with each element in the tensor, recursively from highest to lowest rank. For example, given
-     * the following 3D tensor:
+     * Calls [operation] with each element in the tensor, in row-major order (recursively from highest to lowest rank).
+     * For example, given the following 3D tensor:
      *
      * ```text
      * [ [1  2]   [5  6]
@@ -277,45 +230,27 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws TensorOperationException if this tensor is empty
      */
-    fun reduce(operation: (accumulator: Float, element: Float) -> Float): Float {
-        var first = true
-        var acc = 0f
-
-        forEachElement { element ->
-            acc = if (first) element else operation(acc, element)
-            first = false
-        }
-
-        if (first)
-            throw EmptyTensorException("Cannot reduce an empty tensor")
-
-        return acc
-    }
+    fun reduce(operation: (accumulator: Float, element: Float) -> Float): Float
 
     /**
      * @return The sum over all elements in this tensor.
      */
-    fun sum(): Float =
-        reduce { x, y -> x + y }
+    fun sum(): Float
 
     /**
      * @return The minimum (smallest) element in this tensor.
      */
-    fun min(): Float =
-        reduce(::min)
+    fun min(): Float
 
     /**
      * @return The maximum (largest) element in this tensor.
      */
-    fun max(): Float =
-        reduce(::max)
+    fun max(): Float
 
     /**
      * Sets all elements in the tensor to zero (`0f`)
      */
-    fun zero() {
-        mapAssign { 0f }
-    }
+    fun zeroAssign()
 
     /**
      * Computes the Hadamard product, which multiples each element in both tensors elementwise.
@@ -328,35 +263,25 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
      *
      * @throws IncompatibleShapeException if the tensors do not have the same [shape]
      */
-    infix fun hadamard(other: T): T =
-        zip(other) { x, y -> x * y }
+    infix fun hadamard(other: Tensor): Tensor
 
     /**
-     * Generic (unsafe) overload of [hadamard]
+     * Flattens the tensor down to a [Vector], in row-major order (recursively from highest to lowest rank). For
+     * example, given the following 3D tensor:
+     *
+     * ```text
+     * [ [1  2]   [5  6]
+     *   [3  4]   [7  8] ]
+     * ```
+     *
+     * It would flatten to (1, 2, 3, 4, 5, 6, 7, 8)
+     *
+     * @return Vector containing all tensor elements
      */
-    infix fun hadamard(other: TensorBase): T =
-        hadamard(castUnsafe(other))
-
-    /**
-     * Casts any [TensorBase] to [T] as long as it has the same shape. This cast is guaranteed to be valid because every
-     * possible rank of tensor always corresponds to the same class:
-     *
-     * 1 = [Vector], 2 = [Matrix], 3+ = [NTensor]
-     *
-     * @param other Tensor to cast to [T]
-     *
-     * @return [other] cast to [T]
-     *
-     * @throws IncompatibleGenericTensorException If the tensors do not have the same shape
-     */
-    private fun castUnsafe(other: TensorBase): T {
-        if (this.shape != (other as Tensor<*>).shape)
-            throw IncompatibleGenericTensorException("Cannot cast a generic tensor to a tensor with different shape")
-
-        @Suppress("UNCHECKED_CAST")
-        return other as T
-    }
+    fun flatten(): Vector
 }
+
+const val RUNTIME_TENSOR_CHECKS = false
 
 /**
  * [Tensor.times] with the arguments flipped. These operation are symmetric and equivalent.
@@ -365,34 +290,8 @@ sealed interface Tensor<T : Tensor<T>> : TensorBase {
  *
  * @return New tensor `T` where `T[i]` = `other[i] * this`
  */
-operator fun <T : Tensor<T>> Float.times(other: T) =
+operator fun Float.times(other: Tensor) =
     other.map { it * this }
-
-/**
- * Sums over an [Iterable] with elements of type [V] which get mapped to tensors of type [T], in the same way as
- * with [Iterable.sumOf].
- *
- * @param V Iterator element type
- *
- * @param T Tensor type
- *
- * @param selector Function that selects a [T] tensor from a [V] element
- *
- * @return The selected [T] tensors summed with [Tensor.plus]
- *
- * @throws EmptyTensorException if the selected tensors do not all share the same shape
- */
-inline fun <V, T : Tensor<T>> Iterable<V>.sumOfTensor(crossinline selector: (V) -> T): T {
-    val itr = iterator()
-    if (!itr.hasNext())
-        throw EmptyTensorException("Cannot sum over empty collection of tensors")
-
-    val accumulator = selector(itr.next())
-    while (itr.hasNext())
-        accumulator += selector(itr.next())
-
-    return accumulator
-}
 
 /**
  * Base class for all illegal or unsupported tensor operation exceptions.
@@ -410,8 +309,8 @@ open class IncompatibleShapeException(message: String) : TensorOperationExceptio
 open class EmptyTensorException(message: String) : TensorOperationException(message)
 
 /**
- * Thrown by [Tensor.castUnsafe], and methods which call it, when attempting to convert an incompatible generic
- * [TensorBase] to that specific [Tensor] type.
+ * Thrown by [BoundedTensor.castUnsafe], and methods which call it, when attempting to convert an incompatible generic
+ * [Tensor] to that specific [BoundedTensor] type.
  *
  * Only tensors with equal [Tensor.shape] are compatible.
  */

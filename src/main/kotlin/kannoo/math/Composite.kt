@@ -1,14 +1,18 @@
 package kannoo.math
 
 /**
- * Tensor composed of [slices] with [rank] N - 1. There are two types of composite tensor: [Matrix] and [NTensor]. The
- * only non-[Composite] tensor type is [Vector], and those together make up all possible [Tensor] types.
+ * Tensor composed of [slices] with [rank] N - 1. There are two types of composite tensor:
+ * - [Matrix] (rank 2)
+ * - [NTensor] (rank 3+)
+ *
+ * The only non-[Composite] tensor type is [Vector].
  *
  * @param T Composite tensor type
  *
  * @param S Slice tensor type
  */
-sealed interface Composite<T : Tensor<T>, S : Tensor<S>> : Tensor<T> {
+sealed interface Composite<T : BoundedTensor<T>, S : BoundedTensor<S>> : BoundedTensor<T> {
+    // TODO: Can this generic definition ^ be simplified with Tensor ?
 
     /**
      * Slices that make up this tensor, themselves tensors of rank [rank]` - 1`

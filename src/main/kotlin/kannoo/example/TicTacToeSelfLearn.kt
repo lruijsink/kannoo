@@ -9,7 +9,9 @@ import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.impl.denseLayer
+import kannoo.math.Tensor
 import kannoo.math.Vector
+import kannoo.math.mean
 import kannoo.math.sumOf
 import kannoo.math.vector
 import java.util.concurrent.locks.ReentrantLock
@@ -37,8 +39,9 @@ fun moves(board: Board, play: Square): List<Board> {
     return moves
 }
 
-fun Vector.scoreOf(eval: Eval): Float =
-    when (eval) {
+fun Tensor.scoreOf(eval: Eval): Float =
+    if (this !is Vector) throw IllegalArgumentException("Requires vector")
+    else when (eval) {
         Eval.XWin -> this[0]
         Eval.Draw -> this[1]
         Eval.OWin -> this[2]
@@ -70,14 +73,14 @@ fun inputOf(board: Board): Vector {
     return Vector((squares + player).toFloatArray())
 }
 
-fun trainingDataOf(boards: List<Board>, eval: Eval): List<Sample> =
+fun trainingDataOf(boards: List<Board>, eval: Eval): List<Sample<*>> =
     boards.map { board -> Sample(input = inputOf(board), target = eval.toTarget()) }
 
 fun meanCostAgainstPerfect(model: Model, perfectPlays: List<Pair<Vector, Vector>>): Float {
     var totalCost = 0f
     val cost = MeanSquaredError
     perfectPlays.forEach { (target, input) ->
-        totalCost += cost.compute(target, model.compute(input))
+        totalCost += cost.compute(target, model.compute(input)).mean()
     }
     return totalCost / cache.size
 }
@@ -119,7 +122,7 @@ fun ticTacToeSelfLearn() {
         println("Round ${i + 1}:")
 
         repeat(100) { j ->
-            val trainingData = mutableListOf<Sample>()
+            val trainingData = mutableListOf<Sample<*>>()
             val tdl = ReentrantLock()
             val threads = List(20) {
                 Thread {

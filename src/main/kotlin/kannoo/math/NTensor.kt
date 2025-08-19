@@ -9,8 +9,6 @@ package kannoo.math
  * @param T Slice tensor type, must be [Composite]
  *
  * @param S Nested slice tensor type; the slice type of [T]
- *
- * @param slices The slices to initialize this tensor with
  */
 class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where T : Composite<T, *> {
 
@@ -42,8 +40,8 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
      *   [9  0  1  2]   [1  2  3  4] ]
      * ```
      */
-    override val shape: List<Int>
-        get() = listOf(size) + slices[0].shape
+    override val shape: Shape
+        get() = Shape(compositeSize = size, sliceShape = slices[0].shape)
 
     /**
      * @return A deep copy of this tensor, with equal rank, dimensions, and element values
@@ -141,6 +139,26 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
     }
 
     /**
+     * Flattens the tensor down to a [Vector], in row-major order (recursively from highest to lowest rank). For
+     * example, given the following 3D tensor:
+     *
+     * ```text
+     * [ [1  2]   [5  6]
+     *   [3  4]   [7  8] ]
+     * ```
+     *
+     * It would flatten to (1, 2, 3, 4, 5, 6, 7, 8)
+     *
+     * @return Vector containing all tensor elements
+     */
+    override fun flatten(): Vector {
+        val res = Vector(totalElements)
+        var c = 0
+        forEachElement { res[c++] = it }
+        return res
+    }
+
+    /**
      * @param function Produces slice values
      *
      * @return New Tensor T of equal [shape] as this, and slices set to `T[i]` = [function]`(T[i])`
@@ -163,6 +181,20 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
 }
 
 /**
+ * Constructs a new [NTensor] with [size] slices defined by [initialize].
+ *
+ * @param size Number of slices to instantiate
+ *
+ * @param initialize Function used to instantiate each slice
+ *
+ * @param T Slice tensor type
+ *
+ * @return Tensor of [size] slices, each instantiated by [initialize]
+ */
+inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
+    NTensor(Array(size) { i -> initialize(i) })
+
+/**
  * Constructs a new [NTensor] composed of [slices]
  *
  * @param T Slice tensor type, must itself be [Composite]
@@ -171,7 +203,8 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
  *
  * @return Rank N + 1 tensor, where N = [T]'s rank, containing [slices]
  */
-fun <T : Composite<T, S>, S : Tensor<S>> tensor(vararg slices: T): NTensor<T> {
+fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTensor<T> {
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }
+

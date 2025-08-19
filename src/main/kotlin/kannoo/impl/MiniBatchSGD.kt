@@ -15,11 +15,11 @@ class MiniBatchSGD(
 ) {
     private val gradientComputer = GradientComputer(model, cost)
 
-    fun apply(samples: List<Sample>) {
+    fun apply(samples: List<Sample<*>>) {
         samples.shuffled().chunked(batchSize).forEach(this::batch)
     }
 
-    private fun batch(samples: List<Sample>) {
+    private fun batch(samples: List<Sample<*>>) {
         val gradients = gradientComputer.computeGradients(samples)
         val norm = euclideanNorm(gradients.values)
 
