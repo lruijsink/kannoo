@@ -9,6 +9,7 @@ import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.impl.denseLayer
+import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.mean
 import kannoo.math.sumOf
@@ -38,8 +39,9 @@ fun moves(board: Board, play: Square): List<Board> {
     return moves
 }
 
-fun Vector.scoreOf(eval: Eval): Float =
-    when (eval) {
+fun Tensor.scoreOf(eval: Eval): Float =
+    if (this !is Vector) throw IllegalArgumentException("Requires vector")
+    else when (eval) {
         Eval.XWin -> this[0]
         Eval.Draw -> this[1]
         Eval.OWin -> this[2]

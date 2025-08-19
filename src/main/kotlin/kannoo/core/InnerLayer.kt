@@ -1,7 +1,7 @@
 package kannoo.core
 
-import kannoo.math.Shape
 import kannoo.math.BoundedTensor
+import kannoo.math.Shape
 import kannoo.math.Tensor
 
 abstract class InnerLayer<T : BoundedTensor<T>, O : BoundedTensor<O>>(
@@ -16,14 +16,19 @@ abstract class InnerLayer<T : BoundedTensor<T>, O : BoundedTensor<O>>(
 
     abstract fun gradients(deltaPreActivation: O, input: T, gradient: GradientReceiver)
 
-    fun preActivation(input: Tensor): O =
-        preActivation(input as T) // TODO: cast same way as [Tensor.castUnsafe]
+    fun preActivation(input: Tensor): O {
+        @Suppress("UNCHECKED_CAST") // TODO: see if this cast can checked with reified dense(...) etc.
+        return preActivation(input as T)
+    }
 
-    fun deltaInput(deltaPreActivation: Tensor, input: Tensor): T =
-        deltaInput(deltaPreActivation as O, input as T) // TODO: cast same way as [Tensor.castUnsafe]
+    fun deltaInput(deltaPreActivation: Tensor, input: Tensor): T {
+        @Suppress("UNCHECKED_CAST") // TODO: see if this cast can checked with reified dense(...) etc.
+        return deltaInput(deltaPreActivation as O, input as T)
+    }
 
     fun gradients(deltaPreActivation: Tensor, input: Tensor, gradient: GradientReceiver) {
-        gradients(deltaPreActivation as O, input as T, gradient) // TODO: cast same way as [Tensor.castUnsafe]
+        @Suppress("UNCHECKED_CAST") // TODO: see if this cast can checked with reified dense(...) etc.
+        gradients(deltaPreActivation as O, input as T, gradient)
     }
 
     fun compute(input: Tensor): O =

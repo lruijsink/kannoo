@@ -181,6 +181,20 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
 }
 
 /**
+ * Constructs a new [NTensor] with [size] slices defined by [initialize].
+ *
+ * @param size Number of slices to instantiate
+ *
+ * @param initialize Function used to instantiate each slice
+ *
+ * @param T Slice tensor type
+ *
+ * @return Tensor of [size] slices, each instantiated by [initialize]
+ */
+inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
+    NTensor(Array(size) { i -> initialize(i) })
+
+/**
  * Constructs a new [NTensor] composed of [slices]
  *
  * @param T Slice tensor type, must itself be [Composite]
@@ -194,6 +208,3 @@ fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTenso
     return NTensor(slices as Array<T>)
 }
 
-// TODO: doc
-inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
-    NTensor(Array(size) { i -> initialize(i) })

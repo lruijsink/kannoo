@@ -14,6 +14,7 @@ import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
 import kannoo.impl.denseLayer
+import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.mean
 import kannoo.math.sumOf
@@ -147,8 +148,9 @@ fun List<Pair<Int, Int>>.toTarget(): Vector =
         }.toFloatArray()
     )
 
-fun Vector.toMoves(): List<Pair<Int, Int>> =
-    listOfNotNull(
+fun Tensor.toMoves(): List<Pair<Int, Int>> {
+    if (this !is Vector) throw IllegalArgumentException("Requires vector")
+    return listOfNotNull(
         if (this[0] > 0.5) Pair(0, 0) else null,
         if (this[1] > 0.5) Pair(0, 1) else null,
         if (this[2] > 0.5) Pair(0, 2) else null,
@@ -159,6 +161,7 @@ fun Vector.toMoves(): List<Pair<Int, Int>> =
         if (this[7] > 0.5) Pair(2, 1) else null,
         if (this[8] > 0.5) Pair(2, 2) else null,
     )
+}
 
 fun printBoards(boards: List<Board>) {
     for (i in 0 until 3) {

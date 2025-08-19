@@ -8,6 +8,7 @@ import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.denseLayer
+import kannoo.math.Vector
 import kannoo.math.mean
 import kannoo.math.sumOf
 import kannoo.math.vector
@@ -63,7 +64,7 @@ fun booleanFunctionsExample() {
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->
-                        t.elements.map { it.toInt() }.joinToString("") to rnd(model.compute(t)[0])
+                        t.elements.map { it.toInt() }.joinToString("") to rnd((model.compute(t) as Vector)[0])
                     }
         )
         n++
@@ -81,6 +82,6 @@ fun booleanFunctionsExample() {
     println()
 
     trainingData.map { it.input }.chunked(4).forEach { chunk ->
-        println(chunk.map { round(model.compute(it)[0]).toInt() })
+        println(chunk.map { round((model.compute(it) as Vector)[0]).toInt() })
     }
 }

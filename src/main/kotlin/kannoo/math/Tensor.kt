@@ -281,6 +281,8 @@ sealed interface Tensor {
     fun flatten(): Vector
 }
 
+const val RUNTIME_TENSOR_CHECKS = false
+
 /**
  * [Tensor.times] with the arguments flipped. These operation are symmetric and equivalent.
  *

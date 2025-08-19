@@ -114,26 +114,6 @@ sealed interface BoundedTensor<T : BoundedTensor<T>> : Tensor {
     infix fun hadamard(other: T): T =
         zip(other) { x, y -> x * y }
 
-    /**
-     * Casts any [Tensor] to [T] as long as it has the same shape. This cast is guaranteed to be valid because every
-     * possible rank of tensor always corresponds to the same class:
-     *
-     * 1 = [Vector], 2 = [Matrix], 3+ = [NTensor]
-     *
-     * @param other Tensor to cast to [T]
-     *
-     * @return [other] cast to [T]
-     *
-     * @throws IncompatibleGenericTensorException If the tensors do not have the same shape
-     */
-    private fun castUnsafe(other: Tensor): T {
-        if (this.shape != other.shape)
-            throw IncompatibleGenericTensorException("Cannot cast a generic tensor to a tensor with different shape")
-
-        @Suppress("UNCHECKED_CAST")
-        return other as T
-    }
-
     //
     // Default implementations and specializations of [TensorBase] as [T]:
     //
@@ -219,4 +199,24 @@ sealed interface BoundedTensor<T : BoundedTensor<T>> : Tensor {
 
     override infix fun hadamard(other: Tensor): T =
         hadamard(castUnsafe(other))
+
+    /**
+     * Casts any [Tensor] to [T] as long as it has the same shape. This cast is guaranteed to be valid because every
+     * possible rank of tensor always corresponds to the same class:
+     *
+     * 1 = [Vector], 2 = [Matrix], 3+ = [NTensor]
+     *
+     * @param other Tensor to cast to [T]
+     *
+     * @return [other] cast to [T]
+     *
+     * @throws IncompatibleGenericTensorException If the tensors do not have the same shape
+     */
+    private fun castUnsafe(other: Tensor): T {
+        if (RUNTIME_TENSOR_CHECKS && this.shape != other.shape)
+            throw IncompatibleGenericTensorException("Cannot cast a generic tensor to a tensor with different shape")
+
+        @Suppress("UNCHECKED_CAST")
+        return other as T
+    }
 }
