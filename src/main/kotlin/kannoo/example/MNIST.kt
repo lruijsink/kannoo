@@ -41,7 +41,7 @@ fun targetOf(digit: String): Vector {
 fun inputOf(pixels: List<String>): Vector =
     Vector(pixels.map { it.toFloat() / 255f }.toFloatArray())
 
-fun readCSVs(fileName: String): List<Sample<Vector>> =
+fun readCSVs(fileName: String): List<Sample<Vector, Vector>> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
@@ -50,7 +50,7 @@ fun readCSVs(fileName: String): List<Sample<Vector>> =
         .map { it.split(',') }
         .map { ex -> Sample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
-fun showTestSetError(testSet: List<Sample<Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
+fun showTestSetError(testSet: List<Sample<Vector, Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
     val count = MutableList(10) { 0 }
     val costSum = MutableList(10) { 0f }
     val mseSum = MutableList(10) { 0f }

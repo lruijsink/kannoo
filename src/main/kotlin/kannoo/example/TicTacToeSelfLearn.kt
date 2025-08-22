@@ -73,7 +73,7 @@ fun inputOf(board: Board): Vector {
     return Vector((squares + player).toFloatArray())
 }
 
-fun trainingDataOf(boards: List<Board>, eval: Eval): List<Sample<*>> =
+fun trainingDataOf(boards: List<Board>, eval: Eval): List<Sample<*, *>> =
     boards.map { board -> Sample(input = inputOf(board), target = eval.toTarget()) }
 
 fun meanCostAgainstPerfect(model: Model, perfectPlays: List<Pair<Vector, Vector>>): Float {
@@ -122,7 +122,7 @@ fun ticTacToeSelfLearn() {
         println("Round ${i + 1}:")
 
         repeat(100) { j ->
-            val trainingData = mutableListOf<Sample<*>>()
+            val trainingData = mutableListOf<Sample<*, *>>()
             val tdl = ReentrantLock()
             val threads = List(20) {
                 Thread {

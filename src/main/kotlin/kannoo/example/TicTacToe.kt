@@ -185,7 +185,7 @@ fun printMoves(moveLists: List<List<Pair<Int, Int>>>) {
 fun ticTacToeExample() {
     solve(emptyBoard, startingPlayer)
 
-    val trainingData: List<Sample<Vector>> = bestMoves.map { (board, bestMoves) ->
+    val trainingData: List<Sample<Vector, Vector>> = bestMoves.map { (board, bestMoves) ->
         Sample(input = board.toInput(), target = bestMoves.toTarget())
     }
 

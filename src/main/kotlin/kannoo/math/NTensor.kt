@@ -178,6 +178,15 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
         for (i in 0 until size)
             this[i] = function(i)
     }
+
+    override fun toString(): String =
+        slices.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is NTensor<T> && slices.contentEquals(other.slices)
+
+    override fun hashCode(): Int =
+        slices.contentHashCode()
 }
 
 /**
@@ -207,4 +216,3 @@ fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTenso
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }
-

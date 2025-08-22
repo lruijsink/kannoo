@@ -44,6 +44,11 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
     val rowVectors: Array<Vector> get() = slices
 
     /**
+     * Dimensions of this matrix where height = [rows] and width = [cols].
+     */
+    val dimensions: Dimensions get() = Dimensions(height = rows, width = cols)
+
+    /**
      * @param index Row vector index to get
      *
      * @return Row vector at index [index]
@@ -307,6 +312,35 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
      */
     fun transpose(): Matrix =
         Matrix(cols, rows) { i, j -> this[j, i] }
+
+    // TODO: doc
+    // [ 1 2 3 ]    [ 9 8 7 ]
+    // [ 4 5 6 ] -> [ 6 5 4 ]
+    // [ 7 8 9 ]    [ 3 2 1 ]
+    //
+    // [ 1 2 3 4 ]    [ 8 7 6 5 ]
+    // [ 5 6 7 8 ] -> [ 4 3 2 1 ]
+    fun rotate180(): Matrix =
+        Matrix(rows, cols) { i, j -> this[rows - 1 - i, cols - 1 - j] }
+
+    override fun toString(): String =
+        rowVectors.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is Matrix && rowVectors.contentEquals(other.rowVectors)
+
+    override fun hashCode(): Int =
+        rowVectors.contentHashCode()
+
+    fun prettyPrint(): String {
+        val w = rowVectors.maxOf { row ->
+            row.elements
+                .map { it.toString() }
+                .map { if (it.endsWith(".0")) it.dropLast(2) else it }
+                .maxOf { it.length }
+        }
+        return rowVectors.joinToString("\n") { it.prettyPrint(w) }
+    }
 }
 
 /**

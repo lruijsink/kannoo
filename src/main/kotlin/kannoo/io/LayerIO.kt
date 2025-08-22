@@ -7,7 +7,6 @@ import kotlin.reflect.KClass
 
 sealed class LayerIO<T : InnerLayer<*, *>>(kClass: KClass<T>) {
     val tag = kClass.tag()
-    abstract fun headers(layer: T): List<String>
     abstract fun write(layer: T, outputStream: DataOutputStream)
     abstract fun read(inputStream: DataInputStream): T
 
@@ -17,8 +16,9 @@ sealed class LayerIO<T : InnerLayer<*, *>>(kClass: KClass<T>) {
     }
 }
 
-private val layerIO = listOf<LayerIO<*>>(
+private val layerIO = listOf(
     DenseLayerIO,
+    GrayscaleConvolutionLayerIO,
 )
 
 fun DataInputStream.readLayer(): InnerLayer<*, *> {

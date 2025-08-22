@@ -1,6 +1,5 @@
 package kannoo.core
 
-import kannoo.math.Shape
 import kannoo.math.Tensor
 
 class Model {
@@ -18,7 +17,7 @@ class Model {
         val innerLayerAcc = mutableListOf<InnerLayer<*, *>>()
         initializers.forEachIndexed { i, init ->
             innerLayerAcc += init.initialize(
-                if (i == 0) Shape(inputLayer.size)
+                if (i == 0) inputLayer.shape
                 else innerLayerAcc[i - 1].outputShape,
             )
         }

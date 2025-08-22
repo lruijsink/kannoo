@@ -1,11 +1,19 @@
 package kannoo.core
 
 import kannoo.math.Tensor
+import java.util.IdentityHashMap
 
 class GradientReceiver(model: Model) {
-    val gradients: Map<Tensor, Tensor> = model.layers
-        .flatMap { it.learnable }
-        .associateWith { param -> param.copyZero() }
+    val gradients: Map<Tensor, Tensor>
+
+    init {
+        val gs = IdentityHashMap<Tensor, Tensor>() // Index by reference, not value
+        for (layer in model.layers)
+            for (tensor in layer.learnable)
+                gs[tensor] = tensor.copyZero()
+
+        gradients = gs
+    }
 
     operator fun invoke(param: Tensor, delta: Tensor) {
         val gradient = gradients[param]

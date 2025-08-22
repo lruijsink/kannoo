@@ -6,6 +6,7 @@ import kannoo.core.InnerLayer
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Matrix
 import kannoo.math.Shape
+import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.randomMatrix
 
@@ -18,7 +19,7 @@ class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: Acti
     constructor(inputShape: Shape, outputs: Int, activationFunction: ActivationFunction) :
             this(randomMatrix(outputs, inputShape.totalElements), Vector(outputs), activationFunction)
 
-    override val learnable =
+    override val learnable: List<Tensor> =
         listOf(weights, bias)
 
     override fun preActivation(input: Vector): Vector =

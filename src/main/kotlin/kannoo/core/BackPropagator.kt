@@ -10,12 +10,12 @@ class BackPropagator(
     private val preActivations = model.layers.map { it.outputShape.createTensor() }.toMutableList()
     private val activations = model.layers.map { it.outputShape.createTensor() }.toMutableList()
 
-    fun calculatePartials(sample: Sample<*>, gradientReceiver: GradientReceiver) {
+    fun calculatePartials(sample: Sample<*, *>, gradientReceiver: GradientReceiver) {
         forwardPass(sample)
         backPropagate(sample, gradientReceiver)
     }
 
-    private fun forwardPass(sample: Sample<*>) {
+    private fun forwardPass(sample: Sample<*, *>) {
         var input = sample.input as Tensor
         model.layers.forEachIndexed { i, layer ->
             preActivations[i] = layer.preActivation(input)
@@ -24,7 +24,7 @@ class BackPropagator(
         }
     }
 
-    private fun backPropagate(sample: Sample<*>, gradientReceiver: GradientReceiver) {
+    private fun backPropagate(sample: Sample<*, *>, gradientReceiver: GradientReceiver) {
         var deltaActivation = cost.derivative(sample.target, activations[model.layers.size - 1])
 
         for (i in (model.layers.size - 1) downTo 0) {

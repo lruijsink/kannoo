@@ -290,6 +290,34 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
      */
     infix fun outer(other: Vector): Matrix =
         Matrix(rows = this.size, cols = other.size) { i, j -> this[i] * other[j] }
+
+    override fun toString(): String =
+        elements.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is Vector && elements.contentEquals(other.elements)
+
+    override fun hashCode(): Int =
+        elements.contentHashCode()
+
+    fun prettyPrint(useCommas: Boolean = false): String {
+        val els = elements
+            .map { it.toString() }
+            .map { if (it.endsWith(".0")) it.dropLast(2) else it }
+
+        val w = els.maxOf { it.length }
+        val p = els.map { it.padStart(w, ' ') }
+        return "[ ${p.joinToString(if (useCommas) ", " else "  ")} ]"
+    }
+
+    fun prettyPrint(cellWidth: Int, useCommas: Boolean = false): String {
+        val p = elements
+            .map { it.toString() }
+            .map { if (it.endsWith(".0")) it.dropLast(2) else it }
+            .map { if (it.length > cellWidth) it.substring(0, cellWidth) else it.padStart(cellWidth, ' ') }
+
+        return "[ ${p.joinToString(if (useCommas) ", " else "  ")} ]"
+    }
 }
 
 /**
