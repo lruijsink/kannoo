@@ -29,6 +29,14 @@ data class Shape(val dimensions: List<Int>) {
     val totalElements: Int get() =
         dimensions.reduce { x, y -> x * y }
 
+    // TODO: doc
+    val rank: Int get() =
+        dimensions.size
+
+    // TODO: doc
+    val sliceShape: Shape get() =
+        Shape(dimensions.drop(1))
+
     /**
      * @return New tensor, with elements initialized to zero, with dimensions equal to this shape.
      */
@@ -36,6 +44,6 @@ data class Shape(val dimensions: List<Int>) {
         1 -> Vector(dimensions[0])
         2 -> Matrix(dimensions[0], dimensions[1])
         3 -> NTensor(dimensions[0]) { Matrix(dimensions[1], dimensions[2]) }
-        else -> NTensor(dimensions[0]) { Shape(dimensions.drop(1)).createTensor() as NTensor<*> }
+        else -> NTensor(dimensions[0]) { sliceShape.createTensor() as NTensor<*> }
     }
 }

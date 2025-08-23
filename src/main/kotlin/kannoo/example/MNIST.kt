@@ -1,30 +1,30 @@
 package kannoo.example
 
 import kannoo.core.CostFunction
-import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.core.inputLayer
 import kannoo.impl.CrossEntropyLoss
-import kannoo.impl.DenseLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.Softmax
 import kannoo.impl.denseLayer
+import kannoo.impl.flattenLayer
+import kannoo.impl.grayscaleConvolutionLayer
 import kannoo.io.readModelFromFile
-import kannoo.io.writeLayerAsRGB
-import kannoo.io.writeMatricesAsRGB
 import kannoo.io.writeModelToFile
+import kannoo.math.Dimensions
 import kannoo.math.Matrix
+import kannoo.math.Shape
 import kannoo.math.Vector
 import kannoo.math.mean
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
-const val showFullError = false
+const val showFullError = true
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
 fun rnd(d: Float): String {
@@ -38,10 +38,10 @@ fun targetOf(digit: String): Vector {
     return v
 }
 
-fun inputOf(pixels: List<String>): Vector =
-    Vector(pixels.map { it.toFloat() / 255f }.toFloatArray())
+fun inputOf(pixels: List<String>): Matrix =
+    Vector(pixels.map { it.toFloat() / 255f }.toFloatArray()).unFlatten(Shape(28, 28)) as Matrix
 
-fun readCSVs(fileName: String): List<Sample<Vector, Vector>> =
+fun readCSVs(fileName: String): List<Sample<Matrix, Vector>> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
@@ -50,7 +50,7 @@ fun readCSVs(fileName: String): List<Sample<Vector, Vector>> =
         .map { it.split(',') }
         .map { ex -> Sample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
-fun showTestSetError(testSet: List<Sample<Vector, Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
+fun showTestSetError(testSet: List<Sample<Matrix, Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
     val count = MutableList(10) { 0 }
     val costSum = MutableList(10) { 0f }
     val mseSum = MutableList(10) { 0f }
@@ -99,24 +99,29 @@ fun MNIST() {
     } catch (e: Exception) {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
-            InputLayer(28 * 28),
-            denseLayer(400, Logistic),
+            inputLayer(28, 28),
+            grayscaleConvolutionLayer(
+                kernelSize = Dimensions(5, 5),
+                outputChannels = 16,
+                activationFunction = Logistic,
+            ),
+            flattenLayer(),
             denseLayer(100, Logistic),
             denseLayer(10, Softmax),
         )
     }
 
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 128, learningRate = 0.01f)
+        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 16, learningRate = 0.05f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")
             else Matrix(rows, cols) { i, j -> elements[i * cols + j] }
 
-        FileOutputStream("./data/MNIST.weights.$n.png").writeMatricesAsRGB(
-            (model.layers[0] as DenseLayer).weights.rowVectors.map { it.asMatrix(28, 28) },
-            padding = 2,
-        )
+        //FileOutputStream("./data/MNIST.weights.$n.png").writeMatricesAsRGB(
+        //    (model.layers[0] as DenseLayer).weights.rowVectors.map { it.asMatrix(28, 28) },
+        //    padding = 2,
+        //)
 
         val subsetSize = 60000
 
@@ -145,7 +150,7 @@ fun MNIST() {
 
             writeModelToFile(model, MNIST_MODEL_FILE)
             model.layers.forEachIndexed { i, layer ->
-                FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])
+                //FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])
             }
 
             showTestSetError(miniTestSet, model, cost, true)

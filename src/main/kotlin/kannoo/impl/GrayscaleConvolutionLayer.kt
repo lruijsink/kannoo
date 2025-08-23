@@ -68,12 +68,15 @@ class GrayscaleConvolutionLayer(
                     for (u in 0 until kernelDimensions.height) {
                         for (v in 0 until kernelDimensions.width) {
                             val ia = i + ph - u
-                            if (ia < 0 || ia % sh > 0 || ia >= sh * deltaPreActivation[o].rows) continue
+                            if (ia < 0 || ia % sh > 0) continue
 
                             val ja = j + pw - v
-                            if (ja < 0 || ja % sw > 0 || ja >= sw * deltaPreActivation[o].cols) continue
+                            if (ja < 0 || ja % sw > 0) continue
 
-                            deltaInput[i, j] += kernels[o][u, v] * deltaPreActivation[o][ia / sh, ja / sw]
+                            val id = ia / sh
+                            val jd = ja / sw
+                            if (id < deltaPreActivation[o].rows && jd < deltaPreActivation[o].cols)
+                                deltaInput[i, j] += kernels[o][u, v] * deltaPreActivation[o][id, jd]
                         }
                     }
                 }
@@ -118,10 +121,10 @@ class GrayscaleConvolutionLayer(
 
 fun grayscaleConvolutionLayer(
     kernelSize: Dimensions,
-    padding: Padding? = null,
-    stride: Dimensions? = null,
     outputChannels: Int,
     activationFunction: ActivationFunction,
+    padding: Padding? = null,
+    stride: Dimensions? = null,
 ) =
     InnerLayerInitializer { inputShape ->
         if (inputShape.dimensions.size != 2)
