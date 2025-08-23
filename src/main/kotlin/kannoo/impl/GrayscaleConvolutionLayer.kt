@@ -1,13 +1,14 @@
 package kannoo.impl
 
 import kannoo.core.ActivationFunction
+import kannoo.core.BoundedInnerLayer
 import kannoo.core.GradientReceiver
-import kannoo.core.InnerLayer
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Dimensions
 import kannoo.math.Matrix
 import kannoo.math.NTensor
 import kannoo.math.Padding
+import kannoo.math.Shape
 import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.convolutionOutputDimensions
@@ -20,12 +21,8 @@ class GrayscaleConvolutionLayer(
     val bias: Vector,
     val padding: Padding? = null,
     val stride: Dimensions? = null,
-    activationFunction: ActivationFunction,
-) :
-    InnerLayer<Matrix, NTensor<Matrix>>(
-        outputShape = convolutionOutputDimensions(inputDimensions, kernels[0].dimensions, padding, stride).toShape(),
-        activationFunction = activationFunction,
-    ) {
+    override val activationFunction: ActivationFunction,
+) : BoundedInnerLayer<Matrix, NTensor<Matrix>>() {
 
     constructor(
         inputDimensions: Dimensions,
@@ -44,9 +41,16 @@ class GrayscaleConvolutionLayer(
     )
 
     val outputChannels = kernels.size
+
     val kernelDimensions = kernels[0].dimensions
 
-    override val learnable: List<Tensor> get() =
+    override val outputShape: Shape =
+        Shape(
+            outputChannels,
+            convolutionOutputDimensions(inputDimensions, kernels[0].dimensions, padding, stride).toShape(),
+        )
+
+    override val learnable: List<Tensor> =
         listOf(kernels, bias)
 
     override fun preActivation(input: Matrix): NTensor<Matrix> =

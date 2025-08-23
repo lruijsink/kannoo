@@ -17,7 +17,7 @@ private val negative = Color(0x33, 0xaa, 0xff)
 private operator fun Color.times(s: Float): Color =
     Color((red * s).roundToInt(), (green * s).roundToInt(), (blue * s).roundToInt())
 
-fun OutputStream.writeLayerAsRGB(layer: InnerLayer<*, *>) =
+fun OutputStream.writeLayerAsRGB(layer: InnerLayer) =
     drawMatrix((layer as DenseLayer).weights)
 
 fun OutputStream.drawMatrix(m: Matrix) {

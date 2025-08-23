@@ -291,6 +291,39 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
     infix fun outer(other: Vector): Matrix =
         Matrix(rows = this.size, cols = other.size) { i, j -> this[i] * other[j] }
 
+    // TODO: doc
+    fun unFlatten(shape: Shape, offset: Int = 0): Tensor {
+        if (totalElements > this.size)
+            throw IllegalArgumentException("Insufficient number of elements for shape $this")
+
+        return when (shape.dimensions.size) {
+            1 ->
+                Vector(elements.copyOfRange(offset, shape.dimensions[0]))
+
+            2 -> {
+                val (rows, cols) = shape.dimensions
+                Matrix(rows, cols) { i, j -> this[i * cols + j + offset] }
+            }
+
+            3 -> {
+                val (size, rows, cols) = shape.dimensions
+                val elementsPerMatrix = rows * cols
+                NTensor(size) { n ->
+                    Matrix(rows, cols) { i, j ->
+                        this[n * elementsPerMatrix + i * cols + j + offset]
+                    }
+                }
+            }
+
+            else -> {
+                val elementsPerSlice = totalElements / shape.dimensions[0]
+                NTensor(size = shape.dimensions[0]) { n ->
+                    unFlatten(Shape(shape.dimensions.drop(1)), offset = n * elementsPerSlice) as NTensor<*>
+                }
+            }
+        }
+    }
+
     override fun toString(): String =
         elements.toList().toString()
 
