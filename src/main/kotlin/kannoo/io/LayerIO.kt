@@ -19,6 +19,7 @@ sealed class LayerIO<T : InnerLayer>(kClass: KClass<T>) {
 private val layerIO = listOf(
     DenseLayerIO,
     GrayscaleConvolutionLayerIO,
+    FlattenLayerIO,
 )
 
 fun DataInputStream.readLayer(): InnerLayer {
