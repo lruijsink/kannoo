@@ -68,11 +68,9 @@ fun square(x: Float): Float =
  */
 fun euclideanNorm(tensors: Iterable<Tensor>): Float {
     val maxElement = tensors.maxOf { it.max() }
-    val scaledSumSquared = tensors.sumOf {
-        it.reduce { acc, element ->
-            acc + square(element / maxElement)
-        }
-    }
+    var scaledSumSquared = 0f
+    for (tensor in tensors)
+        tensor.forEachElement { scaledSumSquared += square(it / maxElement) }
     return maxElement * sqrt(scaledSumSquared)
 }
 

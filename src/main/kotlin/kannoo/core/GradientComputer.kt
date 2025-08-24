@@ -11,35 +11,36 @@ class GradientComputer(
     cost: CostFunction,
 ) {
     private val threadCount = Runtime.getRuntime().availableProcessors()
-    private val backPropagator = BackPropagator(model, cost)
-    private val gradientReceivers = List(threadCount) { GradientReceiver(model) }
-    private val combined = GradientReceiver(model)
-    private val combinedLock = ReentrantLock()
-    private val executorService = Executors.newFixedThreadPool(threadCount)
+    private val backPropagators = List(threadCount) { BackPropagator(model, cost) }
+    private val gradientAccumulators = List(threadCount) { GradientAccumulator(model) }
+    private val combinedAccumulator = GradientAccumulator(model)
+    private val combinedAccumulatorLock = ReentrantLock()
+    private val threadPool = Executors.newFixedThreadPool(threadCount)
 
-    fun computeGradients(samples: List<Sample<*, *>>): Map<Tensor, Tensor> {
+    fun computeGradients(samples: List<Sample>): Map<Tensor, Tensor> {
+        combinedAccumulator.reset()
+
         val q = AtomicInteger(0)
         val futures = List(threadCount) { t ->
-            executorService.submit {
-                gradientReceivers[t].reset()
+            threadPool.submit {
+                gradientAccumulators[t].reset()
                 while (true) {
                     val i = q.getAndIncrement()
                     if (i >= samples.size) break
-                    backPropagator.calculatePartials(samples[i], gradientReceivers[t])
+                    backPropagators[t].calculatePartials(samples[i], gradientAccumulators[t])
                 }
-                combinedLock.withLock {
-                    gradientReceivers[t].apply { param, gradient ->
-                        combined(param, gradient)
+                combinedAccumulatorLock.withLock {
+                    gradientAccumulators[t].gradients.forEach { (param, gradient) ->
+                        combinedAccumulator(param, gradient)
                     }
                 }
             }
         }
-        combined.reset()
         futures.forEach { it.get() }
 
-        for ((_, gradient) in combined.gradients)
+        for ((_, gradient) in combinedAccumulator.gradients)
             gradient.mapAssign { x -> if (x.isNaN() || x.isInfinite()) 0.0f else x }
 
-        return combined.gradients
+        return combinedAccumulator.gradients
     }
 }

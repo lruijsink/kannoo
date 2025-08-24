@@ -58,13 +58,13 @@ fun booleanFunctionsExample() {
     var e = 1000f
     while (n < 1000 && e > 0.01f) {
         repeat(10000) {
-            sgd.apply(trainingData)
+            sgd.train(trainingData)
         }
         e = trainingData.sumOf { (input, target) -> cost.compute(target, model.compute(input)).mean() }
         println(
             "${n.toString().padStart(4, ' ')}: [E =${rnd(e)}] " +
                     trainingData.associate { (t, _) ->
-                        t.elements.map { it.toInt() }.joinToString("") to rnd((model.compute(t) as Vector)[0])
+                        (t as Vector).elements.map { it.toInt() }.joinToString("") to rnd((model.compute(t) as Vector)[0])
                     }
         )
         n++

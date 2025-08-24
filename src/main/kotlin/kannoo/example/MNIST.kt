@@ -41,7 +41,7 @@ fun targetOf(digit: String): Vector {
 fun inputOf(pixels: List<String>): Matrix =
     Vector(pixels.map { it.toFloat() / 255f }.toFloatArray()).unFlatten(Shape(28, 28)) as Matrix
 
-fun readCSVs(fileName: String): List<Sample<Matrix, Vector>> =
+fun readCSVs(fileName: String): List<Sample> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
@@ -50,14 +50,14 @@ fun readCSVs(fileName: String): List<Sample<Matrix, Vector>> =
         .map { it.split(',') }
         .map { ex -> Sample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
-fun showTestSetError(testSet: List<Sample<Matrix, Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
+fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, compact: Boolean = false) {
     val count = MutableList(10) { 0 }
     val costSum = MutableList(10) { 0f }
     val mseSum = MutableList(10) { 0f }
     val outputSum = MutableList(10) { Vector(10) { 0f } }
 
     testSet.forEach { (input, target) ->
-        val digit = (0..9).first { n -> target[n] == 1f }
+        val digit = (0..9).first { n -> (target as Vector)[n] == 1f }
         val output = model.compute(input)
         count[digit]++
         outputSum[digit].plusAssign(output)
@@ -112,7 +112,7 @@ fun MNIST() {
     }
 
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 16, learningRate = 0.05f)
+        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 128, learningRate = 0.05f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")
@@ -141,7 +141,7 @@ fun MNIST() {
 
             println("Training round $n, subset ${i + 1} / ${trainingSet.size / subsetSize}")
             val elapsed = measureTimeMillis {
-                sgd.apply(subSet)
+                sgd.train(subSet)
             }
             println(
                 "Took ${rnd(elapsed.toFloat() / 1000)} seconds " +

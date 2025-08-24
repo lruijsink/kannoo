@@ -1,8 +1,12 @@
 package kannoo.impl
 
-import kannoo.core.ElementWiseActivationFunction
+import kannoo.core.ActivationFunction
+import kannoo.math.Tensor
 
-object Linear : ElementWiseActivationFunction() {
-    override fun compute(x: Float) = x
-    override fun derivative(x: Float) = 1f
+object Linear : ActivationFunction {
+    override fun compute(tensor: Tensor): Tensor =
+        tensor
+
+    override fun derivative(tensor: Tensor): Tensor =
+        tensor.map { 1f }
 }

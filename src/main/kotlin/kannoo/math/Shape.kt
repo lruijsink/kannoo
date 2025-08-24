@@ -37,6 +37,10 @@ data class Shape(val dimensions: List<Int>) {
     val sliceShape: Shape get() =
         Shape(dimensions.drop(1))
 
+    // TODO: doc
+    operator fun get(index: Int): Int =
+        dimensions[index]
+
     /**
      * @return New tensor, with elements initialized to zero, with dimensions equal to this shape.
      */
