@@ -1,42 +1,25 @@
 package kannoo.math
 
-fun convolveGS(input: Matrix, kernel: Matrix, padding: Padding? = null, stride: Dimensions? = null): Matrix =
-    when {
-        padding != null && stride != null -> convolveImpl(input, kernel, padding, stride)
-        padding != null -> convolveImpl(input, kernel, padding)
-        stride != null -> convolveImpl(input, kernel, stride)
-        else -> convolveImpl(input, kernel)
-    }
-
-private fun convolveImpl(input: Matrix, kernel: Matrix, padding: Padding, stride: Dimensions): Matrix =
-    Matrix(convolutionOutputDimensions(input.dimensions, kernel.dimensions, padding, stride)) { i, j ->
+fun convolveGS(input: Matrix, kernel: Matrix, padding: Padding?, stride: Dimensions?): Matrix =
+    Matrix(convOutputDims(input.dimensions, kernel.dimensions, padding, stride)) { i, j ->
         sumTo(kernel.rows, kernel.cols) { u, v ->
-            kernel[u, v] * padding.scheme.pad(
-                i = i * stride.height + u - padding.height,
-                j = j * stride.width + v - padding.width,
-                input = input,
-            )
-        }
-    }
+            when {
+                padding != null && stride != null ->
+                    kernel[u, v] * padding.scheme.pad(
+                        i = i * stride.height + u - padding.height,
+                        j = j * stride.width + v - padding.width,
+                        input = input,
+                    )
 
-private fun convolveImpl(input: Matrix, kernel: Matrix, padding: Padding): Matrix =
-    Matrix(convolutionOutputDimensions(input.dimensions, kernel.dimensions, padding = padding)) { i, j ->
-        sumTo(kernel.rows, kernel.cols) { u, v ->
-            kernel[u, v] * padding.scheme.pad(i = i + u - padding.height, j = j + v - padding.width, input)
-        }
-    }
+                padding != null ->
+                    kernel[u, v] * padding.scheme.pad(i = i + u - padding.height, j = j + v - padding.width, input)
 
-private fun convolveImpl(input: Matrix, kernel: Matrix, stride: Dimensions): Matrix =
-    Matrix(convolutionOutputDimensions(input.dimensions, kernel.dimensions, stride = stride)) { i, j ->
-        sumTo(kernel.rows, kernel.cols) { u, v ->
-            kernel[u, v] * input[i * stride.height + u, j * stride.width + v]
-        }
-    }
+                stride != null ->
+                    kernel[u, v] * input[i * stride.height + u, j * stride.width + v]
 
-private fun convolveImpl(input: Matrix, kernel: Matrix): Matrix =
-    Matrix(convolutionOutputDimensions(input.dimensions, kernel.dimensions)) { i, j ->
-        sumTo(kernel.rows, kernel.cols) { u, v ->
-            kernel[u, v] * input[i + u, j + v]
+                else ->
+                    kernel[u, v] * input[i + u, j + v]
+            }
         }
     }
 
@@ -91,33 +74,21 @@ fun kernelsGradientGS(
     val sh = stride?.height ?: 1
     val sw = stride?.width ?: 1
 
-    return when {
-        padding != null && stride != null ->
-            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
-                sumTo(outputHeight, outputWidth) { i, j ->
+    return Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
+        sumTo(outputHeight, outputWidth) { i, j ->
+            when {
+                padding != null && stride != null ->
                     deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input)
-                }
-            }
 
-        padding != null ->
-            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
-                sumTo(outputHeight, outputWidth) { i, j ->
+                padding != null ->
                     deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input)
-                }
-            }
 
-        stride != null ->
-            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
-                sumTo(outputHeight, outputWidth) { i, j ->
+                stride != null ->
                     deltaPreActivation[o][i, j] * input[i * sh + m, j * sw + n]
-                }
-            }
 
-        else ->
-            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
-                sumTo(outputHeight, outputWidth) { i, j ->
+                else ->
                     deltaPreActivation[o][i, j] * input[i + m, j + n]
-                }
             }
+        }
     }
 }

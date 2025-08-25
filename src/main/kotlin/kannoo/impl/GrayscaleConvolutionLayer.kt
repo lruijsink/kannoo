@@ -12,7 +12,7 @@ import kannoo.math.Tensor
 import kannoo.math.Tensor3
 import kannoo.math.Vector
 import kannoo.math.broadcastPlus
-import kannoo.math.convolutionOutputDimensions
+import kannoo.math.convOutputDims
 import kannoo.math.convolveGS
 import kannoo.math.convolveTransposedGS
 import kannoo.math.kernelsGradientGS
@@ -34,7 +34,7 @@ class GrayscaleConvolutionLayer(
         kernels[0].dimensions
 
     override val outputShape: Shape =
-        Shape(outputChannels, convolutionOutputDimensions(inputDimensions, kernelDimensions, padding, stride).toShape())
+        Shape(outputChannels, convOutputDims(inputDimensions, kernelDimensions, padding, stride).toShape())
 
     override val learnable: List<Tensor> =
         listOf(kernels, bias)
