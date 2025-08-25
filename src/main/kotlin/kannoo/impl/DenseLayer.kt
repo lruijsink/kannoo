@@ -36,8 +36,8 @@ class DenseLayer(val weights: Matrix, val bias: Vector, override val activationF
 
 fun denseLayer(outputs: Int, activation: ActivationFunction) =
     InnerLayerInitializer { inputShape ->
-        if (inputShape.dimensions.size > 1)
-            throw IllegalArgumentException("Dense layers require have 1-dimensional input")
+        if (inputShape.rank > 1)
+            throw IllegalArgumentException("Dense layers require a vector (rank 1) input but got $inputShape")
 
         DenseLayer(inputShape.totalElements, outputs, activation)
     }

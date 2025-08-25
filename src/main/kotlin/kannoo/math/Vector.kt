@@ -296,17 +296,17 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
         if (totalElements > this.size)
             throw IllegalArgumentException("Insufficient number of elements for shape $this")
 
-        return when (shape.dimensions.size) {
+        return when (shape.rank) {
             1 ->
-                Vector(elements.copyOfRange(offset, shape.dimensions[0]))
+                Vector(elements.copyOfRange(offset, shape[0]))
 
             2 -> {
-                val (rows, cols) = shape.dimensions
+                val (rows, cols) = shape
                 Matrix(rows, cols) { i, j -> this[i * cols + j + offset] }
             }
 
             3 -> {
-                val (size, rows, cols) = shape.dimensions
+                val (size, rows, cols) = shape
                 val elementsPerMatrix = rows * cols
                 NTensor(size) { n ->
                     Matrix(rows, cols) { i, j ->
@@ -316,9 +316,9 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
             }
 
             else -> {
-                val elementsPerSlice = totalElements / shape.dimensions[0]
-                NTensor(size = shape.dimensions[0]) { n ->
-                    unFlatten(Shape(shape.dimensions.drop(1)), offset = n * elementsPerSlice) as NTensor<*>
+                val elementsPerSlice = totalElements / shape[0]
+                NTensor(size = shape[0]) { n ->
+                    unFlatten(shape.sliceShape, offset = n * elementsPerSlice) as NTensor<*>
                 }
             }
         }

@@ -95,7 +95,7 @@ class GrayscaleConvolutionLayer(
             padding != null && stride != null ->
                 NTensor(outputChannels) { o ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input)
                         }
                     }
@@ -104,7 +104,7 @@ class GrayscaleConvolutionLayer(
             padding != null ->
                 NTensor(outputChannels) { o ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input)
                         }
                     }
@@ -113,7 +113,7 @@ class GrayscaleConvolutionLayer(
             stride != null ->
                 NTensor(outputChannels) { o ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * input[i * sh + m, j * sw + n]
                         }
                     }
@@ -122,7 +122,7 @@ class GrayscaleConvolutionLayer(
             else ->
                 NTensor(outputChannels) { o ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * input[i + m, j + n]
                         }
                     }
@@ -146,11 +146,11 @@ fun grayscaleConvolutionLayer(
     stride: Dimensions? = null,
 ) =
     InnerLayerInitializer { inputShape ->
-        if (inputShape.dimensions.size != 2)
+        if (inputShape.rank != 2)
             throw IllegalArgumentException("Grayscale input must be a matrix (with 2 dimensions) but got $inputShape")
 
         GrayscaleConvolutionLayer(
-            inputDimensions = Dimensions(height = inputShape.dimensions[0], width = inputShape.dimensions[1]),
+            inputDimensions = Dimensions(height = inputShape[0], width = inputShape[1]),
             kernelDimensions = kernelSize,
             padding = padding,
             stride = stride,

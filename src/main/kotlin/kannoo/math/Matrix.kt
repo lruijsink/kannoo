@@ -309,29 +309,33 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
      * @return New matrix `M` which is this one transposed, such that:
      *
      * `M[i, j] = this[j, i]`
+     *
+     * This flips the row and column count of the matrix. For example:
+     *
+     * ```text
+     *                          [1  4]
+     * transpose( [1  2  3] ) = [2  5]
+     *            [4  5  6]     [3  6]
+     * ```
      */
     fun transpose(): Matrix =
         Matrix(cols, rows) { i, j -> this[j, i] }
 
-    // TODO: doc
-    // [ 1 2 3 ]    [ 9 8 7 ]
-    // [ 4 5 6 ] -> [ 6 5 4 ]
-    // [ 7 8 9 ]    [ 3 2 1 ]
-    //
-    // [ 1 2 3 4 ]    [ 8 7 6 5 ]
-    // [ 5 6 7 8 ] -> [ 4 3 2 1 ]
+    /**
+     * @return New matrix M which is this one rotated by 180 degrees, such that:
+     *
+     * `M[i, j] = this[rows - i - 1, cols - j - 1]`
+     *
+     * This preserves the dimensions of the original matrix. For example:
+     *
+     * ```text
+     * rotate180( [1  2  3] ) = [6  5  4]
+     *            [4  5  6]     [3  2  1]
+     */
     fun rotate180(): Matrix =
-        Matrix(rows, cols) { i, j -> this[rows - 1 - i, cols - 1 - j] }
+        Matrix(rows, cols) { i, j -> this[rows - i - 1, cols - j - 1] }
 
-    override fun toString(): String =
-        rowVectors.toList().toString()
-
-    override fun equals(other: Any?): Boolean =
-        other is Matrix && rowVectors.contentEquals(other.rowVectors)
-
-    override fun hashCode(): Int =
-        rowVectors.contentHashCode()
-
+    // TODO: Clean this up
     fun prettyPrint(): String {
         val w = rowVectors.maxOf { row ->
             row.elements
@@ -341,6 +345,15 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
         }
         return rowVectors.joinToString("\n") { it.prettyPrint(w) }
     }
+
+    override fun toString(): String =
+        rowVectors.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is Matrix && rowVectors.contentEquals(other.rowVectors)
+
+    override fun hashCode(): Int =
+        rowVectors.contentHashCode()
 }
 
 /**

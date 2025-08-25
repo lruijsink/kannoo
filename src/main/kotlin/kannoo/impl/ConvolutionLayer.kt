@@ -104,7 +104,7 @@ class ConvolutionLayer(
             padding != null && stride != null -> NTensor(outputChannels) { o ->
                 NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input[c])
                         }
                     }
@@ -114,7 +114,7 @@ class ConvolutionLayer(
             padding != null -> NTensor(outputChannels) { o ->
                 NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input[c])
                         }
                     }
@@ -124,7 +124,7 @@ class ConvolutionLayer(
             stride != null -> NTensor(outputChannels) { o ->
                 NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * input[c][i * sh + m, j * sw + n]
                         }
                     }
@@ -134,7 +134,7 @@ class ConvolutionLayer(
             else -> NTensor(outputChannels) { o ->
                 NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
+                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
                             deltaPreActivation[o][i, j] * input[c][i + m, j + n]
                         }
                     }
@@ -159,11 +159,11 @@ fun convolutionLayer(
     stride: Dimensions? = null,
 ) =
     InnerLayerInitializer { inputShape ->
-        if (inputShape.dimensions.size != 3)
-            throw IllegalArgumentException("Convolution input must be a rank tensor, but got $inputShape")
+        if (inputShape.rank != 3)
+            throw IllegalArgumentException("Convolution input must be a rank 3 tensor, but got $inputShape")
 
         ConvolutionLayer(
-            inputChannels = inputShape.dimensions[0],
+            inputChannels = inputShape[0],
             inputDimensions = Dimensions(height = inputShape[1], width = inputShape[2]),
             kernelDimensions = kernelSize,
             padding = padding,

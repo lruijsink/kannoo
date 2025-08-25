@@ -66,7 +66,7 @@ fun readModelFromFile(fileName: String): Model =
     BufferedInputStream(FileInputStream(fileName)).use { it.readModel() }
 
 fun DataOutputStream.writeShape(shape: Shape) {
-    writeInt(shape.dimensions.size)
+    writeInt(shape.rank)
     shape.dimensions.forEach { writeInt(it) }
 }
 
