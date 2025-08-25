@@ -18,6 +18,7 @@ sealed class LayerIO<T : InnerLayer>(kClass: KClass<T>) {
 
 private val layerIO = listOf(
     DenseLayerIO,
+    ConvolutionLayerIO,
     GrayscaleConvolutionLayerIO,
     FlattenLayerIO,
 )

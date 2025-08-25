@@ -16,16 +16,18 @@ import kannoo.math.convolve
 import kannoo.math.randomMatrix
 import kannoo.math.sumOver
 
-class GrayscaleConvolutionLayer(
+class ConvolutionLayer(
+    val inputChannels: Int,
     val inputDimensions: Dimensions,
-    val kernels: NTensor<Matrix>,
+    val kernels: NTensor<NTensor<Matrix>>,
     val bias: Vector,
     val padding: Padding? = null,
     val stride: Dimensions? = null,
     override val activationFunction: ActivationFunction,
-) : BoundedInnerLayer<Matrix, NTensor<Matrix>>() {
+) : BoundedInnerLayer<NTensor<Matrix>, NTensor<Matrix>>() {
 
     constructor(
+        inputChannels: Int,
         inputDimensions: Dimensions,
         kernelDimensions: Dimensions,
         padding: Padding? = null,
@@ -33,8 +35,13 @@ class GrayscaleConvolutionLayer(
         outputChannels: Int,
         activationFunction: ActivationFunction,
     ) : this(
+        inputChannels = inputChannels,
         inputDimensions = inputDimensions,
-        kernels = NTensor(outputChannels) { randomMatrix(kernelDimensions.height, kernelDimensions.width) },
+        kernels = NTensor(outputChannels) {
+            NTensor(inputChannels) {
+                randomMatrix(kernelDimensions.height, kernelDimensions.width)
+            }
+        },
         bias = Vector(outputChannels),
         padding = padding,
         stride = stride,
@@ -43,7 +50,7 @@ class GrayscaleConvolutionLayer(
 
     val outputChannels = kernels.size
 
-    val kernelDimensions = kernels[0].dimensions
+    val kernelDimensions = Dimensions(kernels.shape[2], kernels.shape[3])
 
     override val outputShape: Shape =
         Shape(
@@ -54,11 +61,11 @@ class GrayscaleConvolutionLayer(
     override val learnable: List<Tensor> =
         listOf(kernels, bias)
 
-    override fun preActivation(input: Matrix): NTensor<Matrix> =
+    override fun preActivation(input: NTensor<Matrix>): NTensor<Matrix> =
         NTensor(outputChannels) { o -> convolve(input, kernels[o], padding, stride) } broadcastPlus bias
 
-    override fun deltaInput(deltaPreActivation: NTensor<Matrix>, input: Matrix): Matrix {
-        val deltaInput = Matrix(rows = input.rows, cols = input.cols)
+    override fun deltaInput(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>): NTensor<Matrix> {
+        val deltaInput = NTensor(inputChannels) { Matrix(rows = inputDimensions.height, cols = inputDimensions.width) }
 
         val ph = padding?.height ?: 0
         val pw = padding?.width ?: 0
@@ -68,15 +75,17 @@ class GrayscaleConvolutionLayer(
         fun paddedIndex(i: Int, s: Int): Int =
             padding?.scheme?.map(i, s) ?: i
 
-        for (o in 0 until outputChannels) {
-            for (i in 0 until outputShape[1]) {
-                for (j in 0 until outputShape[2]) {
-                    for (m in 0 until kernelDimensions.height) {
-                        for (n in 0 until kernelDimensions.width) {
-                            val iPad = paddedIndex(i * sh + m - ph, input.rows)
-                            val jPad = paddedIndex(j * sw + n - pw, input.cols)
-                            if (iPad != -1 && jPad != -1)
-                                deltaInput[iPad, jPad] += kernels[o][m, n] * deltaPreActivation[o][i, j]
+        for (c in 0 until inputChannels) {
+            for (o in 0 until outputChannels) {
+                for (i in 0 until outputShape[1]) {
+                    for (j in 0 until outputShape[2]) {
+                        for (m in 0 until kernelDimensions.height) {
+                            for (n in 0 until kernelDimensions.width) {
+                                val iPad = paddedIndex(i * sh + m - ph, inputDimensions.height)
+                                val jPad = paddedIndex(j * sw + n - pw, inputDimensions.width)
+                                if (iPad != -1 && jPad != -1)
+                                    deltaInput[c][iPad, jPad] += kernels[o][c][m, n] * deltaPreActivation[o][i, j]
+                            }
                         }
                     }
                 }
@@ -85,48 +94,52 @@ class GrayscaleConvolutionLayer(
         return deltaInput
     }
 
-    override fun gradients(deltaPreActivation: NTensor<Matrix>, input: Matrix, gradient: GradientReceiver) {
+    override fun gradients(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>, gradient: GradientReceiver) {
         val ph = padding?.height ?: 0
         val pw = padding?.width ?: 0
         val sh = stride?.height ?: 1
         val sw = stride?.width ?: 1
 
         val kernelGradient = when {
-            padding != null && stride != null ->
-                NTensor(outputChannels) { o ->
+            padding != null && stride != null -> NTensor(outputChannels) { o ->
+                NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
                         sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input)
+                            deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input[c])
                         }
                     }
                 }
+            }
 
-            padding != null ->
-                NTensor(outputChannels) { o ->
+            padding != null -> NTensor(outputChannels) { o ->
+                NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
                         sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input)
+                            deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input[c])
                         }
                     }
                 }
+            }
 
-            stride != null ->
-                NTensor(outputChannels) { o ->
+            stride != null -> NTensor(outputChannels) { o ->
+                NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
                         sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * input[i * sh + m, j * sw + n]
+                            deltaPreActivation[o][i, j] * input[c][i * sh + m, j * sw + n]
                         }
                     }
                 }
+            }
 
-            else ->
-                NTensor(outputChannels) { o ->
+            else -> NTensor(outputChannels) { o ->
+                NTensor(inputChannels) { c ->
                     Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
                         sumOver(0 until outputShape.dimensions[1], 0 until outputShape.dimensions[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * input[i + m, j + n]
+                            deltaPreActivation[o][i, j] * input[c][i + m, j + n]
                         }
                     }
                 }
+            }
         }
 
         gradient(kernels, kernelGradient)
@@ -138,7 +151,7 @@ class GrayscaleConvolutionLayer(
         else NTensor(this.size) { i -> this[i].map { it + vector[i] } }
 }
 
-fun grayscaleConvolutionLayer(
+fun convolutionLayer(
     kernelSize: Dimensions,
     outputChannels: Int,
     activationFunction: ActivationFunction,
@@ -146,11 +159,12 @@ fun grayscaleConvolutionLayer(
     stride: Dimensions? = null,
 ) =
     InnerLayerInitializer { inputShape ->
-        if (inputShape.dimensions.size != 2)
-            throw IllegalArgumentException("Grayscale input must be a matrix (with 2 dimensions) but got $inputShape")
+        if (inputShape.dimensions.size != 3)
+            throw IllegalArgumentException("Convolution input must be a rank tensor, but got $inputShape")
 
-        GrayscaleConvolutionLayer(
-            inputDimensions = Dimensions(height = inputShape.dimensions[0], width = inputShape.dimensions[1]),
+        ConvolutionLayer(
+            inputChannels = inputShape.dimensions[0],
+            inputDimensions = Dimensions(height = inputShape[1], width = inputShape[2]),
             kernelDimensions = kernelSize,
             padding = padding,
             stride = stride,

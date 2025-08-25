@@ -8,6 +8,19 @@ fun convolve(input: Matrix, kernel: Matrix, padding: Padding? = null, stride: Di
         else -> convolveImpl(input, kernel)
     }
 
+fun convolve(
+    input: NTensor<Matrix>,
+    kernels: NTensor<Matrix>,
+    padding: Padding? = null,
+    stride: Dimensions? = null,
+): Matrix =
+    when {
+        padding != null && stride != null -> convolveImpl(input, kernels, padding, stride)
+        padding != null -> convolveImpl(input, kernels, padding)
+        stride != null -> convolveImpl(input, kernels, stride)
+        else -> convolveImpl(input, kernels)
+    }
+
 fun convolutionOutputDimensions(
     input: Dimensions,
     kernel: Dimensions,
@@ -19,11 +32,25 @@ fun convolutionOutputDimensions(
         width = (input.width + 2 * (padding?.width ?: 0) - kernel.width) / (stride?.width ?: 1) + 1,
     )
 
-private inline fun sumOver(iRange: IntRange, jRange: IntRange, crossinline compute: (i: Int, j: Int) -> Float): Float {
+inline fun sumOver(iRange: IntRange, jRange: IntRange, crossinline compute: (i: Int, j: Int) -> Float): Float {
     var res = 0f
     for (i in iRange)
         for (j in jRange)
             res += compute(i, j)
+    return res
+}
+
+inline fun sumOver(
+    iRange: IntRange,
+    jRange: IntRange,
+    kRange: IntRange,
+    crossinline compute: (i: Int, j: Int, k: Int) -> Float,
+): Float {
+    var res = 0f
+    for (i in iRange)
+        for (j in jRange)
+            for (k in kRange)
+                res += compute(i, j, k)
     return res
 }
 
@@ -59,5 +86,37 @@ private fun convolveImpl(input: Matrix, kernel: Matrix): Matrix =
     Matrix(convolutionOutputDimensions(input.dimensions, kernel.dimensions)) { i, j ->
         sumOver(0 until kernel.rows, 0 until kernel.cols) { u, v ->
             kernel[u, v] * input[i + u, j + v]
+        }
+    }
+
+private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, padding: Padding, stride: Dimensions) =
+    Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions, padding, stride)) { i, j ->
+        sumOver(0 until kernels.shape[0], 0 until kernels.shape[1], 0 until kernels.shape[2]) { c, m, n ->
+            kernels[c][m, n] * padding.scheme.pad(
+                i = i * stride.height + m - padding.height,
+                j = j * stride.width + n - padding.width,
+                input = input[c],
+            )
+        }
+    }
+
+private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, padding: Padding): Matrix =
+    Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions, padding = padding)) { i, j ->
+        sumOver(0 until kernels.shape[0], 0 until kernels.shape[1], 0 until kernels.shape[2]) { c, m, n ->
+            kernels[c][m, n] * padding.scheme.pad(i = i + m - padding.height, j = j + n - padding.width, input[c])
+        }
+    }
+
+private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, stride: Dimensions): Matrix =
+    Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions, stride = stride)) { i, j ->
+        sumOver(0 until kernels.shape[0], 0 until kernels.shape[1], 0 until kernels.shape[2]) { c, m, n ->
+            kernels[c][m, n] * input[c][i * stride.height + m, j * stride.width + n]
+        }
+    }
+
+private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>): Matrix =
+    Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions)) { i, j ->
+        sumOver(0 until kernels.shape[0], 0 until kernels.shape[1], 0 until kernels.shape[2]) { c, m, n ->
+            kernels[c][m, n] * input[c][i + m, j + n]
         }
     }

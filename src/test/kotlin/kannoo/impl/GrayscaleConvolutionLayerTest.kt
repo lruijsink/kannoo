@@ -9,6 +9,7 @@ import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.ZeroPadding
 import kannoo.math.matrix
+import kannoo.math.randomMatrix
 import kannoo.math.tensor
 import kannoo.math.vector
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -23,6 +24,37 @@ class GrayscaleConvolutionLayerTest {
 
     private val gradientReceiverMock = mock<GradientReceiver>()
     private val gradientCaptor = argumentCaptor<Tensor>()
+
+    @Test
+    fun `Delta input without padding or stride`() {
+        val X = randomMatrix(3, 3) // doesn't actually matter
+        val dY = tensor(
+            matrix(
+                vector(1f, 2f),
+                vector(3f, 4f),
+            ),
+        )
+        val K = tensor(
+            matrix(
+                vector(1f, 0f),
+                vector(-1f, 2f),
+            ),
+        )
+        val layer = GrayscaleConvolutionLayer(
+            inputDimensions = X.dimensions,
+            kernels = K,
+            bias = Vector(K.size),
+            activationFunction = ReLU,
+        )
+        assertEquals(
+            matrix(
+                vector(2f, 3f, -2f),
+                vector(6f, 5f, -2f),
+                vector(0f, 3f, 4f),
+            ),
+            layer.deltaInput(dY, X),
+        )
+    }
 
     @Test
     fun `No padding or stride`() {

@@ -24,6 +24,9 @@ fun DataInputStream.readMatrix(rows: Int, cols: Int): Matrix =
 fun DataInputStream.readNTensor3(size: Int, sliceRows: Int, sliceCols: Int): NTensor<Matrix> =
     NTensor(size) { readMatrix(sliceRows, sliceCols) }
 
+fun DataInputStream.readNTensor4(size: Int, subSlices: Int, sliceRows: Int, sliceCols: Int): NTensor<NTensor<Matrix>> =
+    NTensor(size) { NTensor(subSlices) { readMatrix(sliceRows, sliceCols) } }
+
 fun DataOutputStream.writeVector(vector: Vector) {
     vector.elements.forEach { writeFloat(it) }
 }
@@ -34,6 +37,10 @@ fun DataOutputStream.writeMatrix(matrix: Matrix) {
 
 fun DataOutputStream.writeNTensor3(tensor: NTensor<Matrix>) {
     tensor.slices.forEach { writeMatrix(it) }
+}
+
+fun DataOutputStream.writeNTensor4(tensor: NTensor<NTensor<Matrix>>) {
+    tensor.slices.forEach { writeNTensor3(it) }
 }
 
 fun DataInputStream.readTerminatedString(): String {
