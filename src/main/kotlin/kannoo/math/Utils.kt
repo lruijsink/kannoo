@@ -79,3 +79,39 @@ fun euclideanNorm(tensors: Iterable<Tensor>): Float {
  */
 fun Tensor.mean(): Float =
     sum() / totalElements
+
+// TODO: doc
+inline fun sumOver(
+    iRange: IntRange,
+    jRange: IntRange,
+    crossinline compute: (i: Int, j: Int) -> Float,
+): Float {
+    var res = 0f
+    for (i in iRange)
+        for (j in jRange)
+            res += compute(i, j)
+    return res
+}
+
+// TODO: doc
+inline fun sumOver(
+    iRange: IntRange,
+    jRange: IntRange,
+    kRange: IntRange,
+    crossinline compute: (i: Int, j: Int, k: Int) -> Float,
+): Float {
+    var res = 0f
+    for (i in iRange)
+        for (j in jRange)
+            for (k in kRange)
+                res += compute(i, j, k)
+    return res
+}
+
+// TODO: doc
+inline fun sumTo(iMax: Int, jMax: Int, crossinline compute: (i: Int, j: Int) -> Float) =
+    sumOver(0 until iMax, 0 until jMax, compute)
+
+// TODO: doc
+inline fun sumTo(iMax: Int, jMax: Int, kMax: Int, crossinline compute: (i: Int, j: Int, k: Int) -> Float) =
+    sumOver(0 until iMax, 0 until jMax, 0 until kMax, compute)

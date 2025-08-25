@@ -308,17 +308,16 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
             3 -> {
                 val (size, rows, cols) = shape
                 val elementsPerMatrix = rows * cols
-                NTensor(size) { n ->
-                    Matrix(rows, cols) { i, j ->
-                        this[n * elementsPerMatrix + i * cols + j + offset]
-                    }
+                NTensor(size, rows, cols) { n, i, j ->
+                    this[n * elementsPerMatrix + i * cols + j + offset]
                 }
             }
 
             else -> {
                 val elementsPerSlice = totalElements / shape[0]
+                val sliceShape = shape.sliceShape
                 NTensor(size = shape[0]) { n ->
-                    unFlatten(shape.sliceShape, offset = n * elementsPerSlice) as NTensor<*>
+                    unFlatten(sliceShape, offset = n * elementsPerSlice) as NTensor<*>
                 }
             }
         }

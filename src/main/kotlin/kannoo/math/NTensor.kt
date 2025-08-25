@@ -189,6 +189,22 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
         slices.contentHashCode()
 }
 
+// TODO: doc
+fun NTensor(size: Int, rows: Int, cols: Int): NTensor<Matrix> =
+    NTensor(size) { Matrix(rows, cols) }
+
+// TODO: doc
+fun NTensor(size: Int, span: Int, rows: Int, cols: Int): NTensor<NTensor<Matrix>> =
+    NTensor(size) { NTensor(span, rows, cols) }
+
+// TODO: doc
+inline fun NTensor(size: Int, rows: Int, cols: Int, crossinline initialize: (Int, Int, Int) -> Float) =
+    NTensor(size) { h -> Matrix(rows, cols) { i, j -> initialize(h, i, j) } }
+
+// TODO: doc
+inline fun NTensor(size: Int, span: Int, rows: Int, cols: Int, crossinline initialize: (Int, Int, Int, Int) -> Float) =
+    NTensor(size) { g -> NTensor(span) { h -> Matrix(rows, cols) { i, j -> initialize(g, h, i, j) } } }
+
 /**
  * Constructs a new [NTensor] with [size] slices defined by [initialize].
  *
@@ -216,3 +232,11 @@ fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTenso
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }
+
+// TODO: doc
+fun randomTensor(size: Int, rows: Int, cols: Int): NTensor<Matrix> =
+    NTensor(size) { randomMatrix(rows, cols) }
+
+// TODO: doc
+fun randomTensor(size: Int, span: Int, rows: Int, cols: Int): NTensor<NTensor<Matrix>> =
+    NTensor(size) { NTensor(span) { randomMatrix(rows, cols) } }

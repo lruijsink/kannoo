@@ -378,6 +378,10 @@ fun Matrix(rows: Int, cols: Int): Matrix =
 inline fun Matrix(rows: Int, cols: Int, crossinline init: (row: Int, col: Int) -> Float): Matrix =
     Matrix(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
 
+// TODO: doc
+inline fun Matrix(dimensions: Dimensions, crossinline init: (i: Int, j: Int) -> Float): Matrix =
+    Matrix(rows = dimensions.height, cols = dimensions.width, init = init)
+
 /**
  * @param vectors Row vectors to initialize with
  *

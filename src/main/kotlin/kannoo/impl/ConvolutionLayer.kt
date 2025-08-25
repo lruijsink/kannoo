@@ -13,8 +13,9 @@ import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.convolutionOutputDimensions
 import kannoo.math.convolve
-import kannoo.math.randomMatrix
-import kannoo.math.sumOver
+import kannoo.math.convolveTransposed
+import kannoo.math.kernelsGradient
+import kannoo.math.randomTensor
 
 class ConvolutionLayer(
     val inputChannels: Int,
@@ -37,11 +38,7 @@ class ConvolutionLayer(
     ) : this(
         inputChannels = inputChannels,
         inputDimensions = inputDimensions,
-        kernels = NTensor(outputChannels) {
-            NTensor(inputChannels) {
-                randomMatrix(kernelDimensions.height, kernelDimensions.width)
-            }
-        },
+        kernels = randomTensor(outputChannels, inputChannels, kernelDimensions.height, kernelDimensions.width),
         bias = Vector(outputChannels),
         padding = padding,
         stride = stride,
@@ -64,88 +61,15 @@ class ConvolutionLayer(
     override fun preActivation(input: NTensor<Matrix>): NTensor<Matrix> =
         NTensor(outputChannels) { o -> convolve(input, kernels[o], padding, stride) } broadcastPlus bias
 
-    override fun deltaInput(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>): NTensor<Matrix> {
-        val deltaInput = NTensor(inputChannels) { Matrix(rows = inputDimensions.height, cols = inputDimensions.width) }
-
-        val ph = padding?.height ?: 0
-        val pw = padding?.width ?: 0
-        val sh = stride?.height ?: 1
-        val sw = stride?.width ?: 1
-
-        fun paddedIndex(i: Int, s: Int): Int =
-            padding?.scheme?.map(i, s) ?: i
-
-        for (c in 0 until inputChannels) {
-            for (o in 0 until outputChannels) {
-                for (i in 0 until outputShape[1]) {
-                    for (j in 0 until outputShape[2]) {
-                        for (m in 0 until kernelDimensions.height) {
-                            for (n in 0 until kernelDimensions.width) {
-                                val iPad = paddedIndex(i * sh + m - ph, inputDimensions.height)
-                                val jPad = paddedIndex(j * sw + n - pw, inputDimensions.width)
-                                if (iPad != -1 && jPad != -1)
-                                    deltaInput[c][iPad, jPad] += kernels[o][c][m, n] * deltaPreActivation[o][i, j]
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return deltaInput
-    }
+    override fun deltaInput(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>): NTensor<Matrix> =
+        convolveTransposed(kernels, deltaPreActivation, inputDimensions, padding, stride)
 
     override fun gradients(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>, gradient: GradientReceiver) {
-        val ph = padding?.height ?: 0
-        val pw = padding?.width ?: 0
-        val sh = stride?.height ?: 1
-        val sw = stride?.width ?: 1
-
-        val kernelGradient = when {
-            padding != null && stride != null -> NTensor(outputChannels) { o ->
-                NTensor(inputChannels) { c ->
-                    Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input[c])
-                        }
-                    }
-                }
-            }
-
-            padding != null -> NTensor(outputChannels) { o ->
-                NTensor(inputChannels) { c ->
-                    Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input[c])
-                        }
-                    }
-                }
-            }
-
-            stride != null -> NTensor(outputChannels) { o ->
-                NTensor(inputChannels) { c ->
-                    Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * input[c][i * sh + m, j * sw + n]
-                        }
-                    }
-                }
-            }
-
-            else -> NTensor(outputChannels) { o ->
-                NTensor(inputChannels) { c ->
-                    Matrix(kernelDimensions.height, kernelDimensions.width) { m, n ->
-                        sumOver(0 until outputShape[1], 0 until outputShape[2]) { i, j ->
-                            deltaPreActivation[o][i, j] * input[c][i + m, j + n]
-                        }
-                    }
-                }
-            }
-        }
-
-        gradient(kernels, kernelGradient)
+        gradient(kernels, kernelsGradient(kernels, deltaPreActivation, input, padding, stride))
         gradient(bias, Vector(outputChannels) { o -> deltaPreActivation[o].sum() })
     }
 
+    // TODO: define generally
     private infix fun NTensor<Matrix>.broadcastPlus(vector: Vector): NTensor<Matrix> =
         if (this.size != vector.size) throw IllegalArgumentException("Tensor and vector sizes must match")
         else NTensor(this.size) { i -> this[i].map { it + vector[i] } }

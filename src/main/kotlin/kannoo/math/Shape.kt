@@ -57,7 +57,8 @@ class Shape(val dimensions: List<Int>) {
     fun createTensor(): Tensor = when (rank) {
         1 -> Vector(this[0])
         2 -> Matrix(this[0], this[1])
-        3 -> NTensor(this[0]) { Matrix(this[1], this[2]) }
+        3 -> NTensor(this[0], this[1], this[2])
+        4 -> NTensor(this[0], this[1], this[2], this[3])
         else -> NTensor(this[0]) { sliceShape.createTensor() as NTensor<*> }
     }
 

@@ -48,9 +48,9 @@ class GrayscaleConvolutionLayerTest {
         )
         assertEquals(
             matrix(
-                vector(2f, 3f, -2f),
-                vector(6f, 5f, -2f),
-                vector(0f, 3f, 4f),
+                vector(1f, 2f, 0f),
+                vector(2f, 4f, 4f),
+                vector(-3f, 2f, 8f),
             ),
             layer.deltaInput(dY, X),
         )
