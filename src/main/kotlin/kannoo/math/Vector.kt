@@ -308,7 +308,7 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
             3 -> {
                 val (size, rows, cols) = shape
                 val elementsPerMatrix = rows * cols
-                NTensor(size, rows, cols) { n, i, j ->
+                Tensor3(size, rows, cols) { n, i, j ->
                     this[n * elementsPerMatrix + i * cols + j + offset]
                 }
             }

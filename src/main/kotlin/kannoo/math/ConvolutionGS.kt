@@ -41,8 +41,8 @@ private fun convolveImpl(input: Matrix, kernel: Matrix): Matrix =
     }
 
 fun convolveTransposedGS(
-    kernels: NTensor<Matrix>,
-    deltaPreActivation: NTensor<Matrix>,
+    kernels: Tensor3,
+    deltaPreActivation: Tensor3,
     inputDimensions: Dimensions,
     padding: Padding? = null,
     stride: Dimensions? = null,
@@ -77,12 +77,12 @@ fun convolveTransposedGS(
 }
 
 fun kernelsGradientGS(
-    kernels: NTensor<Matrix>,
-    deltaPreActivation: NTensor<Matrix>,
+    kernels: Tensor3,
+    deltaPreActivation: Tensor3,
     input: Matrix,
     padding: Padding?,
     stride: Dimensions?,
-): NTensor<Matrix> {
+): Tensor3 {
     val (outputChannels, kernelHeight, kernelWidth) = kernels.shape
     val (_, outputHeight, outputWidth) = deltaPreActivation.shape
 
@@ -93,28 +93,28 @@ fun kernelsGradientGS(
 
     return when {
         padding != null && stride != null ->
-            NTensor(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
+            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input)
                 }
             }
 
         padding != null ->
-            NTensor(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
+            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input)
                 }
             }
 
         stride != null ->
-            NTensor(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
+            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * input[i * sh + m, j * sw + n]
                 }
             }
 
         else ->
-            NTensor(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
+            Tensor3(outputChannels, kernelHeight, kernelWidth) { o, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * input[i + m, j + n]
                 }

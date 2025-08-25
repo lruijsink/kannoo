@@ -20,9 +20,9 @@ import kannoo.io.writeMatricesAsRGB
 import kannoo.io.writeModelToFile
 import kannoo.math.Dimensions
 import kannoo.math.Matrix
-import kannoo.math.NTensor
 import kannoo.math.Shape
 import kannoo.math.Tensor
+import kannoo.math.Tensor3
 import kannoo.math.Vector
 import kannoo.math.mean
 import java.io.FileInputStream
@@ -180,7 +180,7 @@ fun MNIST() {
 
         val L = model.layers[0] as GrayscaleConvolutionLayer
         val M = digitSamples.flatMap { (_, input) ->
-            (L.compute(input) as NTensor<Matrix>).slices.toList()
+            (L.compute(input) as Tensor3).slices.toList()
         }
 
         FileOutputStream("./data/MNIST.$n.convolutions.0.png").writeMatricesAsRGB(M)

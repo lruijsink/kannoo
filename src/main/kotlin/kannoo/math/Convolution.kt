@@ -1,8 +1,8 @@
 package kannoo.math
 
 fun convolve(
-    input: NTensor<Matrix>,
-    kernels: NTensor<Matrix>,
+    input: Tensor3,
+    kernels: Tensor3,
     padding: Padding? = null,
     stride: Dimensions? = null,
 ): Matrix =
@@ -24,7 +24,7 @@ fun convolutionOutputDimensions(
         width = (input.width + 2 * (padding?.width ?: 0) - kernel.width) / (stride?.width ?: 1) + 1,
     )
 
-private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, padding: Padding, stride: Dimensions) =
+private fun convolveImpl(input: Tensor3, kernels: Tensor3, padding: Padding, stride: Dimensions) =
     Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions, padding, stride)) { i, j ->
         sumTo(kernels.shape[0], kernels.shape[1], kernels.shape[2]) { c, m, n ->
             kernels[c][m, n] * padding.scheme.pad(
@@ -35,21 +35,21 @@ private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, paddi
         }
     }
 
-private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, padding: Padding): Matrix =
+private fun convolveImpl(input: Tensor3, kernels: Tensor3, padding: Padding): Matrix =
     Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions, padding = padding)) { i, j ->
         sumTo(kernels.shape[0], kernels.shape[1], kernels.shape[2]) { c, m, n ->
             kernels[c][m, n] * padding.scheme.pad(i = i + m - padding.height, j = j + n - padding.width, input[c])
         }
     }
 
-private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>, stride: Dimensions): Matrix =
+private fun convolveImpl(input: Tensor3, kernels: Tensor3, stride: Dimensions): Matrix =
     Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions, stride = stride)) { i, j ->
         sumTo(kernels.shape[0], kernels.shape[1], kernels.shape[2]) { c, m, n ->
             kernels[c][m, n] * input[c][i * stride.height + m, j * stride.width + n]
         }
     }
 
-private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>): Matrix =
+private fun convolveImpl(input: Tensor3, kernels: Tensor3): Matrix =
     Matrix(convolutionOutputDimensions(input[0].dimensions, kernels[0].dimensions)) { i, j ->
         sumTo(kernels.shape[0], kernels.shape[1], kernels.shape[2]) { c, m, n ->
             kernels[c][m, n] * input[c][i + m, j + n]
@@ -57,15 +57,15 @@ private fun convolveImpl(input: NTensor<Matrix>, kernels: NTensor<Matrix>): Matr
     }
 
 fun convolveTransposed(
-    kernels: NTensor<NTensor<Matrix>>,
-    deltaPreActivation: NTensor<Matrix>,
+    kernels: Tensor4,
+    deltaPreActivation: Tensor3,
     inputDimensions: Dimensions,
     padding: Padding? = null,
     stride: Dimensions? = null,
-): NTensor<Matrix> {
+): Tensor3 {
     val (outputChannels, inputChannels, kernelHeight, kernelWidth) = kernels.shape
     val (_, outputHeight, outputWidth) = deltaPreActivation.shape
-    val deltaInput = NTensor(inputChannels, inputDimensions.height, inputDimensions.width)
+    val deltaInput = Tensor3(inputChannels, inputDimensions.height, inputDimensions.width)
 
     val ph = padding?.height ?: 0
     val pw = padding?.width ?: 0
@@ -95,12 +95,12 @@ fun convolveTransposed(
 }
 
 fun kernelsGradient(
-    kernels: NTensor<NTensor<Matrix>>,
-    deltaPreActivation: NTensor<Matrix>,
-    input: NTensor<Matrix>,
+    kernels: Tensor4,
+    deltaPreActivation: Tensor3,
+    input: Tensor3,
     padding: Padding?,
     stride: Dimensions?,
-): NTensor<NTensor<Matrix>> {
+): Tensor4 {
     val (outputChannels, inputChannels, kernelHeight, kernelWidth) = kernels.shape
     val (_, outputHeight, outputWidth) = deltaPreActivation.shape
 
@@ -111,28 +111,28 @@ fun kernelsGradient(
 
     return when {
         padding != null && stride != null ->
-            NTensor(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
+            Tensor4(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * padding.scheme.pad(i * sh + m - ph, j * sw + n - pw, input[c])
                 }
             }
 
         padding != null ->
-            NTensor(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
+            Tensor4(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * padding.scheme.pad(i + m - ph, j + n - pw, input[c])
                 }
             }
 
         stride != null ->
-            NTensor(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
+            Tensor4(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * input[c][i * sh + m, j * sw + n]
                 }
             }
 
         else ->
-            NTensor(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
+            Tensor4(outputChannels, inputChannels, kernelHeight, kernelWidth) { o, c, m, n ->
                 sumTo(outputHeight, outputWidth) { i, j ->
                     deltaPreActivation[o][i, j] * input[c][i + m, j + n]
                 }

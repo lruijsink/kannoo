@@ -5,11 +5,11 @@ import kannoo.core.BoundedInnerLayer
 import kannoo.core.GradientReceiver
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Dimensions
-import kannoo.math.Matrix
-import kannoo.math.NTensor
 import kannoo.math.Padding
 import kannoo.math.Shape
 import kannoo.math.Tensor
+import kannoo.math.Tensor3
+import kannoo.math.Tensor4
 import kannoo.math.Vector
 import kannoo.math.convolutionOutputDimensions
 import kannoo.math.convolve
@@ -20,12 +20,12 @@ import kannoo.math.randomTensor
 class ConvolutionLayer(
     val inputChannels: Int,
     val inputDimensions: Dimensions,
-    val kernels: NTensor<NTensor<Matrix>>,
+    val kernels: Tensor4,
     val bias: Vector,
     val padding: Padding? = null,
     val stride: Dimensions? = null,
     override val activationFunction: ActivationFunction,
-) : BoundedInnerLayer<NTensor<Matrix>, NTensor<Matrix>>() {
+) : BoundedInnerLayer<Tensor3, Tensor3>() {
 
     constructor(
         inputChannels: Int,
@@ -58,21 +58,21 @@ class ConvolutionLayer(
     override val learnable: List<Tensor> =
         listOf(kernels, bias)
 
-    override fun preActivation(input: NTensor<Matrix>): NTensor<Matrix> =
-        NTensor(outputChannels) { o -> convolve(input, kernels[o], padding, stride) } broadcastPlus bias
+    override fun preActivation(input: Tensor3): Tensor3 =
+        Tensor3(outputChannels) { o -> convolve(input, kernels[o], padding, stride) } broadcastPlus bias
 
-    override fun deltaInput(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>): NTensor<Matrix> =
+    override fun deltaInput(deltaPreActivation: Tensor3, input: Tensor3): Tensor3 =
         convolveTransposed(kernels, deltaPreActivation, inputDimensions, padding, stride)
 
-    override fun gradients(deltaPreActivation: NTensor<Matrix>, input: NTensor<Matrix>, gradient: GradientReceiver) {
+    override fun gradients(deltaPreActivation: Tensor3, input: Tensor3, gradient: GradientReceiver) {
         gradient(kernels, kernelsGradient(kernels, deltaPreActivation, input, padding, stride))
         gradient(bias, Vector(outputChannels) { o -> deltaPreActivation[o].sum() })
     }
 
     // TODO: define generally
-    private infix fun NTensor<Matrix>.broadcastPlus(vector: Vector): NTensor<Matrix> =
+    private infix fun Tensor3.broadcastPlus(vector: Vector): Tensor3 =
         if (this.size != vector.size) throw IllegalArgumentException("Tensor and vector sizes must match")
-        else NTensor(this.size) { i -> this[i].map { it + vector[i] } }
+        else Tensor3(this.size) { i -> this[i].map { it + vector[i] } }
 }
 
 fun convolutionLayer(

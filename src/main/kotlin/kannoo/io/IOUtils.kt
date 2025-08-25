@@ -3,8 +3,9 @@ package kannoo.io
 import kannoo.core.Model
 import kannoo.math.Dimensions
 import kannoo.math.Matrix
-import kannoo.math.NTensor
 import kannoo.math.Shape
+import kannoo.math.Tensor3
+import kannoo.math.Tensor4
 import kannoo.math.Vector
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -21,11 +22,11 @@ fun DataInputStream.readVector(size: Int): Vector =
 fun DataInputStream.readMatrix(rows: Int, cols: Int): Matrix =
     Matrix(Array(rows) { readVector(cols) })
 
-fun DataInputStream.readNTensor3(size: Int, sliceRows: Int, sliceCols: Int): NTensor<Matrix> =
-    NTensor(size) { readMatrix(sliceRows, sliceCols) }
+fun DataInputStream.readTensor3(size: Int, sliceRows: Int, sliceCols: Int): Tensor3 =
+    Tensor3(size) { readMatrix(sliceRows, sliceCols) }
 
-fun DataInputStream.readNTensor4(size: Int, subSlices: Int, sliceRows: Int, sliceCols: Int): NTensor<NTensor<Matrix>> =
-    NTensor(size) { NTensor(subSlices) { readMatrix(sliceRows, sliceCols) } }
+fun DataInputStream.readTensor4(size: Int, subSlices: Int, sliceRows: Int, sliceCols: Int): Tensor4 =
+    Tensor4(size) { readTensor3(subSlices, sliceRows, sliceCols) }
 
 fun DataOutputStream.writeVector(vector: Vector) {
     vector.elements.forEach { writeFloat(it) }
@@ -35,12 +36,12 @@ fun DataOutputStream.writeMatrix(matrix: Matrix) {
     matrix.rowVectors.forEach { writeVector(it) }
 }
 
-fun DataOutputStream.writeNTensor3(tensor: NTensor<Matrix>) {
+fun DataOutputStream.writeTensor3(tensor: Tensor3) {
     tensor.slices.forEach { writeMatrix(it) }
 }
 
-fun DataOutputStream.writeNTensor4(tensor: NTensor<NTensor<Matrix>>) {
-    tensor.slices.forEach { writeNTensor3(it) }
+fun DataOutputStream.writeTensor4(tensor: Tensor4) {
+    tensor.slices.forEach { writeTensor3(it) }
 }
 
 fun DataInputStream.readTerminatedString(): String {

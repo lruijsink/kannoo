@@ -10,7 +10,7 @@ object GrayscaleConvolutionLayerIO : LayerIO<GrayscaleConvolutionLayer>(Grayscal
         outputStream.writeDimensions(layer.inputDimensions)
         outputStream.writeInt(layer.outputChannels)
         outputStream.writeDimensions(layer.kernelDimensions)
-        outputStream.writeNTensor3(layer.kernels)
+        outputStream.writeTensor3(layer.kernels)
         outputStream.writeVector(layer.bias)
         outputStream.writeNullable(layer.padding) { writePadding(it) }
         outputStream.writeNullable(layer.stride) { writeDimensions(it) }
@@ -21,7 +21,7 @@ object GrayscaleConvolutionLayerIO : LayerIO<GrayscaleConvolutionLayer>(Grayscal
         val inputDimensions = inputStream.readDimensions()
         val outputChannels = inputStream.readInt()
         val kernelDimensions = inputStream.readDimensions()
-        val kernels = inputStream.readNTensor3(outputChannels, kernelDimensions.height, kernelDimensions.width)
+        val kernels = inputStream.readTensor3(outputChannels, kernelDimensions.height, kernelDimensions.width)
         val bias = inputStream.readVector(outputChannels)
         val padding = inputStream.readNullable { readPadding() }
         val stride = inputStream.readNullable { readDimensions() }

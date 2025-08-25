@@ -6,10 +6,10 @@ import kannoo.core.GradientReceiver
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Dimensions
 import kannoo.math.Matrix
-import kannoo.math.NTensor
 import kannoo.math.Padding
 import kannoo.math.Shape
 import kannoo.math.Tensor
+import kannoo.math.Tensor3
 import kannoo.math.Vector
 import kannoo.math.convolutionOutputDimensions
 import kannoo.math.convolveGS
@@ -19,12 +19,12 @@ import kannoo.math.randomTensor
 
 class GrayscaleConvolutionLayer(
     val inputDimensions: Dimensions,
-    val kernels: NTensor<Matrix>,
+    val kernels: Tensor3,
     val bias: Vector,
     val padding: Padding? = null,
     val stride: Dimensions? = null,
     override val activationFunction: ActivationFunction,
-) : BoundedInnerLayer<Matrix, NTensor<Matrix>>() {
+) : BoundedInnerLayer<Matrix, Tensor3>() {
 
     constructor(
         inputDimensions: Dimensions,
@@ -55,21 +55,21 @@ class GrayscaleConvolutionLayer(
     override val learnable: List<Tensor> =
         listOf(kernels, bias)
 
-    override fun preActivation(input: Matrix): NTensor<Matrix> =
-        NTensor(outputChannels) { o -> convolveGS(input, kernels[o], padding, stride) } broadcastPlus bias
+    override fun preActivation(input: Matrix): Tensor3 =
+        Tensor3(outputChannels) { o -> convolveGS(input, kernels[o], padding, stride) } broadcastPlus bias
 
-    override fun deltaInput(deltaPreActivation: NTensor<Matrix>, input: Matrix): Matrix =
+    override fun deltaInput(deltaPreActivation: Tensor3, input: Matrix): Matrix =
         convolveTransposedGS(kernels, deltaPreActivation, inputDimensions, padding, stride)
 
-    override fun gradients(deltaPreActivation: NTensor<Matrix>, input: Matrix, gradient: GradientReceiver) {
+    override fun gradients(deltaPreActivation: Tensor3, input: Matrix, gradient: GradientReceiver) {
         gradient(kernels, kernelsGradientGS(kernels, deltaPreActivation, input, padding, stride))
         gradient(bias, Vector(outputChannels) { o -> deltaPreActivation[o].sum() })
     }
 
     // TODO: define generally
-    private infix fun NTensor<Matrix>.broadcastPlus(vector: Vector): NTensor<Matrix> =
+    private infix fun Tensor3.broadcastPlus(vector: Vector): Tensor3 =
         if (this.size != vector.size) throw IllegalArgumentException("Tensor and vector sizes must match")
-        else NTensor(this.size) { i -> this[i].map { it + vector[i] } }
+        else Tensor3(this.size) { i -> this[i].map { it + vector[i] } }
 }
 
 fun grayscaleConvolutionLayer(

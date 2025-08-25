@@ -2,10 +2,9 @@ package kannoo.impl
 
 import kannoo.core.GradientReceiver
 import kannoo.math.Dimensions
-import kannoo.math.Matrix
-import kannoo.math.NTensor
 import kannoo.math.Padding
 import kannoo.math.Tensor
+import kannoo.math.Tensor3
 import kannoo.math.Vector
 import kannoo.math.ZeroPadding
 import kannoo.math.matrix
@@ -253,12 +252,12 @@ class GrayscaleConvolutionLayerTest {
         )
     }
 
-    private fun captureGradients(kernels: NTensor<Matrix>, bias: Vector): Pair<NTensor<Matrix>, Vector> {
+    private fun captureGradients(kernels: Tensor3, bias: Vector): Pair<Tensor3, Vector> {
         verify(gradientReceiverMock).invoke(refEq(kernels), gradientCaptor.capture())
         verify(gradientReceiverMock).invoke(refEq(bias), gradientCaptor.capture())
         verifyNoMoreInteractions(gradientReceiverMock)
 
         @Suppress("UNCHECKED_CAST")
-        return (gradientCaptor.firstValue as NTensor<Matrix>) to (gradientCaptor.lastValue as Vector)
+        return (gradientCaptor.firstValue as Tensor3) to (gradientCaptor.lastValue as Vector)
     }
 }

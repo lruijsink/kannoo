@@ -8,7 +8,7 @@ class NTensorTest {
     @Test
     fun `NTensor shape is highest rank to lowest`() {
         assertEquals(
-            listOf(2, 3, 4),
+            Shape(2, 3, 4),
             tensor(
                 matrix(
                     vector(1f, 2f, 3f, 4f),

@@ -11,7 +11,7 @@ object ConvolutionLayerIO : LayerIO<ConvolutionLayer>(ConvolutionLayer::class) {
         outputStream.writeDimensions(layer.inputDimensions)
         outputStream.writeInt(layer.outputChannels)
         outputStream.writeDimensions(layer.kernelDimensions)
-        outputStream.writeNTensor4(layer.kernels)
+        outputStream.writeTensor4(layer.kernels)
         outputStream.writeVector(layer.bias)
         outputStream.writeNullable(layer.padding) { writePadding(it) }
         outputStream.writeNullable(layer.stride) { writeDimensions(it) }
@@ -23,7 +23,7 @@ object ConvolutionLayerIO : LayerIO<ConvolutionLayer>(ConvolutionLayer::class) {
         val inputDimensions = inputStream.readDimensions()
         val outputChannels = inputStream.readInt()
         val (kernelHeight, kernelWidth) = inputStream.readDimensions()
-        val kernels = inputStream.readNTensor4(outputChannels, inputChannels, kernelHeight, kernelWidth)
+        val kernels = inputStream.readTensor4(outputChannels, inputChannels, kernelHeight, kernelWidth)
         val bias = inputStream.readVector(outputChannels)
         val padding = inputStream.readNullable { readPadding() }
         val stride = inputStream.readNullable { readDimensions() }
