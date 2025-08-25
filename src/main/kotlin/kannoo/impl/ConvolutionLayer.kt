@@ -19,7 +19,6 @@ import kannoo.math.kernelsGradient
 import kannoo.math.randomTensor
 
 class ConvolutionLayer(
-    val inputChannels: Int,
     val inputDimensions: Dimensions,
     val kernels: Tensor4,
     val bias: Vector,
@@ -28,33 +27,14 @@ class ConvolutionLayer(
     override val activationFunction: ActivationFunction,
 ) : BoundedInnerLayer<Tensor3, Tensor3>() {
 
-    constructor(
-        inputChannels: Int,
-        inputDimensions: Dimensions,
-        kernelDimensions: Dimensions,
-        padding: Padding? = null,
-        stride: Dimensions? = null,
-        outputChannels: Int,
-        activationFunction: ActivationFunction,
-    ) : this(
-        inputChannels = inputChannels,
-        inputDimensions = inputDimensions,
-        kernels = randomTensor(outputChannels, inputChannels, kernelDimensions.height, kernelDimensions.width),
-        bias = Vector(outputChannels),
-        padding = padding,
-        stride = stride,
-        activationFunction = activationFunction,
-    )
+    val outputChannels =
+        kernels.size
 
-    val outputChannels = kernels.size
-
-    val kernelDimensions = Dimensions(kernels.shape[2], kernels.shape[3])
+    val kernelDimensions =
+        Dimensions(kernels.shape[2], kernels.shape[3])
 
     override val outputShape: Shape =
-        Shape(
-            outputChannels,
-            convolutionOutputDimensions(inputDimensions, kernelDimensions, padding, stride).toShape(),
-        )
+        Shape(outputChannels, convolutionOutputDimensions(inputDimensions, kernelDimensions, padding, stride).toShape())
 
     override val learnable: List<Tensor> =
         listOf(kernels, bias)
@@ -83,12 +63,11 @@ fun convolutionLayer(
             throw IllegalArgumentException("Convolution input must be a rank 3 tensor, but got $inputShape")
 
         ConvolutionLayer(
-            inputChannels = inputShape[0],
             inputDimensions = Dimensions(height = inputShape[1], width = inputShape[2]),
-            kernelDimensions = kernelSize,
+            kernels = randomTensor(outputChannels, inputShape[0], kernelSize.height, kernelSize.width),
+            bias = Vector(outputChannels),
             padding = padding,
             stride = stride,
-            outputChannels = outputChannels,
             activationFunction = activationFunction,
         )
     }

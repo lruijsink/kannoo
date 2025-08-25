@@ -27,31 +27,14 @@ class GrayscaleConvolutionLayer(
     override val activationFunction: ActivationFunction,
 ) : BoundedInnerLayer<Matrix, Tensor3>() {
 
-    constructor(
-        inputDimensions: Dimensions,
-        kernelDimensions: Dimensions,
-        padding: Padding? = null,
-        stride: Dimensions? = null,
-        outputChannels: Int,
-        activationFunction: ActivationFunction,
-    ) : this(
-        inputDimensions = inputDimensions,
-        kernels = randomTensor(outputChannels, kernelDimensions.height, kernelDimensions.width),
-        bias = Vector(outputChannels),
-        padding = padding,
-        stride = stride,
-        activationFunction = activationFunction,
-    )
+    val outputChannels =
+        kernels.size
 
-    val outputChannels = kernels.size
-
-    val kernelDimensions = kernels[0].dimensions
+    val kernelDimensions =
+        kernels[0].dimensions
 
     override val outputShape: Shape =
-        Shape(
-            outputChannels,
-            convolutionOutputDimensions(inputDimensions, kernelDimensions, padding, stride).toShape(),
-        )
+        Shape(outputChannels, convolutionOutputDimensions(inputDimensions, kernelDimensions, padding, stride).toShape())
 
     override val learnable: List<Tensor> =
         listOf(kernels, bias)
@@ -77,14 +60,14 @@ fun grayscaleConvolutionLayer(
 ) =
     InnerLayerInitializer { inputShape ->
         if (inputShape.rank != 2)
-            throw IllegalArgumentException("Grayscale input must be a matrix (with 2 dimensions) but got $inputShape")
+            throw IllegalArgumentException("Requires matrix (2-dimensional) input but got $inputShape")
 
         GrayscaleConvolutionLayer(
             inputDimensions = Dimensions(height = inputShape[0], width = inputShape[1]),
-            kernelDimensions = kernelSize,
+            kernels = randomTensor(outputChannels, kernelSize.height, kernelSize.width),
+            bias = Vector(outputChannels),
             padding = padding,
             stride = stride,
-            outputChannels = outputChannels,
             activationFunction = activationFunction,
         )
     }

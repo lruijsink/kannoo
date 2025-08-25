@@ -9,7 +9,6 @@ import kannoo.impl.GrayscaleConvolutionLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
-import kannoo.impl.ReLU
 import kannoo.impl.Softmax
 import kannoo.impl.convolutionLayer
 import kannoo.impl.denseLayer
@@ -20,10 +19,12 @@ import kannoo.io.writeMatricesAsRGB
 import kannoo.io.writeModelToFile
 import kannoo.math.Dimensions
 import kannoo.math.Matrix
+import kannoo.math.Padding
 import kannoo.math.Shape
 import kannoo.math.Tensor
 import kannoo.math.Tensor3
 import kannoo.math.Vector
+import kannoo.math.ZeroPadding
 import kannoo.math.mean
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -112,16 +113,16 @@ fun MNIST() {
             inputLayer(28, 28),
             grayscaleConvolutionLayer(
                 kernelSize = Dimensions(5, 5),
-                outputChannels = 8,
-                activationFunction = ReLU,
-                padding = null,
+                outputChannels = 10,
+                activationFunction = Logistic,
+                padding = Padding(2, 2, ZeroPadding),
                 stride = Dimensions(3, 3),
             ),
             convolutionLayer(
                 kernelSize = Dimensions(3, 3),
                 outputChannels = 16,
-                activationFunction = ReLU,
-                padding = null,
+                activationFunction = Logistic,
+                padding = Padding(1, 1, ZeroPadding),
                 stride = Dimensions(2, 2),
             ),
             flattenLayer(),
@@ -133,7 +134,7 @@ fun MNIST() {
     val digitSamples = List(10) { i -> i to trainingSet.first { digitOf(it.target) == i }.input }
 
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 64, learningRate = 0.1f)
+        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 64, learningRate = 1f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")
@@ -180,7 +181,7 @@ fun MNIST() {
 
         val L = model.layers[0] as GrayscaleConvolutionLayer
         val M = digitSamples.flatMap { (_, input) ->
-            (L.compute(input) as Tensor3).slices.toList()
+            (L.preActivation(input) as Tensor3).slices.toList()
         }
 
         FileOutputStream("./data/MNIST.$n.convolutions.0.png").writeMatricesAsRGB(M)
