@@ -291,7 +291,26 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
     infix fun outer(other: Vector): Matrix =
         Matrix(rows = this.size, cols = other.size) { i, j -> this[i] * other[j] }
 
-    // TODO: doc
+    /**
+     * Un-flatten a vector into a higher dimension [Tensor], preserving the element values but re-arranged into the
+     * given shape (in reverse row-major order). The number of elements in [shape] must match the number of elements in
+     * this vector.
+     *
+     * For example:
+     * ```text
+     * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].unFlatten(Shape(2, 3, 2))
+     *
+     *  =  [ [1  2] [ 7   8]
+     *       [3  4] [ 9  10]
+     *       [5  6] [11  12] ]
+     * ```
+     *
+     * @param shape Shape to arrange the vector's elements into
+     *
+     * @param offset TODO: used for rank 4+ but this is currently broken!
+     *
+     * @return New tensor with this vector's elements arranged into the given shape
+     */
     fun unFlatten(shape: Shape, offset: Int = 0): Tensor {
         if (totalElements > this.size)
             throw IllegalArgumentException("Insufficient number of elements for shape $this")

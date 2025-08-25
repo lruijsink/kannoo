@@ -12,7 +12,6 @@ package kannoo.math
  * @param S Slice tensor type
  */
 sealed interface Composite<T : BoundedTensor<T>, S : BoundedTensor<S>> : BoundedTensor<T> {
-    // TODO: Can this generic definition ^ be simplified with Tensor ?
 
     /**
      * Slices that make up this tensor, themselves tensors of rank [rank]` - 1`

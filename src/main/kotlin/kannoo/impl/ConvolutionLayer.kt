@@ -11,6 +11,7 @@ import kannoo.math.Tensor
 import kannoo.math.Tensor3
 import kannoo.math.Tensor4
 import kannoo.math.Vector
+import kannoo.math.broadcastPlus
 import kannoo.math.convolutionOutputDimensions
 import kannoo.math.convolve
 import kannoo.math.convolveTransposed
@@ -68,11 +69,6 @@ class ConvolutionLayer(
         gradient(kernels, kernelsGradient(kernels, deltaPreActivation, input, padding, stride))
         gradient(bias, Vector(outputChannels) { o -> deltaPreActivation[o].sum() })
     }
-
-    // TODO: define generally
-    private infix fun Tensor3.broadcastPlus(vector: Vector): Tensor3 =
-        if (this.size != vector.size) throw IllegalArgumentException("Tensor and vector sizes must match")
-        else Tensor3(this.size) { i -> this[i].map { it + vector[i] } }
 }
 
 fun convolutionLayer(

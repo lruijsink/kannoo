@@ -199,6 +199,8 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
  * @param T Slice tensor type
  *
  * @return Tensor of [size] slices, each instantiated by [initialize]
+ *
+ * @throws IncompatibleShapeException If [initialize] produces slices of differing shapes
  */
 inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
     NTensor(Array(size) { i -> initialize(i) })
