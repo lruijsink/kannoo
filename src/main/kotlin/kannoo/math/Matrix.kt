@@ -44,6 +44,11 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
     val rowVectors: Array<Vector> get() = slices
 
     /**
+     * Dimensions of this matrix where height = [rows] and width = [cols].
+     */
+    val dimensions: Dimensions get() = Dimensions(height = rows, width = cols)
+
+    /**
      * @param index Row vector index to get
      *
      * @return Row vector at index [index]
@@ -304,9 +309,51 @@ class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
      * @return New matrix `M` which is this one transposed, such that:
      *
      * `M[i, j] = this[j, i]`
+     *
+     * This flips the row and column count of the matrix. For example:
+     *
+     * ```text
+     *                          [1  4]
+     * transpose( [1  2  3] ) = [2  5]
+     *            [4  5  6]     [3  6]
+     * ```
      */
     fun transpose(): Matrix =
         Matrix(cols, rows) { i, j -> this[j, i] }
+
+    /**
+     * @return New matrix M which is this one rotated by 180 degrees, such that:
+     *
+     * `M[i, j] = this[rows - i - 1, cols - j - 1]`
+     *
+     * This preserves the dimensions of the original matrix. For example:
+     *
+     * ```text
+     * rotate180( [1  2  3] ) = [6  5  4]
+     *            [4  5  6]     [3  2  1]
+     */
+    fun rotate180(): Matrix =
+        Matrix(rows, cols) { i, j -> this[rows - i - 1, cols - j - 1] }
+
+    // TODO: Clean this up
+    fun prettyPrint(): String {
+        val w = rowVectors.maxOf { row ->
+            row.elements
+                .map { it.toString() }
+                .map { if (it.endsWith(".0")) it.dropLast(2) else it }
+                .maxOf { it.length }
+        }
+        return rowVectors.joinToString("\n") { it.prettyPrint(w) }
+    }
+
+    override fun toString(): String =
+        rowVectors.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is Matrix && rowVectors.contentEquals(other.rowVectors)
+
+    override fun hashCode(): Int =
+        rowVectors.contentHashCode()
 }
 
 /**
@@ -330,6 +377,16 @@ fun Matrix(rows: Int, cols: Int): Matrix =
  */
 inline fun Matrix(rows: Int, cols: Int, crossinline init: (row: Int, col: Int) -> Float): Matrix =
     Matrix(Array(rows) { row -> Vector(cols) { col -> init(row, col) } })
+
+/**
+ * @param dimensions Dimensions of the resulting matrix
+ *
+ * @param init Initialization function
+ *
+ * @return New matrix with all elements initialized as [init]`(row, col)`
+ */
+inline fun Matrix(dimensions: Dimensions, crossinline init: (row: Int, col: Int) -> Float): Matrix =
+    Matrix(rows = dimensions.height, cols = dimensions.width, init = init)
 
 /**
  * @param vectors Row vectors to initialize with

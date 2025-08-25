@@ -1,24 +1,25 @@
 package kannoo.impl
 
 import kannoo.core.ActivationFunction
+import kannoo.core.BoundedInnerLayer
 import kannoo.core.GradientReceiver
-import kannoo.core.InnerLayer
 import kannoo.core.InnerLayerInitializer
 import kannoo.math.Matrix
 import kannoo.math.Shape
+import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.randomMatrix
 
-class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: ActivationFunction) :
-    InnerLayer<Vector, Vector>(
-        outputShape = Shape(bias.size),
-        activationFunction = activationFunction,
-    ) {
+class DenseLayer(val weights: Matrix, val bias: Vector, override val activationFunction: ActivationFunction) :
+    BoundedInnerLayer<Vector, Vector>() {
 
-    constructor(inputShape: Shape, outputs: Int, activationFunction: ActivationFunction) :
-            this(randomMatrix(outputs, inputShape.totalElements), Vector(outputs), activationFunction)
+    constructor(inputSize: Int, outputs: Int, activationFunction: ActivationFunction) :
+            this(randomMatrix(outputs, inputSize), Vector(outputs), activationFunction)
 
-    override val learnable =
+    override val outputShape: Shape =
+        Shape(bias.size)
+
+    override val learnable: List<Tensor> =
         listOf(weights, bias)
 
     override fun preActivation(input: Vector): Vector =
@@ -35,5 +36,8 @@ class DenseLayer(val weights: Matrix, val bias: Vector, activationFunction: Acti
 
 fun denseLayer(outputs: Int, activation: ActivationFunction) =
     InnerLayerInitializer { inputShape ->
-        DenseLayer(inputShape, outputs, activation)
+        if (inputShape.rank > 1)
+            throw IllegalArgumentException("Dense layers require a vector (rank 1) input but got $inputShape")
+
+        DenseLayer(inputShape.totalElements, outputs, activation)
     }

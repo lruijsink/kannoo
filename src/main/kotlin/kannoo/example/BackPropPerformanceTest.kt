@@ -35,7 +35,7 @@ fun backPropPerformanceTest() {
 
     repeat(rounds) { n ->
         println("Round ${n + 1}:")
-        val elapsed = measureTimeMillis { sgd.apply(trainingDataNew) }
+        val elapsed = measureTimeMillis { sgd.train(trainingDataNew) }
         println("$elapsed ms")
     }
 }

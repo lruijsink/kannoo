@@ -1,8 +1,8 @@
 package kannoo.core
 
-import kannoo.math.BoundedTensor
+import kannoo.math.Tensor
 
-data class Sample<T : BoundedTensor<T>>(
-    val input: T,
-    val target: T,
+data class Sample(
+    val input: Tensor,
+    val target: Tensor,
 )

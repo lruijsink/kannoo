@@ -5,9 +5,6 @@ import java.io.DataInputStream
 import java.io.DataOutputStream
 
 object DenseLayerIO : LayerIO<DenseLayer>(DenseLayer::class) {
-    override fun headers(layer: DenseLayer) =
-        listOf(layer.weights.rows.toString(), layer.weights.cols.toString())
-
     override fun write(layer: DenseLayer, outputStream: DataOutputStream) {
         outputStream.writeTerminatedString(layer.activationFunction.serialize())
         outputStream.writeInt(layer.weights.rows)

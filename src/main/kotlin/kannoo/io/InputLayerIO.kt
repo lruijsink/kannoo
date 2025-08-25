@@ -5,8 +5,8 @@ import java.io.DataInputStream
 import java.io.DataOutputStream
 
 fun DataInputStream.readInputLayer(): InputLayer =
-    InputLayer(readInt())
+    InputLayer(readShape())
 
 fun DataOutputStream.writeInputLayer(inputLayer: InputLayer) {
-    writeInt(inputLayer.size)
+    writeShape(inputLayer.shape)
 }

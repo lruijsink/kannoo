@@ -290,6 +290,85 @@ class Vector(val elements: FloatArray) : BoundedTensor<Vector> {
      */
     infix fun outer(other: Vector): Matrix =
         Matrix(rows = this.size, cols = other.size) { i, j -> this[i] * other[j] }
+
+    /**
+     * Un-flatten a vector into a higher dimension [Tensor], preserving the element values but re-arranged into the
+     * given shape (in reverse row-major order). The number of elements in [shape] must match the number of elements in
+     * this vector.
+     *
+     * For example:
+     * ```text
+     * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].unFlatten(Shape(2, 3, 2))
+     *
+     *  =  [ [1  2] [ 7   8]
+     *       [3  4] [ 9  10]
+     *       [5  6] [11  12] ]
+     * ```
+     *
+     * @param shape Shape to arrange the vector's elements into
+     *
+     * @param offset TODO: used for rank 4+ but this is currently broken!
+     *
+     * @return New tensor with this vector's elements arranged into the given shape
+     */
+    fun unFlatten(shape: Shape, offset: Int = 0): Tensor {
+        if (totalElements > this.size)
+            throw IllegalArgumentException("Insufficient number of elements for shape $this")
+
+        return when (shape.rank) {
+            1 ->
+                Vector(elements.copyOfRange(offset, shape[0]))
+
+            2 -> {
+                val (rows, cols) = shape
+                Matrix(rows, cols) { i, j -> this[i * cols + j + offset] }
+            }
+
+            3 -> {
+                val (size, rows, cols) = shape
+                val elementsPerMatrix = rows * cols
+                Tensor3(size, rows, cols) { n, i, j ->
+                    this[n * elementsPerMatrix + i * cols + j + offset]
+                }
+            }
+
+            else -> {
+                val elementsPerSlice = totalElements / shape[0]
+                val sliceShape = shape.sliceShape
+                NTensor(size = shape[0]) { n ->
+                    unFlatten(sliceShape, offset = n * elementsPerSlice) as NTensor<*>
+                }
+            }
+        }
+    }
+
+    override fun toString(): String =
+        elements.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is Vector && elements.contentEquals(other.elements)
+
+    override fun hashCode(): Int =
+        elements.contentHashCode()
+
+    fun prettyPrint(useCommas: Boolean = false): String {
+        val els = elements
+            .map { it.toString() }
+            .map { if (it.endsWith(".0")) it.dropLast(2) else it }
+
+        val w = els.maxOf { it.length }
+        val p = els.map { it.padStart(w, ' ') }
+        return "[ ${p.joinToString(if (useCommas) ", " else "  ")} ]"
+    }
+
+    fun prettyPrint(cellWidth: Int, useCommas: Boolean = false): String {
+        val p = elements
+            .map { it.toString() }
+            .map { if (it.endsWith(".0")) it.dropLast(2) else it }
+            .map { if (it.length > cellWidth) it.substring(0, cellWidth) else it.padStart(cellWidth, ' ') }
+
+        return "[ ${p.joinToString(if (useCommas) ", " else "  ")} ]"
+    }
 }
 
 /**

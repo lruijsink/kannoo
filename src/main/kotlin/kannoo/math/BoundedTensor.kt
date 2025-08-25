@@ -119,7 +119,7 @@ sealed interface BoundedTensor<T : BoundedTensor<T>> : Tensor {
     //
 
     override val totalElements: Int get() =
-        shape.dimensions.reduce { x, y -> x * y }
+        shape.totalElements
 
     override fun copy(): T
 

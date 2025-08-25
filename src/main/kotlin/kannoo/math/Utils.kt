@@ -68,11 +68,9 @@ fun square(x: Float): Float =
  */
 fun euclideanNorm(tensors: Iterable<Tensor>): Float {
     val maxElement = tensors.maxOf { it.max() }
-    val scaledSumSquared = tensors.sumOf {
-        it.reduce { acc, element ->
-            acc + square(element / maxElement)
-        }
-    }
+    var scaledSumSquared = 0f
+    for (tensor in tensors)
+        tensor.forEachElement { scaledSumSquared += square(it / maxElement) }
     return maxElement * sqrt(scaledSumSquared)
 }
 
@@ -81,3 +79,75 @@ fun euclideanNorm(tensors: Iterable<Tensor>): Float {
  */
 fun Tensor.mean(): Float =
     sum() / totalElements
+
+/**
+ * @param iRange Range of `i` values
+ *
+ * @param jRange Range of `j` values
+ *
+ * @param compute Function to compute
+ *
+ * @return Sum of [compute] for each (i, j) in range
+ */
+inline fun sumOver(iRange: IntRange, jRange: IntRange, crossinline compute: (i: Int, j: Int) -> Float): Float {
+    var res = 0f
+    for (i in iRange)
+        for (j in jRange)
+            res += compute(i, j)
+    return res
+}
+
+/**
+ * @param iRange Range of `i` values
+ *
+ * @param jRange Range of `j` values
+ *
+ * @param kRange Range of `k` values
+ *
+ * @param compute Function to compute
+ *
+ * @return Sum of [compute] for each (i, j, k) in range
+ */
+inline fun sumOver(
+    iRange: IntRange,
+    jRange: IntRange,
+    kRange: IntRange,
+    crossinline compute: (i: Int, j: Int, k: Int) -> Float,
+): Float {
+    var res = 0f
+    for (i in iRange)
+        for (j in jRange)
+            for (k in kRange)
+                res += compute(i, j, k)
+    return res
+}
+
+/**
+ * Sum over a pair of indexes starting at 0 and ending at `xMax` (excl.)
+ *
+ * @param iMax Max `i` value (excl.)
+ *
+ * @param jMax Max `j` value (excl.)
+ *
+ * @param compute Function to compute
+ *
+ * @return Sum of [compute] for each (i, j) in `[0, iMax)`, `[0, jMax)`
+ */
+inline fun sumTo(iMax: Int, jMax: Int, crossinline compute: (i: Int, j: Int) -> Float) =
+    sumOver(0 until iMax, 0 until jMax, compute)
+
+/**
+ * Sum over a triple of indexes starting at 0 and ending at `xMax` (excl.)
+ *
+ * @param iMax Max `i` value (excl.)
+ *
+ * @param jMax Max `j` value (excl.)
+ *
+ * @param kMax Max `k` value (excl.)
+ *
+ * @param compute Function to compute
+ *
+ * @return Sum of [compute] for each (i, j, k) in `[0, iMax)`, `[0, jMax)`, `[0, kMax)`
+ */
+inline fun sumTo(iMax: Int, jMax: Int, kMax: Int, crossinline compute: (i: Int, j: Int, k: Int) -> Float) =
+    sumOver(0 until iMax, 0 until jMax, 0 until kMax, compute)

@@ -7,7 +7,7 @@ package kannoo.math
  *
  * @param dimensions Dimensions from highest rank to lowest
  */
-data class Shape(val dimensions: List<Int>) {
+class Shape(val dimensions: List<Int>) {
 
     constructor(vararg dimensions: Int) :
             this(dimensions.toList())
@@ -30,12 +30,59 @@ data class Shape(val dimensions: List<Int>) {
         dimensions.reduce { x, y -> x * y }
 
     /**
+     * Rank = number of dimensions of this shape
+     */
+    val rank: Int get() =
+        dimensions.size
+
+    /**
+     * Shape of this shape's slices. Has rank N - 1 and drops the first dimension. For example:
+     *
+     * `Shape(3, 8, 6).sliceShape = Shape(8, 6)`
+     */
+    val sliceShape: Shape get() =
+        Shape(dimensions.drop(1))
+
+    /**
+     * Shorthand for `dimensions[index]`
+     *
+     * @return Dimension [index]'s size
+     */
+    operator fun get(index: Int): Int =
+        dimensions[index]
+
+    /**
      * @return New tensor, with elements initialized to zero, with dimensions equal to this shape.
      */
-    fun createTensor(): Tensor = when (dimensions.size) {
-        1 -> Vector(dimensions[0])
-        2 -> Matrix(dimensions[0], dimensions[1])
-        3 -> NTensor(dimensions[0]) { Matrix(dimensions[1], dimensions[2]) }
-        else -> NTensor(dimensions[0]) { Shape(dimensions.drop(1)).createTensor() as NTensor<*> }
+    fun createTensor(): Tensor = when (rank) {
+        1 -> Vector(this[0])
+        2 -> Matrix(this[0], this[1])
+        3 -> Tensor3(this[0], this[1], this[2])
+        4 -> Tensor4(this[0], this[1], this[2], this[3])
+        else -> NTensor(this[0]) { sliceShape.createTensor() as NTensor<*> }
     }
+
+    operator fun component1(): Int =
+        dimensions[0]
+
+    operator fun component2(): Int =
+        dimensions[1]
+
+    operator fun component3(): Int =
+        dimensions[2]
+
+    operator fun component4(): Int =
+        dimensions[3]
+
+    operator fun component5(): Int =
+        dimensions[4]
+
+    override fun equals(other: Any?): Boolean =
+        other is Shape && dimensions == other.dimensions
+
+    override fun hashCode(): Int =
+        dimensions.hashCode()
+
+    override fun toString(): String =
+        dimensions.toString()
 }

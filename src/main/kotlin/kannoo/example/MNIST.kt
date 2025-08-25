@@ -1,22 +1,30 @@
 package kannoo.example
 
 import kannoo.core.CostFunction
-import kannoo.core.InputLayer
 import kannoo.core.Model
 import kannoo.core.Sample
+import kannoo.core.inputLayer
 import kannoo.impl.CrossEntropyLoss
-import kannoo.impl.DenseLayer
+import kannoo.impl.GrayscaleConvolutionLayer
 import kannoo.impl.Logistic
 import kannoo.impl.MeanSquaredError
 import kannoo.impl.MiniBatchSGD
 import kannoo.impl.Softmax
+import kannoo.impl.convolutionLayer
 import kannoo.impl.denseLayer
+import kannoo.impl.flattenLayer
+import kannoo.impl.grayscaleConvolutionLayer
 import kannoo.io.readModelFromFile
-import kannoo.io.writeLayerAsRGB
 import kannoo.io.writeMatricesAsRGB
 import kannoo.io.writeModelToFile
+import kannoo.math.Dimensions
 import kannoo.math.Matrix
+import kannoo.math.Padding
+import kannoo.math.Shape
+import kannoo.math.Tensor
+import kannoo.math.Tensor3
 import kannoo.math.Vector
+import kannoo.math.ZeroPadding
 import kannoo.math.mean
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -24,7 +32,7 @@ import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
-const val showFullError = false
+const val showFullError = true
 const val MNIST_MODEL_FILE = "./data/MNIST.kannoo"
 
 fun rnd(d: Float): String {
@@ -38,10 +46,13 @@ fun targetOf(digit: String): Vector {
     return v
 }
 
-fun inputOf(pixels: List<String>): Vector =
-    Vector(pixels.map { it.toFloat() / 255f }.toFloatArray())
+fun digitOf(target: Tensor): Int =
+    (0..9).first { n -> (target as Vector)[n] == 1f }
 
-fun readCSVs(fileName: String): List<Sample<Vector>> =
+fun inputOf(pixels: List<String>): Matrix =
+    Vector(pixels.map { it.toFloat() / 255f }.toFloatArray()).unFlatten(Shape(28, 28)) as Matrix
+
+fun readCSVs(fileName: String): List<Sample> =
     FileInputStream(fileName)
         .readAllBytes()
         .toString(Charsets.UTF_8)
@@ -50,14 +61,14 @@ fun readCSVs(fileName: String): List<Sample<Vector>> =
         .map { it.split(',') }
         .map { ex -> Sample(input = inputOf(ex.drop(1)), target = targetOf(ex[0])) }
 
-fun showTestSetError(testSet: List<Sample<Vector>>, model: Model, cost: CostFunction, compact: Boolean = false) {
+fun showTestSetError(testSet: List<Sample>, model: Model, cost: CostFunction, compact: Boolean = false) {
     val count = MutableList(10) { 0 }
     val costSum = MutableList(10) { 0f }
     val mseSum = MutableList(10) { 0f }
     val outputSum = MutableList(10) { Vector(10) { 0f } }
 
     testSet.forEach { (input, target) ->
-        val digit = (0..9).first { n -> target[n] == 1f }
+        val digit = (0..9).first { n -> (target as Vector)[n] == 1f }
         val output = model.compute(input)
         count[digit]++
         outputSum[digit].plusAssign(output)
@@ -99,24 +110,40 @@ fun MNIST() {
     } catch (e: Exception) {
         println("Pre-trained model not found, creating new instance ($e)")
         Model(
-            InputLayer(28 * 28),
-            denseLayer(400, Logistic),
-            denseLayer(100, Logistic),
+            inputLayer(28, 28),
+            grayscaleConvolutionLayer(
+                kernelSize = Dimensions(5, 5),
+                outputChannels = 10,
+                activationFunction = Logistic,
+                padding = Padding(2, 2, ZeroPadding),
+                stride = Dimensions(3, 3),
+            ),
+            convolutionLayer(
+                kernelSize = Dimensions(3, 3),
+                outputChannels = 16,
+                activationFunction = Logistic,
+                padding = Padding(1, 1, ZeroPadding),
+                stride = Dimensions(2, 2),
+            ),
+            flattenLayer(),
+            denseLayer(36, Logistic),
             denseLayer(10, Softmax),
         )
     }
 
+    val digitSamples = List(10) { i -> i to trainingSet.first { digitOf(it.target) == i }.input }
+
     (1..100).forEach { n ->
-        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 128, learningRate = 0.01f)
+        val sgd = MiniBatchSGD(model = model, cost = cost, batchSize = 64, learningRate = 1f)
 
         fun Vector.asMatrix(rows: Int, cols: Int): Matrix =
             if (rows * cols != size) throw IllegalArgumentException("Can't convert to that size")
             else Matrix(rows, cols) { i, j -> elements[i * cols + j] }
 
-        FileOutputStream("./data/MNIST.weights.$n.png").writeMatricesAsRGB(
-            (model.layers[0] as DenseLayer).weights.rowVectors.map { it.asMatrix(28, 28) },
-            padding = 2,
-        )
+        //FileOutputStream("./data/MNIST.weights.$n.png").writeMatricesAsRGB(
+        //    (model.layers[0] as DenseLayer).weights.rowVectors.map { it.asMatrix(28, 28) },
+        //    padding = 2,
+        //)
 
         val subsetSize = 60000
 
@@ -136,7 +163,7 @@ fun MNIST() {
 
             println("Training round $n, subset ${i + 1} / ${trainingSet.size / subsetSize}")
             val elapsed = measureTimeMillis {
-                sgd.apply(subSet)
+                sgd.train(subSet)
             }
             println(
                 "Took ${rnd(elapsed.toFloat() / 1000)} seconds " +
@@ -145,11 +172,18 @@ fun MNIST() {
 
             writeModelToFile(model, MNIST_MODEL_FILE)
             model.layers.forEachIndexed { i, layer ->
-                FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])
+                //FileOutputStream("./data/MNIST.$i.png").writeLayerAsRGB(model.layers[i])
             }
 
             showTestSetError(miniTestSet, model, cost, true)
             println()
         }
+
+        val L = model.layers[0] as GrayscaleConvolutionLayer
+        val M = digitSamples.flatMap { (_, input) ->
+            (L.preActivation(input) as Tensor3).slices.toList()
+        }
+
+        FileOutputStream("./data/MNIST.$n.convolutions.0.png").writeMatricesAsRGB(M)
     }
 }

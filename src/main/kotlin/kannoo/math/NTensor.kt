@@ -178,6 +178,15 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
         for (i in 0 until size)
             this[i] = function(i)
     }
+
+    override fun toString(): String =
+        slices.toList().toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is NTensor<T> && slices.contentEquals(other.slices)
+
+    override fun hashCode(): Int =
+        slices.contentHashCode()
 }
 
 /**
@@ -190,6 +199,8 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
  * @param T Slice tensor type
  *
  * @return Tensor of [size] slices, each instantiated by [initialize]
+ *
+ * @throws IncompatibleShapeException If [initialize] produces slices of differing shapes
  */
 inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
     NTensor(Array(size) { i -> initialize(i) })
@@ -207,4 +218,3 @@ fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTenso
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }
-
