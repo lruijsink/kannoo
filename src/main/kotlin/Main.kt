@@ -53,7 +53,7 @@ fun main() {
             }
         }
     }
-    ImageIO.write(bufferedImage, "png", FileOutputStream("mandelbrot.png"))
+    ImageIO.write(bufferedImage, "png", FileOutputStream("./data/mandelbrot.png"))
     println("Image successfully serialized (took $msRender ms)")
 
     println("Destroying Vulkan instance")
