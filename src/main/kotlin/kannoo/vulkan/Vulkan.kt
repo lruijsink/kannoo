@@ -118,11 +118,14 @@ const val PIXEL_SIZE = 4 * Float.SIZE_BYTES
 
 class Vulkan(
     val shaderFile: String,
-    val width: Int = 6400,
-    val height: Int = 4800,
+    val inputWidth: Int = 128,
+    val inputHeight: Int = 128,
+    val outputWidth: Int = 6400,
+    val outputHeight: Int = 4800,
     val workgroupSize: Int = 32,
 ) {
-    val bufferSize: Long = width * height * PIXEL_SIZE.toLong()
+    val inputBufferSize: Long = inputWidth * inputHeight * Float.SIZE_BYTES.toLong()
+    val outputBufferSize: Long = outputWidth * outputHeight * PIXEL_SIZE.toLong()
 
     val enabledExtensions =
         if (DEBUG) listOf(
@@ -143,8 +146,10 @@ class Vulkan(
     val queueFamilyIndex: Int
     val device: VkDevice
     val queue: VkQueue
-    val buffer: Long
-    val bufferMemory: Long
+    val inputBuffer: Long
+    val inputBufferMemory: Long
+    val outputBuffer: Long
+    val outputBufferMemory: Long
     val descriptorSetLayout: Long
     val descriptorPool: Long
     val descriptorSet: Long
@@ -171,9 +176,13 @@ class Vulkan(
         this.device = device
         this.queue = queue
 
-        val (buffer, bufferMemory) = createBuffer()
-        this.buffer = buffer
-        this.bufferMemory = bufferMemory
+        val (inputBuffer, inputBufferMemory) = createInputBuffer()
+        this.inputBuffer = inputBuffer
+        this.inputBufferMemory = inputBufferMemory
+
+        val (outputBuffer, outputBufferMemory) = createOutputBuffer()
+        this.outputBuffer = outputBuffer
+        this.outputBufferMemory = outputBufferMemory
 
         this.descriptorSetLayout = createDescriptorSetLayout()
 
@@ -324,15 +333,48 @@ class Vulkan(
         throw IllegalStateException("No compute queue family was found")
     }
 
-    fun createBuffer(): Pair<Long, Long> = stackPush().use { stack ->
+    fun createInputBuffer(): Pair<Long, Long> = stackPush().use { stack ->
+        val createInfo = VkBufferCreateInfo.calloc()
+            .`sType$Default`()
+            .size(inputBufferSize)
+            .usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+            .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
+
+        val pInputBuffer = stack.mallocLong(1)
+        vkCreateBuffer(device, createInfo, null, pInputBuffer).orThrow()
+        val inputBuffer = pInputBuffer.get(0)
+
+        val memoryRequirements = VkMemoryRequirements.calloc()
+        vkGetBufferMemoryRequirements(device, inputBuffer, memoryRequirements)
+
+        val allocateInfo = VkMemoryAllocateInfo.calloc()
+            .`sType$Default`()
+            .allocationSize(memoryRequirements.size())
+            .memoryTypeIndex(
+                findMemoryType(
+                    memoryRequirements.memoryTypeBits(),
+                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT or VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                )
+            )
+
+        val pInputBufferMemory = stack.mallocLong(1)
+        vkAllocateMemory(device, allocateInfo, null, pInputBufferMemory).orThrow()
+        val inputBufferMemory = pInputBufferMemory.get()
+
+        vkBindBufferMemory(device, inputBuffer, inputBufferMemory, 0).orThrow()
+
+        return Pair(inputBuffer, inputBufferMemory)
+    }
+
+    fun createOutputBuffer(): Pair<Long, Long> = stackPush().use { stack ->
         val bufferCreateInfo = VkBufferCreateInfo.calloc()
             .`sType$Default`()
-            .size(bufferSize)
+            .size(outputBufferSize)
             .usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
             .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
 
         val pBuffer = stack.mallocLong(1)
-        vkCreateBuffer(device, bufferCreateInfo, null, pBuffer).orThrow("Failed to create buffer")
+        vkCreateBuffer(device, bufferCreateInfo, null, pBuffer).orThrow()
         val buffer = pBuffer.get(0)
 
         val memoryRequirements = VkMemoryRequirements.calloc()
@@ -349,10 +391,10 @@ class Vulkan(
             )
 
         val pBufferMemory = stack.mallocLong(1)
-        vkAllocateMemory(device, allocateInfo, null, pBufferMemory).orThrow("Failed to allocate memory")
+        vkAllocateMemory(device, allocateInfo, null, pBufferMemory).orThrow()
         val bufferMemory = pBufferMemory.get()
 
-        vkBindBufferMemory(device, buffer, bufferMemory, 0).orThrow("Failed to bind buffer memory")
+        vkBindBufferMemory(device, buffer, bufferMemory, 0).orThrow()
 
         return Pair(buffer, bufferMemory)
     }
@@ -370,15 +412,23 @@ class Vulkan(
     }
 
     fun createDescriptorSetLayout(): Long = stackPush().use { stack ->
-        val binding = VkDescriptorSetLayoutBinding.calloc(1)
+        val bindings = VkDescriptorSetLayoutBinding.calloc(2)
+
+        bindings.get(0)
             .binding(0)
+            .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+            .descriptorCount(1)
+            .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+
+        bindings.get(1)
+            .binding(1)
             .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
             .descriptorCount(1)
             .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
 
         val createInfo = VkDescriptorSetLayoutCreateInfo.calloc()
             .`sType$Default`()
-            .pBindings(binding)
+            .pBindings(bindings)
 
         val pDescriptorSetLayout = stack.mallocLong(1)
         vkCreateDescriptorSetLayout(device, createInfo, null, pDescriptorSetLayout).orThrow()
@@ -388,7 +438,7 @@ class Vulkan(
     fun createDescriptorSet(): Pair<Long, Long> = stackPush().use { stack ->
         val poolSize = VkDescriptorPoolSize.calloc(1)
             .type(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
-            .descriptorCount(1)
+            .descriptorCount(2)
 
         val poolCreateInfo = VkDescriptorPoolCreateInfo.calloc()
             .`sType$Default`()
@@ -408,18 +458,33 @@ class Vulkan(
         vkAllocateDescriptorSets(device, allocateInfo, pDescriptorSets).orThrow()
         val descriptorSet = pDescriptorSets.get(0)
 
-        val bufferInfo = VkDescriptorBufferInfo.calloc(1)
-            .buffer(buffer)
-            .offset(0)
-            .range(bufferSize)
+        val writeDescriptorSet = VkWriteDescriptorSet.calloc(2)
 
-        val writeDescriptorSet = VkWriteDescriptorSet.calloc(1)
+        val inputBufferInfo = VkDescriptorBufferInfo.calloc(1)
+            .buffer(inputBuffer)
+            .offset(0)
+            .range(inputBufferSize)
+
+        writeDescriptorSet.get(0)
             .`sType$Default`()
             .dstSet(pDescriptorSets.get(0))
             .dstBinding(0)
             .descriptorCount(1)
             .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
-            .pBufferInfo(bufferInfo)
+            .pBufferInfo(inputBufferInfo)
+
+        val outputBufferInfo = VkDescriptorBufferInfo.calloc(1)
+            .buffer(outputBuffer)
+            .offset(0)
+            .range(outputBufferSize)
+
+        writeDescriptorSet.get(1)
+            .`sType$Default`()
+            .dstSet(pDescriptorSets.get(0))
+            .dstBinding(1)
+            .descriptorCount(1)
+            .descriptorType(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+            .pBufferInfo(outputBufferInfo)
 
         vkUpdateDescriptorSets(device, writeDescriptorSet, null)
 
@@ -501,8 +566,8 @@ class Vulkan(
         )
         vkCmdDispatch(
             commandBuffer,
-            ceil(width / workgroupSize.toFloat()).toInt(),
-            ceil(height / workgroupSize.toFloat()).toInt(),
+            ceil(outputWidth / workgroupSize.toFloat()).toInt(),
+            ceil(outputHeight / workgroupSize.toFloat()).toInt(),
             1,
         )
         vkEndCommandBuffer(commandBuffer).orThrow()
@@ -527,22 +592,39 @@ class Vulkan(
         vkDestroyFence(device, fence, null)
     }
 
+    fun setInput(floatArray: FloatArray): Unit = stackPush().use { stack ->
+        val inputSizeBytes = floatArray.size.toLong() * Float.SIZE_BYTES
+        if (inputSizeBytes != inputBufferSize)
+            throw IllegalArgumentException("Input must be $inputBufferSize bytes but got ${floatArray.size} * ${Float.SIZE_BYTES} = $inputSizeBytes")
+
+        val pMappedMemory = stack.mallocPointer(1)
+        vkMapMemory(device, inputBufferMemory, 0, inputBufferSize, 0, pMappedMemory).orThrow()
+        val mappedMemory = pMappedMemory.get(0)
+        val buffer = memByteBuffer(mappedMemory, inputBufferSize.toInt()).asFloatBuffer()
+
+        buffer.put(floatArray)
+
+        vkUnmapMemory(device, inputBufferMemory)
+    }
+
     fun getRenderedImage(): FloatArray = stackPush().use { stack ->
         val pMappedMemory = stack.mallocPointer(1)
-        vkMapMemory(device, bufferMemory, 0, bufferSize, 0, pMappedMemory).orThrow()
+        vkMapMemory(device, outputBufferMemory, 0, outputBufferSize, 0, pMappedMemory).orThrow()
         val mappedMemory = pMappedMemory.get(0)
-        val buffer = memByteBuffer(mappedMemory, bufferSize.toInt())
+        val buffer = memByteBuffer(mappedMemory, outputBufferSize.toInt()).asFloatBuffer()
 
-        val bytes = FloatArray(bufferSize.toInt() / Float.SIZE_BYTES)
-        buffer.asFloatBuffer().get(bytes)
+        val bytes = FloatArray(outputBufferSize.toInt() / Float.SIZE_BYTES)
+        buffer.get(bytes)
 
-        vkUnmapMemory(device, bufferMemory)
+        vkUnmapMemory(device, outputBufferMemory)
         return bytes
     }
 
     fun destroy() {
-        vkFreeMemory(device, bufferMemory, null)
-        vkDestroyBuffer(device, buffer, null)
+        vkFreeMemory(device, inputBufferMemory, null)
+        vkFreeMemory(device, outputBufferMemory, null)
+        vkDestroyBuffer(device, inputBuffer, null)
+        vkDestroyBuffer(device, outputBuffer, null)
         vkDestroyShaderModule(device, computeShaderModule, null)
         vkDestroyDescriptorPool(device, descriptorPool, null)
         vkDestroyDescriptorSetLayout(device, descriptorSetLayout, null)
