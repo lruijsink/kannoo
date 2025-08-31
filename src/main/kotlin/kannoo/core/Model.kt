@@ -1,5 +1,6 @@
 package kannoo.core
 
+import kannoo.math.Composite
 import kannoo.math.Tensor
 
 class Model {
@@ -30,4 +31,7 @@ class Model {
 
     fun compute(input: Tensor): Tensor =
         layers.fold(input) { v, layer -> layer.compute(v) }
+
+    fun compute(batch: Composite): Composite =
+        layers.fold(batch) { v, layer -> layer.computeBatch(v) }
 }

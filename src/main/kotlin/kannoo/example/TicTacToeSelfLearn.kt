@@ -106,9 +106,7 @@ fun ticTacToeSelfLearn() {
     val model = Model(
         InputLayer(2 * 9 + 2),
         denseLayer(3 * 3 * 20, ReLU),
-        denseLayer(3 * 3 * 10, ReLU),
         denseLayer(3 * 3 * 5, ReLU),
-        denseLayer(3 * 3 * 2, ReLU),
         denseLayer(3, Softmax)
     )
     val sgd = MiniBatchSGD(
@@ -129,7 +127,7 @@ fun ticTacToeSelfLearn() {
             val tdl = ReentrantLock()
             val threads = List(10) {
                 Thread {
-                    val g = List(50) {
+                    val g = List(20) {
                         val moves = playGame(model)
                         trainingDataOf(moves, moves.last().eval()!!)
                     }.flatten()

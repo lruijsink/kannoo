@@ -1,16 +1,14 @@
 package kannoo.math
 
 /**
- * N-dimensional tensor, composed of [slices] with [rank] N - 1, which must themselves be [Composite].
+ * N-dimensional tensor, composed of [slices] with [rank] N - 1, which must themselves be [BoundedComposite].
  *
  * Note that this makes [Matrix] the only other [Composite] tensor type, and the only one which accepts non-composite
  * slices (of type [Vector]), thereby effectively setting the minimum rank of [NTensor] to 3.
  *
  * @param T Slice tensor type, must be [Composite]
- *
- * @param S Nested slice tensor type; the slice type of [T]
  */
-class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where T : Composite<T, *> {
+class NTensor<T>(override val slices: Array<T>) : BoundedComposite<NTensor<T>, T> where T : BoundedComposite<T, *> {
 
     init {
         if (slices.any { it.size != slices[0].size })
@@ -202,7 +200,7 @@ class NTensor<T>(override val slices: Array<T>) : Composite<NTensor<T>, T> where
  *
  * @throws IncompatibleShapeException If [initialize] produces slices of differing shapes
  */
-inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
+inline fun <reified T : BoundedComposite<T, *>> NTensor(size: Int, crossinline initialize: (index: Int) -> T): NTensor<T> =
     NTensor(Array(size) { i -> initialize(i) })
 
 /**
@@ -214,7 +212,7 @@ inline fun <reified T : Composite<T, *>> NTensor(size: Int, crossinline initiali
  *
  * @return Rank N + 1 tensor, where N = [T]'s rank, containing [slices]
  */
-fun <T : Composite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTensor<T> {
+fun <T : BoundedComposite<T, S>, S : BoundedTensor<S>> tensor(vararg slices: T): NTensor<T> {
     @Suppress("KotlinConstantConditions") // We know this cast is safe:
     return NTensor(slices as Array<T>)
 }

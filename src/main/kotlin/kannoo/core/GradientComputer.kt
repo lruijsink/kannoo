@@ -1,5 +1,6 @@
 package kannoo.core
 
+import kannoo.math.Composite
 import kannoo.math.Tensor
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -42,5 +43,18 @@ class GradientComputer(
             gradient.mapAssign { x -> if (x.isNaN() || x.isInfinite()) 0.0f else x }
 
         return combinedAccumulator.gradients
+    }
+
+    val batchAccumulator = GradientAccumulator(model)
+    val batchBackPropagator = BackPropagator(model, cost)
+
+    fun computeGradientsBatch(inputs: Composite, targets: Composite): Map<Tensor, Tensor> {
+        batchAccumulator.reset()
+        batchBackPropagator.calculatePartialsBatch(inputs, targets, batchAccumulator)
+
+        for ((_, gradient) in batchAccumulator.gradients)
+            gradient.mapAssign { x -> if (x.isNaN() || x.isInfinite()) 0.0f else x }
+
+        return batchAccumulator.gradients
     }
 }

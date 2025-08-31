@@ -1,6 +1,8 @@
 package kannoo.core
 
 import kannoo.impl.Softmax
+import kannoo.math.Composite
+import kannoo.math.Shape
 
 class BackPropagator(
     val model: Model,
@@ -24,7 +26,7 @@ class BackPropagator(
     }
 
     private fun backPropagate(sample: Sample, gradientReceiver: GradientReceiver) {
-        var deltaActivation = cost.derivative(sample.target, activations[model.layers.size - 1])
+        var deltaActivation = cost.derivative(sample.target, activations.last())
 
         for (i in (model.layers.size - 1) downTo 0) {
             val deltaPreActivation =
@@ -39,6 +41,59 @@ class BackPropagator(
                 deltaActivation = model.layers[i].deltaInput(deltaPreActivation, input)
 
             model.layers[i].gradients(deltaPreActivation, input, gradientReceiver)
+        }
+    }
+
+    fun calculatePartialsBatch(inputs: Composite, targets: Composite, gradientReceiver: GradientReceiver) {
+        val batchSize = inputs.size
+
+        val batchPreActivations = model.layers
+            .map { Shape(batchSize, it.outputShape).createTensor() as Composite }
+            .toMutableList()
+
+        val batchActivations = model.layers
+            .map { Shape(batchSize, it.outputShape).createTensor() as Composite }
+            .toMutableList()
+
+        forwardPassBatch(inputs, batchPreActivations, batchActivations)
+        backPropagateBatch(inputs, targets, gradientReceiver, batchPreActivations, batchActivations)
+    }
+
+    private fun forwardPassBatch(
+        inputs: Composite,
+        batchPreActivations: MutableList<Composite>,
+        batchActivations: MutableList<Composite>,
+    ) {
+        var intermediate = inputs
+        model.layers.forEachIndexed { i, layer ->
+            batchPreActivations[i] = layer.preActivationBatch(intermediate)
+            batchActivations[i] = layer.activationFunction.compute(batchPreActivations[i]) as Composite
+            intermediate = batchActivations[i]
+        }
+    }
+
+    private fun backPropagateBatch(
+        inputs: Composite,
+        targets: Composite,
+        gradientReceiver: GradientReceiver,
+        batchPreActivations: MutableList<Composite>,
+        batchActivations: MutableList<Composite>,
+    ) {
+        var deltaActivations = cost.derivative(targets, batchActivations.last()) as Composite
+
+        for (i in (model.layers.size - 1) downTo 0) {
+            val deltaPreActivations =
+                if (model.layers[i].activationFunction == Softmax) deltaActivations // Combined into one operation
+                else deltaActivations.hadamard(model.layers[i].activationFunction.derivative(batchPreActivations[i])) as Composite
+
+            val input =
+                if (i == 0) inputs
+                else batchActivations[i - 1]
+
+            if (i > 0)
+                deltaActivations = model.layers[i].deltaInputBatch(deltaPreActivations, input)
+
+            model.layers[i].gradientsBatch(deltaPreActivations, input, gradientReceiver)
         }
     }
 }

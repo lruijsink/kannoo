@@ -21,7 +21,7 @@ fun booleanFunctionsExample() {
         denseLayer(4, Logistic),
         denseLayer(1, Logistic),
     )
-    val sgd = MiniBatchSGD(model, MeanSquaredError, 0.3f, 4)
+    val sgd = MiniBatchSGD(model, MeanSquaredError, 0.3f, 1)
 
     val trainingData = listOf(
         // 0, 0 = and
@@ -57,7 +57,7 @@ fun booleanFunctionsExample() {
     var n = 0
     var e = 1000f
     while (n < 1000 && e > 0.01f) {
-        repeat(10000) {
+        repeat(10) {
             sgd.train(trainingData)
         }
         e = trainingData.sumOf { (input, target) -> cost.compute(target, model.compute(input)).mean() }

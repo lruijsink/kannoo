@@ -1,4 +1,5 @@
 
+import kannoo.example.MNIST
 import kannoo.example.rnd
 import kannoo.math.Matrix
 import kannoo.math.Shape
@@ -19,6 +20,9 @@ val tiledShader = Shader(
 )
 
 fun main() {
+    MNIST()
+    return
+
     val inputSize = 2048
     val outputSize = 1024
     val batchSize = 512

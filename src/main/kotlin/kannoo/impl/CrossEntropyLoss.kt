@@ -1,6 +1,7 @@
 package kannoo.impl
 
 import kannoo.core.CostFunction
+import kannoo.math.Matrix
 import kannoo.math.Tensor
 import kannoo.math.Vector
 import kannoo.math.clip
@@ -13,10 +14,18 @@ object CrossEntropyLoss : CostFunction {
     const val EPSILON = 1e-15f
 
     override fun compute(target: Tensor, actual: Tensor): Tensor =
-        compute(target as Vector, actual as Vector) // TODO: Implement axis (rows, cols, and for rank > 2 tensors
+        when (target) {
+            is Vector -> compute(target, actual as Vector)
+            is Matrix -> Matrix(target.size) { row -> compute(target[row], (actual as Matrix)[row]) }
+            else -> TODO("Not implemented yet")
+        }
 
     override fun derivative(target: Tensor, actual: Tensor): Tensor =
-        derivative(target as Vector, actual as Vector) // TODO: Implement axis (rows, cols, and for rank > 2 tensors
+        when (target) {
+            is Vector -> derivative(target, actual as Vector)
+            is Matrix -> Matrix(target.size) { row -> derivative(target[row], (actual as Matrix)[row]) }
+            else -> TODO("Not implemented yet")
+        }
 
     private fun compute(target: Vector, actual: Vector): Vector =
         -target.zip(actual) { t, a -> t * ln(a.clip(EPSILON, 1f - EPSILON)) }

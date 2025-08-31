@@ -43,23 +43,23 @@ class GrayscaleConvolutionLayer(
     override fun preActivation(input: Matrix): Tensor3 =
         Tensor3(outputChannels) { o -> convolveGS(input, kernels[o], padding, stride) } broadcastPlus bias
 
-    override fun preActivationBatch(input: Tensor3): Tensor4 =
-        Tensor4(input.size) { i -> preActivation(input[i]) }
+    override fun preActivationBatch(inputs: Tensor3): Tensor4 =
+        Tensor4(inputs.size) { i -> preActivation(inputs[i]) }
 
     override fun deltaInput(deltaPreActivation: Tensor3, input: Matrix): Matrix =
         convolveTransposedGS(kernels, deltaPreActivation, inputDimensions, padding, stride)
 
-    override fun deltaInputBatch(deltaPreActivation: Tensor4, input: Tensor3): Tensor3 =
-        Tensor3(input.size) { i -> deltaInput(deltaPreActivation[i], input[i]) }
+    override fun deltaInputBatch(deltaPreActivations: Tensor4, inputs: Tensor3): Tensor3 =
+        Tensor3(inputs.size) { i -> deltaInput(deltaPreActivations[i], inputs[i]) }
 
     override fun gradients(deltaPreActivation: Tensor3, input: Matrix, gradient: GradientReceiver) {
         gradient(kernels, kernelsGradientGS(kernels, deltaPreActivation, input, padding, stride))
         gradient(bias, Vector(outputChannels) { o -> deltaPreActivation[o].sum() })
     }
 
-    override fun gradientsBatch(deltaPreActivation: Tensor4, input: Tensor3, gradient: GradientReceiver) {
-        for (i in 0 until input.size)
-            gradients(deltaPreActivation[i], input[i], gradient)
+    override fun gradientsBatch(deltaPreActivations: Tensor4, inputs: Tensor3, gradient: GradientReceiver) {
+        for (i in 0 until inputs.size)
+            gradients(deltaPreActivations[i], inputs[i], gradient)
     }
 }
 

@@ -26,24 +26,24 @@ class FlattenLayer(val inputShape: Shape) : InnerLayer() {
     override fun preActivation(input: Tensor): Vector =
         input.flatten()
 
-    override fun preActivationBatch(input: Tensor): Matrix =
-        Matrix(input.size) { i -> (input as Composite<*, *>)[i].flatten() }
+    override fun preActivationBatch(inputs: Composite): Matrix =
+        Matrix(inputs.size) { i -> inputs[i].flatten() }
 
     override fun deltaInput(deltaPreActivation: Tensor, input: Tensor): Tensor =
         (deltaPreActivation as Vector).unFlatten(inputShape)
 
-    override fun deltaInputBatch(deltaPreActivation: Tensor, input: Tensor): Tensor =
-        (deltaPreActivation as Matrix).unflattenBatch(inputShape.sliceShape)
+    override fun deltaInputBatch(deltaPreActivations: Composite, inputs: Composite): Composite =
+        (deltaPreActivations as Matrix).unflattenBatch(inputShape)
 
     override fun gradients(deltaPreActivation: Tensor, input: Tensor, gradient: GradientReceiver) {
         // Do nothing
     }
 
-    override fun gradientsBatch(deltaPreActivation: Tensor, input: Tensor, gradient: GradientReceiver) {
+    override fun gradientsBatch(deltaPreActivations: Composite, inputs: Composite, gradient: GradientReceiver) {
         // Do nothing
     }
 
-    private fun Matrix.unflattenBatch(shape: Shape): Composite<*, *> =
+    private fun Matrix.unflattenBatch(shape: Shape): Composite =
         @Suppress("UNCHECKED_CAST")
         when (shape.rank) {
             1 -> throw IllegalArgumentException("Cannot unflatten into a rank 1 shape $shape")

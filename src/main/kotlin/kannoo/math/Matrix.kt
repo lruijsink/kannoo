@@ -4,7 +4,7 @@ package kannoo.math
  * 2-dimensional [Tensor] composed of of [Vector] row vector slices. By convention, the slices are stored row-first,
  * meaning the matrix element `M[i, j]` refers to the element in row `i` and column `j`.
  */
-class Matrix(override val slices: Array<Vector>) : Composite<Matrix, Vector> {
+class Matrix(override val slices: Array<Vector>) : BoundedComposite<Matrix, Vector> {
 
     init {
         if (slices.any { it.size != slices[0].size })

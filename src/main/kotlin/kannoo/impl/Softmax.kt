@@ -1,6 +1,7 @@
 package kannoo.impl
 
 import kannoo.core.ActivationFunction
+import kannoo.math.Matrix
 import kannoo.math.Tensor
 import kannoo.math.Vector
 import kotlin.math.exp
@@ -22,10 +23,16 @@ object Softmax : ActivationFunction {
     private fun derivative(v: Vector): Vector = v
 
     override fun compute(tensor: Tensor): Tensor =
-        if (tensor is Vector) compute(tensor)
-        else TODO("Implement axis (rows, cols, and for rank > 2 tensors")
+        when (tensor) {
+            is Vector -> compute(tensor)
+            is Matrix -> Matrix(tensor.size) { row -> compute(tensor[row]) }
+            else -> TODO("Implement axis (rows, cols, and for rank > 2 tensors")
+        }
 
     override fun derivative(tensor: Tensor): Tensor =
-        if (tensor is Vector) derivative(tensor)
-        else TODO("Implement axis (rows, cols, and for rank > 2 tensors")
+        when (tensor) {
+            is Vector -> derivative(tensor)
+            is Matrix -> Matrix(tensor.size) { row -> derivative(tensor[row]) }
+            else -> TODO("Implement axis (rows, cols, and for rank > 2 tensors")
+        }
 }

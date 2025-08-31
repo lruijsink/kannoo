@@ -115,7 +115,7 @@ sealed interface BoundedTensor<T : BoundedTensor<T>> : Tensor {
         zip(other) { x, y -> x * y }
 
     //
-    // Default implementations and specializations of [TensorBase] as [T]:
+    // Default implementations and bindings:
     //
 
     override val totalElements: Int get() =
