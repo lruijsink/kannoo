@@ -1,6 +1,6 @@
 #version 450
 
-#define WORKGROUP_SIZE 64
+#define WORKGROUP_SIZE 32
 layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
 
 layout (binding = 0) buffer inputBuffer {
