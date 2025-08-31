@@ -1,0 +1,47 @@
+#version 450
+
+#define WORKGROUP_SIZE 64
+layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
+
+layout (binding = 0) buffer inputBuffer {
+    float vInput[];
+};
+
+layout (binding = 1) buffer weightsBuffer {
+    float mWeights[];
+};
+
+layout (binding = 2) buffer outputBuffer {
+    float vOutput[];
+};
+
+layout (push_constant) uniform Params {
+    int inputSize;
+    int outputSize;
+    int batchSize;
+};
+
+float getInput(uint b, uint x) {
+    return vInput[b * inputSize + x];
+}
+
+float getWeight(uint x, uint y) {
+    return mWeights[x + y * inputSize];
+}
+
+void setOutput(uint b, uint y, float v) {
+    vOutput[b * outputSize + y] = v;
+}
+
+void addOutput(uint b, uint y, float v) {
+    vOutput[b * outputSize + y] += v;
+}
+
+void main() {
+    uint b = gl_GlobalInvocationID.y;
+    uint y = gl_GlobalInvocationID.x;
+    setOutput(b, y, 0.0);
+    for (uint x = 0; x < inputSize; x++) {
+        addOutput(b, y, getInput(b, x) * getWeight(x, y));
+    }
+}

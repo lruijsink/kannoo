@@ -1,62 +1,81 @@
+
+import kannoo.example.rnd
 import kannoo.math.Matrix
+import kannoo.math.Shape
+import kannoo.math.randomMatrix
+import kannoo.vulkan.Shader
 import kannoo.vulkan.Vulkan
-import java.awt.Color
-import java.awt.image.BufferedImage
-import java.io.FileOutputStream
-import javax.imageio.ImageIO
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
+import kannoo.vulkan.VulkanMatrixMultiply
 import kotlin.system.measureTimeMillis
 
 fun main() {
-    println("Creating Vulkan instance")
-    val vulkan: Vulkan?
-    val msInit = measureTimeMillis { vulkan = Vulkan(shaderFile = "shaders/comp.spv") }
-    println("Vulkan instance successfully created (took $msInit ms)")
-    vulkan!!
+    val R = 1000
+    val inputSize = 2048
+    val outputSize = 1024
+    val batchSize = 512
+    val input = randomMatrix(batchSize, inputSize)
+    val weights = randomMatrix(outputSize, inputSize)
 
-    println("Setting input")
-    val xO = vulkan.inputWidth / 2
-    val yO = vulkan.inputHeight / 2
-    vulkan.setInput(
-        Matrix(vulkan.inputHeight, vulkan.inputWidth) { y, x ->
-            val rx = (xO - x).toFloat() / xO
-            val ry = (yO - y).toFloat() / yO
-            if (sqrt(rx*rx + ry*ry) < 1f) 1f else 0f
-        }.flatten().elements,
+    val simpleShader = Shader(
+        fileName = "shaders/simple.spv",
+        workgroupSize = 32,
     )
-    println("Input successfully set")
 
-    println("Running command buffer")
-    val msRun = measureTimeMillis { vulkan.runCommandBuffer() }
-    println("Command buffer successfully run (took $msRun ms)")
+    val tiledShader = Shader(
+        fileName = "shaders/tiled.spv",
+        workgroupSize = 32,
+    )
 
-    println("Retrieving rendered image")
-    var scalars = FloatArray(1)
-    val msGet = measureTimeMillis { scalars = vulkan.getRenderedImage() }
-    println("Rendered image successfully retrieved (took $msGet ms)")
+    println("Creating Vulkan instance")
+    val vulkan = Vulkan()
+    println("Vulkan instance successfully created")
 
-    println("Serializing image")
-    val bufferedImage = BufferedImage(vulkan.outputWidth, vulkan.outputHeight, BufferedImage.TYPE_INT_RGB)
-    val msRender = measureTimeMillis {
-        var i = 0
-        for (y in 0 until vulkan.outputHeight) {
-            for (x in 0 until vulkan.outputWidth) {
-                val c = Color(
-                    min(255, (scalars[i++] * 255f).roundToInt()),
-                    min(255, (scalars[i++] * 255f).roundToInt()),
-                    min(255, (scalars[i++] * 255f).roundToInt()),
-                    min(255, (scalars[i++] * 255f).roundToInt()),
-                )
-                bufferedImage.setRGB(x, y, c.rgb)
-            }
+    println("Creating matrix multiply pipeline")
+    val vulkanMatrixMultiply = VulkanMatrixMultiply(
+        vulkan = vulkan,
+        shader = tiledShader,
+        inputSize = inputSize,
+        outputSize = outputSize,
+        batchSize = batchSize,
+    )
+    println("Matrix multiply pipeline successfully created")
+
+    println()
+    println("                         batches   input/output vectors")
+    println("                              |     |")
+    println("                              v     v")
+    println("Input matrix dimensions:    ${input.shape}")
+    println("Weights matrix dimensions: ${weights.shape}")
+    println("Output matrix dimensions:   ${Shape(batchSize, outputSize)} = Input * Weights.transpose()")
+    println()
+    val calc = R.toLong() * batchSize * inputSize * outputSize
+    println("Total work = $R repetitions * $batchSize batches * $inputSize input vectors * $outputSize weights per input")
+    println("           = $calc (${rnd(calc / 1_000_000_000_000.0f)} trillion) calculations")
+    println()
+
+    var ref: Matrix? = null
+    val cpuMs = measureTimeMillis {
+        repeat(R / 100) {
+            ref = Matrix(Array(batchSize) { i -> weights * input[i] })
         }
     }
-    ImageIO.write(bufferedImage, "png", FileOutputStream("./data/mandelbrot.png"))
-    println("Image successfully serialized (took $msRender ms)")
+    ref!!
+    println("CPU took ${rnd(cpuMs / 1000.0f)} sec. for ${R / 100}   matrix multiplications (${R.toFloat() * 10 / cpuMs} mmuls/sec.)")
+    println()
+
+    val output = Matrix(batchSize, outputSize)
+    val runsMs = measureTimeMillis {
+        repeat(R) {
+            vulkanMatrixMultiply.multiplyTransposed(input, weights, output)
+        }
+    }
+    println("GPU took  ${rnd(runsMs / 1000.0f)} sec. for $R matrix multiplications (${R.toFloat() * 1000 / runsMs} mmuls/sec.)")
+    println()
+    println("GPU is ${rnd((cpuMs.toFloat() / runsMs) * 100)} times faster")
+    println()
 
     println("Destroying Vulkan instance")
+    vulkanMatrixMultiply.destroy()
     vulkan.destroy()
     println("Vulkan instance successfully destroyed")
 }

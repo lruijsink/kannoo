@@ -1,5 +1,7 @@
 package kannoo.vulkan
 
+import org.lwjgl.PointerBuffer
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -14,3 +16,7 @@ fun readFileToNative(fileName: String): ByteBuffer =
         buffer.flip()
         return buffer
     }
+
+fun MemoryStack.pointers(strings: Iterable<String>): PointerBuffer =
+    pointers(*strings.map { UTF8(it) }.toTypedArray())
+
