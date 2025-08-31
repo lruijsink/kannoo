@@ -13,10 +13,19 @@ abstract class InnerLayer {
 
     abstract fun preActivation(input: Tensor): Tensor
 
+    abstract fun preActivationBatch(input: Tensor): Tensor
+
     abstract fun deltaInput(deltaPreActivation: Tensor, input: Tensor): Tensor
+
+    abstract fun deltaInputBatch(deltaPreActivation: Tensor, input: Tensor): Tensor
 
     abstract fun gradients(deltaPreActivation: Tensor, input: Tensor, gradient: GradientReceiver)
 
+    abstract fun gradientsBatch(deltaPreActivation: Tensor, input: Tensor, gradient: GradientReceiver)
+
     fun compute(input: Tensor): Tensor =
         activationFunction.compute(preActivation(input))
+
+    fun computeBatch(input: Tensor): Tensor =
+        activationFunction.compute(preActivationBatch(input))
 }

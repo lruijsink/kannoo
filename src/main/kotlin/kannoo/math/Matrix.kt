@@ -369,6 +369,18 @@ fun Matrix(rows: Int, cols: Int): Matrix =
 /**
  * @param rows Row count
  *
+ * @param init Row initialization function
+ *
+ * @return New matrix with [rows] number of row vectors initialized by [init]`(row)`
+ *
+ * @throws IncompatibleShapeException if [init] returns vectors of different sizes
+ */
+inline fun Matrix(rows: Int, crossinline init: (row: Int) -> Vector): Matrix =
+    Matrix(Array(rows) { row -> init(row) })
+
+/**
+ * @param rows Row count
+ *
  * @param cols Column count
  *
  * @param init Initialization function
