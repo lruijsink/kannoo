@@ -3,7 +3,6 @@ package kannoo.vulkan
 import kannoo.math.Matrix
 import kannoo.math.Shape
 import org.lwjgl.system.MemoryStack.stackPush
-import org.lwjgl.system.MemoryUtil.memByteBuffer
 import org.lwjgl.system.MemoryUtil.memFree
 import org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY
 import org.lwjgl.vulkan.VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER
@@ -32,10 +31,8 @@ import org.lwjgl.vulkan.VK10.vkDestroyPipeline
 import org.lwjgl.vulkan.VK10.vkDestroyPipelineLayout
 import org.lwjgl.vulkan.VK10.vkDestroyShaderModule
 import org.lwjgl.vulkan.VK10.vkEndCommandBuffer
-import org.lwjgl.vulkan.VK10.vkMapMemory
 import org.lwjgl.vulkan.VK10.vkQueueSubmit
 import org.lwjgl.vulkan.VK10.vkResetFences
-import org.lwjgl.vulkan.VK10.vkUnmapMemory
 import org.lwjgl.vulkan.VK10.vkUpdateDescriptorSets
 import org.lwjgl.vulkan.VK10.vkWaitForFences
 import org.lwjgl.vulkan.VkCommandBuffer
@@ -332,27 +329,15 @@ class VulkanMatrixMultiply(
     }
 
     private fun setWeights(weights: Matrix): Unit = stackPush().use { stack ->
-        if (weights.rows != outputSize || weights.cols != inputSize)
-            throw IllegalArgumentException("Weights must be a ($outputSize x $inputSize) matrix, but got ${weights.shape}")
-
-        val pMappedMemory = stack.mallocPointer(1)
-        vkMapMemory(vulkan.device, weightsBuffer.memory, 0, weightsBufferSize, 0, pMappedMemory).orThrow()
-        val buffer = memByteBuffer(pMappedMemory.get(0), weightsBufferSize.toInt()).asFloatBuffer()
+        val buffer = weightsBuffer.mapped.asFloatBuffer()
         weights.slices.forEach { buffer.put(it.elements) }
-
-        vkUnmapMemory(vulkan.device, weightsBuffer.memory)
+        buffer.flip()
     }
 
     private fun setInput(batch: Matrix): Unit = stackPush().use { stack ->
-        if (batch.rows != batchSize || batch.cols != inputSize)
-            throw IllegalArgumentException("Input must be a ($batchSize x $inputSize) batch, but got ${batch.shape}")
-
-        val pMappedMemory = stack.mallocPointer(1)
-        vkMapMemory(vulkan.device, inputBuffer.memory, 0, inputBufferSize, 0, pMappedMemory).orThrow()
-        val buffer = memByteBuffer(pMappedMemory.get(0), inputBufferSize.toInt()).asFloatBuffer()
+        val buffer = inputBuffer.mapped.asFloatBuffer()
         batch.slices.forEach { buffer.put(it.elements) }
-
-        vkUnmapMemory(vulkan.device, inputBuffer.memory)
+        buffer.flip()
     }
 
     private fun runCommandBuffer(): Unit = stackPush().use { stack ->
@@ -366,19 +351,16 @@ class VulkanMatrixMultiply(
     }
 
     private fun getOutput(destination: Matrix): Unit = stackPush().use { stack ->
-        val pMappedMemory = stack.mallocPointer(1)
-        vkMapMemory(vulkan.device, outputBuffer.memory, 0, outputBufferSize, 0, pMappedMemory).orThrow()
-        val mappedMemory = pMappedMemory.get(0)
-        val buffer = memByteBuffer(mappedMemory, outputBufferSize.toInt()).asFloatBuffer()
-
+        val buffer = outputBuffer.mapped.asFloatBuffer()
         for (i in 0 until batchSize) buffer.get(destination.slices[i].elements)
-
-        vkUnmapMemory(vulkan.device, outputBuffer.memory)
+        buffer.flip()
     }
 
     fun destroy() {
         memFree(shader.code)
-        vulkan.destroyBuffers(inputBuffer, weightsBuffer, outputBuffer)
+        inputBuffer.destroy()
+        weightsBuffer.destroy()
+        outputBuffer.destroy()
         vkDestroyFence(vulkan.device, fence, null)
         vkDestroyCommandPool(vulkan.device, commandPool, null)
         vkDestroyShaderModule(vulkan.device, computeShaderModule, null)

@@ -10,9 +10,9 @@ import kotlin.system.measureTimeMillis
 
 fun main() {
     val R = 1000
-    val inputSize = 2048
-    val outputSize = 1024
-    val batchSize = 512
+    val inputSize = 640
+    val outputSize = 1280
+    val batchSize = 1280
     val input = randomMatrix(batchSize, inputSize)
     val weights = randomMatrix(outputSize, inputSize)
 

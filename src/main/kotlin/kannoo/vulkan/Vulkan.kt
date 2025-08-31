@@ -23,13 +23,11 @@ import org.lwjgl.vulkan.VK10.vkBindBufferMemory
 import org.lwjgl.vulkan.VK10.vkCreateBuffer
 import org.lwjgl.vulkan.VK10.vkCreateDevice
 import org.lwjgl.vulkan.VK10.vkCreateInstance
-import org.lwjgl.vulkan.VK10.vkDestroyBuffer
 import org.lwjgl.vulkan.VK10.vkDestroyDevice
 import org.lwjgl.vulkan.VK10.vkDestroyInstance
 import org.lwjgl.vulkan.VK10.vkEnumerateInstanceExtensionProperties
 import org.lwjgl.vulkan.VK10.vkEnumerateInstanceLayerProperties
 import org.lwjgl.vulkan.VK10.vkEnumeratePhysicalDevices
-import org.lwjgl.vulkan.VK10.vkFreeMemory
 import org.lwjgl.vulkan.VK10.vkGetBufferMemoryRequirements
 import org.lwjgl.vulkan.VK10.vkGetDeviceQueue
 import org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceMemoryProperties
@@ -259,7 +257,7 @@ class Vulkan {
 
         vkBindBufferMemory(device, buffer, memory, 0).orThrow()
 
-        return VulkanBuffer(handle = buffer, memory = memory)
+        return VulkanBuffer(vulkan = this, size = size, handle = buffer, memory = memory)
     }
 
     private fun findMemoryType(memoryTypeBits: Int, properties: Int): Int = stackPush().use { stack ->
@@ -272,15 +270,6 @@ class Vulkan {
             ) return i
 
         return -1
-    }
-
-    fun destroyBuffer(buffer: VulkanBuffer) {
-        vkFreeMemory(device, buffer.memory, null)
-        vkDestroyBuffer(device, buffer.handle, null)
-    }
-
-    fun destroyBuffers(vararg buffers: VulkanBuffer) {
-        buffers.forEach { destroyBuffer(it) }
     }
 
     fun destroy() {
