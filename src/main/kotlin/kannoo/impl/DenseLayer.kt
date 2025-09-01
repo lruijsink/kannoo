@@ -8,6 +8,7 @@ import kannoo.math.Matrix
 import kannoo.math.Shape
 import kannoo.math.Tensor
 import kannoo.math.Vector
+import kannoo.math.broadcastPlus
 import kannoo.math.randomMatrix
 
 class DenseLayer(val weights: Matrix, val bias: Vector, override val activationFunction: ActivationFunction) :
@@ -26,13 +27,13 @@ class DenseLayer(val weights: Matrix, val bias: Vector, override val activationF
         weights * input + bias
 
     override fun preActivationBatch(inputs: Matrix): Matrix =
-        Matrix(inputs.size) { i -> preActivation(inputs[i]) }
+        inputs.multiplyTranspose(weights).broadcastPlus(bias)
 
     override fun deltaInput(deltaPreActivation: Vector, input: Vector): Vector =
         deltaPreActivation * weights
 
     override fun deltaInputBatch(deltaPreActivations: Matrix, inputs: Matrix): Matrix =
-        Matrix(inputs.size) { i -> deltaInput(deltaPreActivations[i], inputs[i]) }
+        deltaPreActivations * weights
 
     override fun gradients(deltaPreActivation: Vector, input: Vector, gradient: GradientReceiver) {
         gradient(weights, deltaPreActivation.outer(input))
@@ -40,8 +41,8 @@ class DenseLayer(val weights: Matrix, val bias: Vector, override val activationF
     }
 
     override fun gradientsBatch(deltaPreActivations: Matrix, inputs: Matrix, gradient: GradientReceiver) {
-        for (i in 0 until inputs.size)
-            gradients(deltaPreActivations[i], inputs[i], gradient)
+        gradient(weights, deltaPreActivations.transposeMultiply(inputs))
+        gradient(bias, deltaPreActivations.sumRows())
     }
 }
 

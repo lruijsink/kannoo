@@ -322,6 +322,79 @@ class Matrix(override val slices: Array<Vector>) : BoundedComposite<Matrix, Vect
         Matrix(cols, rows) { i, j -> this[j, i] }
 
     /**
+     * Standard matrix multiplication, multiply this matrix, with dimensions N x K, by the argument matrix, which must
+     * have dimensions K x M, into the result matrix which will have dimensions N x M.
+     *
+     * @param other Matrix to multiply with
+     *
+     * @return N x M matrix where this matrix has dimensions N x K and the argument K x M
+     *
+     * @throws IncompatibleShapeException if this matrix's `cols` != `other.rows`
+     */
+    operator fun times(other: Matrix): Matrix {
+        if (this.cols != other.rows)
+            throw IncompatibleShapeException(
+                "Cannot multiply this matrix, of shape $shape, with the given matrix of shape ${other.shape}, " +
+                        "column count of this matrix must equal the row count of the argument.",
+            )
+
+        val res = Matrix(rows, other.cols)
+        for (i in 0 until rows)
+            for (j in 0 until other.cols)
+                for (k in 0 until cols)
+                    res[i, j] += this[i, k] * other[k, j]
+        return res
+    }
+
+    /**
+     * Equivalent to `this * other.transpose()` but implemented in a more efficient way.
+     *
+     * @param other Matrix to multiply with
+     *
+     * @returns: N x M matrix where this matrix has dimensions N x K and the argument M x K
+     *
+     * @throws IncompatibleShapeException if both matrices do not have the same [cols] count
+     */
+    infix fun multiplyTranspose(other: Matrix): Matrix {
+        if (this.cols != other.cols)
+            throw IncompatibleShapeException(
+                "Cannot multiply this matrix, of shape $shape, with the transpose of the given matrix of shape " +
+                        "${other.shape}, both must have the same column count.",
+            )
+
+        val res = Matrix(this.rows, other.rows)
+        for (i in 0 until this.rows)
+            for (j in 0 until other.rows)
+                for (k in 0 until cols)
+                    res[i, j] += this[i, k] * other[j, k]
+        return res
+    }
+
+    /**
+     * Equivalent to `this.transpose() * other` but implemented in a more efficient way.
+     *
+     * @param other Matrix to multiply with
+     *
+     * @returns: N x M matrix where this matrix has dimensions K x N and the argument K x M
+     *
+     * @throws IncompatibleShapeException if both matrices do not have the same [rows] count
+     */
+    infix fun transposeMultiply(other: Matrix): Matrix {
+        if (this.rows != other.rows)
+            throw IncompatibleShapeException(
+                "Cannot multiply the transpose of this matrix, of shape $shape, with the given matrix of shape " +
+                        "${other.shape}, both must have the same row count.",
+            )
+
+        val res = Matrix(this.cols, other.cols)
+        for (k in 0 until rows)
+            for (i in 0 until this.cols)
+                for (j in 0 until other.cols)
+                    res[i, j] += this[k, i] * other[k, j]
+        return res
+    }
+
+    /**
      * @return New matrix M which is this one rotated by 180 degrees, such that:
      *
      * `M[i, j] = this[rows - i - 1, cols - j - 1]`
@@ -334,6 +407,14 @@ class Matrix(override val slices: Array<Vector>) : BoundedComposite<Matrix, Vect
      */
     fun rotate180(): Matrix =
         Matrix(rows, cols) { i, j -> this[rows - i - 1, cols - j - 1] }
+
+    // TODO: doc
+    fun sumRows(): Vector {
+        val res = Vector(cols)
+        for (vector in slices)
+            res += vector
+        return res
+    }
 
     // TODO: Clean this up
     fun prettyPrint(): String {
@@ -431,3 +512,17 @@ fun <T : Vector> tensor(vararg rowVectors: T): Matrix {
  */
 fun emptyMatrix(): Matrix =
     Matrix(arrayOf())
+
+// TODO: Generalize broadcasting
+/**
+ * @param vector Vector to broadcast
+ *
+ * @return New tensor T with [vector] added to each row vector in this matrix
+ *
+ * @throws IncompatibleShapeException If this matrix's row vector size (column count) differs from [vector]'s size
+ */
+infix fun Matrix.broadcastPlus(vector: Vector): Matrix =
+    if (this.cols != vector.size)
+        throw IncompatibleShapeException("Matrix and vector sizes must match")
+    else
+        Matrix(this.size) { i -> this[i] + vector }
