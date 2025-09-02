@@ -18,9 +18,10 @@ import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 
 class VulkanDescriptorSet(
-    val vulkan: Vulkan,
+    vulkan: Vulkan,
     val bufferBindings: Map<Int, VulkanBuffer>,
-) {
+) : VulkanResource(vulkan) {
+
     val layout: Long = createDescriptorSetLayout()
     val pool: Long = createDescriptorPool()
     val handle: Long = createDescriptorSet()
@@ -92,7 +93,7 @@ class VulkanDescriptorSet(
         return descriptorSet
     }
 
-    fun destroy() {
+    override fun destroy() {
         vkDestroyDescriptorPool(vulkan.device, pool, null)
         vkDestroyDescriptorSetLayout(vulkan.device, layout, null)
     }

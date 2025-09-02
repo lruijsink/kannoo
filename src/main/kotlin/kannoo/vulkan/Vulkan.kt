@@ -8,19 +8,12 @@ import org.lwjgl.vulkan.KHRPortabilityEnumeration.VK_INSTANCE_CREATE_ENUMERATE_P
 import org.lwjgl.vulkan.KHRPortabilityEnumeration.VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
 import org.lwjgl.vulkan.KHRPortabilitySubset.VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
 import org.lwjgl.vulkan.VK10.VK_API_VERSION_1_0
-import org.lwjgl.vulkan.VK10.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-import org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-import org.lwjgl.vulkan.VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 import org.lwjgl.vulkan.VK10.VK_QUEUE_COMPUTE_BIT
-import org.lwjgl.vulkan.VK10.VK_SHARING_MODE_EXCLUSIVE
 import org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_APPLICATION_INFO
 import org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO
 import org.lwjgl.vulkan.VK10.VK_VERSION_MAJOR
 import org.lwjgl.vulkan.VK10.VK_VERSION_MINOR
 import org.lwjgl.vulkan.VK10.VK_VERSION_PATCH
-import org.lwjgl.vulkan.VK10.vkAllocateMemory
-import org.lwjgl.vulkan.VK10.vkBindBufferMemory
-import org.lwjgl.vulkan.VK10.vkCreateBuffer
 import org.lwjgl.vulkan.VK10.vkCreateDevice
 import org.lwjgl.vulkan.VK10.vkCreateInstance
 import org.lwjgl.vulkan.VK10.vkDestroyDevice
@@ -28,13 +21,10 @@ import org.lwjgl.vulkan.VK10.vkDestroyInstance
 import org.lwjgl.vulkan.VK10.vkEnumerateInstanceExtensionProperties
 import org.lwjgl.vulkan.VK10.vkEnumerateInstanceLayerProperties
 import org.lwjgl.vulkan.VK10.vkEnumeratePhysicalDevices
-import org.lwjgl.vulkan.VK10.vkGetBufferMemoryRequirements
 import org.lwjgl.vulkan.VK10.vkGetDeviceQueue
-import org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceMemoryProperties
 import org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceProperties
 import org.lwjgl.vulkan.VK10.vkGetPhysicalDeviceQueueFamilyProperties
 import org.lwjgl.vulkan.VkApplicationInfo
-import org.lwjgl.vulkan.VkBufferCreateInfo
 import org.lwjgl.vulkan.VkDevice
 import org.lwjgl.vulkan.VkDeviceCreateInfo
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo
@@ -42,10 +32,7 @@ import org.lwjgl.vulkan.VkExtensionProperties
 import org.lwjgl.vulkan.VkInstance
 import org.lwjgl.vulkan.VkInstanceCreateInfo
 import org.lwjgl.vulkan.VkLayerProperties
-import org.lwjgl.vulkan.VkMemoryAllocateInfo
-import org.lwjgl.vulkan.VkMemoryRequirements
 import org.lwjgl.vulkan.VkPhysicalDevice
-import org.lwjgl.vulkan.VkPhysicalDeviceMemoryProperties
 import org.lwjgl.vulkan.VkPhysicalDeviceProperties
 import org.lwjgl.vulkan.VkQueue
 import org.lwjgl.vulkan.VkQueueFamilyProperties
@@ -56,6 +43,8 @@ const val VK_LAYER_KHRONOS_VALIDATION_LAYER_NAME = "VK_LAYER_KHRONOS_validation"
 val DEBUG = System.getProperty("debug", "false").toBoolean()
 
 class Vulkan {
+    private val resources = mutableListOf<VulkanResource>()
+
     val enabledExtensions =
         if (DEBUG) listOf(
             VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
@@ -92,6 +81,10 @@ class Vulkan {
         this.queueFamilyIndex = queueFamilyIndex
         this.device = device
         this.queue = queue
+    }
+
+    fun register(resource: VulkanResource) {
+        resources += resource
     }
 
     private fun enumerateSupportedInstanceExtensions(): List<String> = stackPush().use { stack ->
@@ -227,52 +220,8 @@ class Vulkan {
         throw IllegalStateException("No compute queue family was found")
     }
 
-    fun createBuffer(size: Long): VulkanBuffer = stackPush().use { stack ->
-        val createInfo = VkBufferCreateInfo.calloc()
-            .`sType$Default`()
-            .size(size)
-            .usage(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
-            .sharingMode(VK_SHARING_MODE_EXCLUSIVE)
-
-        val pBuffer = stack.mallocLong(1)
-        vkCreateBuffer(device, createInfo, null, pBuffer).orThrow()
-        val buffer = pBuffer.get(0)
-
-        val memoryRequirements = VkMemoryRequirements.calloc()
-        vkGetBufferMemoryRequirements(device, buffer, memoryRequirements)
-
-        val allocateInfo = VkMemoryAllocateInfo.calloc()
-            .`sType$Default`()
-            .allocationSize(memoryRequirements.size())
-            .memoryTypeIndex(
-                findMemoryType(
-                    memoryRequirements.memoryTypeBits(),
-                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT or VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                )
-            )
-
-        val pMemory = stack.mallocLong(1)
-        vkAllocateMemory(device, allocateInfo, null, pMemory).orThrow()
-        val memory = pMemory.get()
-
-        vkBindBufferMemory(device, buffer, memory, 0).orThrow()
-
-        return VulkanBuffer(vulkan = this, size = size, handle = buffer, memory = memory)
-    }
-
-    private fun findMemoryType(memoryTypeBits: Int, properties: Int): Int = stackPush().use { stack ->
-        val memoryProperties = VkPhysicalDeviceMemoryProperties.calloc()
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, memoryProperties)
-
-        for (i in 0 until memoryProperties.memoryTypeCount())
-            if (memoryTypeBits and (1 shl i) != 0 &&
-                (memoryProperties.memoryTypes().get(i).propertyFlags() and properties) == properties
-            ) return i
-
-        return -1
-    }
-
     fun destroy() {
+        resources.asReversed().forEach { it.destroy() }
         vkDestroyDevice(device, null)
         vkDestroyInstance(instance, null)
     }

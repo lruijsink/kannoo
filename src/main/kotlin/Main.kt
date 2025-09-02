@@ -3,25 +3,15 @@ import kannoo.example.rnd
 import kannoo.math.Matrix
 import kannoo.math.Shape
 import kannoo.math.randomMatrix
-import kannoo.vulkan.Shader
 import kannoo.vulkan.Vulkan
 import kannoo.vulkan.VulkanMatrixMultiply
+import kannoo.vulkan.createShader
 import kotlin.system.measureTimeMillis
 
-val simpleShader = Shader(
-    fileName = "shaders/simple.spv",
-    workgroupSize = 32,
-)
-
-val tiledShader = Shader(
-    fileName = "shaders/tiled.spv",
-    workgroupSize = 32,
-)
-
 fun main() {
-    val rounds = 1000
+    val rounds = 10000
     val cpuReduction = 100
-    val cpuSkip = false
+    val cpuSkip = true
 
     val inputSize = 2048
     val outputSize = 1024
@@ -32,6 +22,20 @@ fun main() {
     println("Creating Vulkan instance")
     val vulkan = Vulkan()
     println("Vulkan instance successfully created")
+
+    println("Loading simple shader")
+    val simpleShader = vulkan.createShader(
+        fileName = "shaders/simple.spv",
+        workgroupSize = 32,
+    )
+    println("Simple shader successfully loaded")
+
+    println("Loading tiled shader")
+    val tiledShader = vulkan.createShader(
+        fileName = "shaders/tiled.spv",
+        workgroupSize = 32,
+    )
+    println("Tiled shader successfully loaded")
 
     println("Creating matrix multiply pipeline")
     val vulkanMatrixMultiply = VulkanMatrixMultiply(
@@ -83,7 +87,6 @@ fun main() {
     }
 
     println("Destroying Vulkan instance")
-    vulkanMatrixMultiply.destroy()
     vulkan.destroy()
     println("Vulkan instance successfully destroyed")
 }

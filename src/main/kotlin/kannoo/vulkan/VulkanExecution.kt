@@ -10,9 +10,10 @@ import org.lwjgl.vulkan.VkFenceCreateInfo
 import org.lwjgl.vulkan.VkSubmitInfo
 
 class VulkanExecution(
-    val vulkan: Vulkan,
+    vulkan: Vulkan,
     commandBuffers: List<VulkanCommandBuffer>,
-) {
+) : VulkanResource(vulkan) {
+
     constructor(vulkan: Vulkan, vararg commandBuffers: VulkanCommandBuffer) : this(vulkan, commandBuffers.toList())
 
     private val fence = createFence()
@@ -38,7 +39,7 @@ class VulkanExecution(
         vkWaitForFences(vulkan.device, fence, true, 100000000000).orThrow()
     }
 
-    fun destroy() {
+    override fun destroy() {
         vkDestroyFence(vulkan.device, fence, null)
     }
 }

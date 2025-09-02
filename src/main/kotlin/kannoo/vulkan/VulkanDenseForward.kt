@@ -1,7 +1,5 @@
 package kannoo.vulkan
 
-import org.lwjgl.system.MemoryUtil.memFree
-
 class VulkanDenseForward(
     val vulkan: Vulkan,
     val input: VulkanMatrixBuffer,
@@ -29,7 +27,10 @@ class VulkanDenseForward(
         input.rows,
     )
 
-    val shader = Shader(fileName = "shaders/dense_forward.spv", workgroupSize = 32)
+    val shader = vulkan.createShader(
+        fileName = "shaders/dense_forward.spv",
+        workgroupSize = 32,
+    )
 
     val pipeline = vulkan.createPipeline(
         descriptorSet,
@@ -49,13 +50,5 @@ class VulkanDenseForward(
 
     fun forward() {
         // TODO
-    }
-
-    fun destroy() {
-        execution.destroy()
-        commandBuffer.destroy()
-        pipeline.destroy()
-        memFree(shader.code)
-        descriptorSet.destroy()
     }
 }

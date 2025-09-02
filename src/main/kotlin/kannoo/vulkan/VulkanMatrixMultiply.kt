@@ -6,7 +6,7 @@ import org.lwjgl.system.MemoryStack.stackPush
 
 class VulkanMatrixMultiply(
     private val vulkan: Vulkan,
-    private val shader: Shader,
+    private val shader: VulkanShader,
     private val inputSize: Int,
     private val outputSize: Int,
     private val batchSize: Int,
@@ -41,7 +41,6 @@ class VulkanMatrixMultiply(
         pipeline,
         (outputSize + shader.workgroupSize - 1) / shader.workgroupSize,
         (batchSize + shader.workgroupSize - 1) / shader.workgroupSize,
-        1,
     )
 
     private val execution = vulkan.createExecution(
@@ -90,15 +89,5 @@ class VulkanMatrixMultiply(
         val buffer = outputBuffer.mapped.asFloatBuffer()
         for (i in 0 until batchSize) buffer.get(destination.slices[i].elements)
         buffer.flip()
-    }
-
-    fun destroy() {
-        inputBuffer.destroy()
-        weightsBuffer.destroy()
-        outputBuffer.destroy()
-        descriptorSet.destroy()
-        pipeline.destroy()
-        commandBuffer.destroy()
-        execution.destroy()
     }
 }

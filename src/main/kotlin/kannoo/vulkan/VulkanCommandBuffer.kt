@@ -20,12 +20,13 @@ import org.lwjgl.vulkan.VkCommandPoolCreateInfo
 import java.nio.IntBuffer
 
 class VulkanCommandBuffer(
-    val vulkan: Vulkan,
+    vulkan: Vulkan,
     val pipeline: VulkanPipeline,
     val groupCountX: Int,
     val groupCountY: Int,
     val groupCountZ: Int,
-) {
+) : VulkanResource(vulkan) {
+
     val pool: Long = createCommandPool()
     val handle: VkCommandBuffer = createCommandBuffer()
 
@@ -79,7 +80,7 @@ class VulkanCommandBuffer(
         return commandBuffer
     }
 
-    fun destroy() {
+    override fun destroy() {
         vkDestroyCommandPool(vulkan.device, pool, null)
     }
 }

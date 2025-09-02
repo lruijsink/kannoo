@@ -17,11 +17,12 @@ import org.lwjgl.vulkan.VkPushConstantRange
 import org.lwjgl.vulkan.VkShaderModuleCreateInfo
 
 class VulkanPipeline(
-    val vulkan: Vulkan,
+    vulkan: Vulkan,
     val descriptorSet: VulkanDescriptorSet,
     val pushConstants: VulkanPushConstants,
-    val shader: Shader,
-) {
+    val shader: VulkanShader,
+) : VulkanResource(vulkan) {
+
     val shaderModule: Long = createComputeShaderModule()
     val layout: Long = createPipelineLayout()
     val handle: Long = createComputePipeline()
@@ -70,7 +71,7 @@ class VulkanPipeline(
         return pPipeline.get()
     }
 
-    fun destroy() {
+    override fun destroy() {
         memFree(shader.code)
         vkDestroyShaderModule(vulkan.device, shaderModule, null)
         vkDestroyPipelineLayout(vulkan.device, layout, null)
@@ -81,5 +82,5 @@ class VulkanPipeline(
 fun Vulkan.createPipeline(
     descriptorSet: VulkanDescriptorSet,
     pushConstants: VulkanPushConstants,
-    shader: Shader,
+    shader: VulkanShader,
 ) = VulkanPipeline(this, descriptorSet, pushConstants, shader)
