@@ -1,7 +1,10 @@
 package kannoo.vulkan
 
+import kannoo.math.randomSignedFloat
 import org.lwjgl.system.MemoryStack.stackPush
+import org.lwjgl.system.MemoryUtil.memAddress
 import org.lwjgl.system.MemoryUtil.memByteBuffer
+import org.lwjgl.system.MemoryUtil.memSet
 import org.lwjgl.vulkan.VK10.vkDestroyBuffer
 import org.lwjgl.vulkan.VK10.vkFreeMemory
 import org.lwjgl.vulkan.VK10.vkMapMemory
@@ -9,8 +12,8 @@ import org.lwjgl.vulkan.VK10.vkUnmapMemory
 import java.nio.ByteBuffer
 
 class VulkanBuffer(
+    private val vulkan: Vulkan,
     val size: Long,
-    val vulkan: Vulkan,
     val handle: Long,
     val memory: Long,
 ) {
@@ -26,5 +29,17 @@ class VulkanBuffer(
         vkUnmapMemory(vulkan.device, memory)
         vkFreeMemory(vulkan.device, memory, null)
         vkDestroyBuffer(vulkan.device, handle, null)
+    }
+
+    fun initZero() {
+        memSet(memAddress(mapped), 0, mapped.capacity() * Float.SIZE_BYTES.toLong())
+    }
+
+    fun initRandom() {
+        val floats = mapped.asFloatBuffer()
+        repeat(floats.capacity()) {
+            floats.put(randomSignedFloat())
+        }
+        floats.flip()
     }
 }

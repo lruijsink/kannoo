@@ -1,0 +1,74 @@
+#version 450
+
+#define WORKGROUP_SIZE 32
+layout (
+local_size_x = WORKGROUP_SIZE, // outputs dimension
+local_size_y = WORKGROUP_SIZE// batches dimension
+) in;
+
+layout (binding = 0) buffer inputBuffer {
+    float inputs[];
+};
+
+layout (binding = 1) buffer weightsBuffer {
+    float weights[];
+};
+
+layout (binding = 2) buffer biasBuffer {
+    float bias[];
+};
+
+layout (binding = 3) buffer outputBuffer {
+    float outputs[];
+};
+
+layout (push_constant) uniform Params {
+    int inputSize;
+    int outputSize;
+    int batchSize;
+};
+
+float getInput(uint b, uint x) {
+    return inputs[b * inputSize + x];
+}
+
+float getWeight(uint x, uint y) {
+    return weights[x + y * inputSize];
+}
+
+void setOutput(uint b, uint y, float v) {
+    outputs[b * outputSize + y] = v;
+}
+
+// Shared memory tiles
+shared float Asub[WORKGROUP_SIZE][WORKGROUP_SIZE];
+shared float Bsub[WORKGROUP_SIZE][WORKGROUP_SIZE];
+
+void main() {
+    uint b = gl_GlobalInvocationID.y;
+    uint y = gl_GlobalInvocationID.x;
+    if (b >= batchSize || y >= outputSize) return;
+
+    float acc = bias[y];
+    for (uint k0 = 0; k0 < inputSize; k0 += WORKGROUP_SIZE) {
+        uint lb = gl_LocalInvocationID.y;
+        uint ly = gl_LocalInvocationID.x;
+
+        Asub[lb][ly] = ((k0 + ly) < inputSize)
+        ? getInput(b, k0 + ly)
+        : 0.0;
+
+        Bsub[lb][ly] = ((k0 + lb) < inputSize)
+        ? getWeight(k0 + lb, y)
+        : 0.0;
+
+        barrier();
+
+        for (uint k = 0; k < WORKGROUP_SIZE; k++) {
+            acc += Asub[lb][k] * Bsub[k][ly];
+        }
+
+        barrier();
+    }
+    setOutput(b, y, acc);
+}

@@ -1,5 +1,4 @@
 
-import kannoo.example.MNIST
 import kannoo.example.rnd
 import kannoo.math.Matrix
 import kannoo.math.Shape
@@ -20,8 +19,9 @@ val tiledShader = Shader(
 )
 
 fun main() {
-    MNIST()
-    return
+    val rounds = 1000
+    val cpuReduction = 100
+    val cpuSkip = false
 
     val inputSize = 2048
     val outputSize = 1024
@@ -43,9 +43,6 @@ fun main() {
     )
     println("Matrix multiply pipeline successfully created")
 
-    val rounds = 1000
-    val cpuReduction = 100
-
     println()
     println("                         batches   input/output vectors")
     println("                              |     |")
@@ -59,15 +56,18 @@ fun main() {
     println("           = $calc (${rnd(calc / 1_000_000_000_000.0f)} trillion) calculations")
     println()
 
-    var ref: Matrix? = null
-    val cpuMs = measureTimeMillis {
-        repeat(rounds / cpuReduction) {
-            ref = Matrix(Array(batchSize) { i -> weights * input[i] })
+    var cpuMs = 1L
+    if (!cpuSkip) {
+        var ref: Matrix? = null
+        cpuMs = measureTimeMillis {
+            repeat(rounds / cpuReduction) {
+                ref = Matrix(Array(batchSize) { i -> weights * input[i] })
+            }
         }
+        ref!!
+        println("CPU took ${rnd(cpuMs / 1000.0f)} sec. for ${rounds / cpuReduction}   matrix multiplications (${rounds.toFloat() * 1000 / (cpuMs * cpuReduction)} mmuls/sec.)")
+        println()
     }
-    ref!!
-    println("CPU took ${rnd(cpuMs / 1000.0f)} sec. for ${rounds / cpuReduction}   matrix multiplications (${rounds.toFloat() * 1000 / (cpuMs * cpuReduction)} mmuls/sec.)")
-    println()
 
     val output = Matrix(batchSize, outputSize)
     val runsMs = measureTimeMillis {
@@ -77,8 +77,10 @@ fun main() {
     }
     println("GPU took  ${rnd(runsMs / 1000.0f)} sec. for $rounds matrix multiplications (${rounds.toFloat() * 1000 / runsMs} mmuls/sec.)")
     println()
-    println("GPU is ${rnd((cpuMs.toFloat() / runsMs) * cpuReduction)} times faster")
-    println()
+    if (!cpuSkip) {
+        println("GPU is ${rnd((cpuMs.toFloat() / runsMs) * cpuReduction)} times faster")
+        println()
+    }
 
     println("Destroying Vulkan instance")
     vulkanMatrixMultiply.destroy()
