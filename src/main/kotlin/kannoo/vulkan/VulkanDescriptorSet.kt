@@ -27,7 +27,7 @@ class VulkanDescriptorSet(
     val handle: Long = createDescriptorSet()
 
     private fun createDescriptorSetLayout(): Long = stackPush().use { stack ->
-        val bindings = VkDescriptorSetLayoutBinding.calloc(3)
+        val bindings = VkDescriptorSetLayoutBinding.calloc(bufferBindings.size)
 
         bufferBindings.keys.forEachIndexed { i, binding ->
             bindings.get(i)

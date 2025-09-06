@@ -22,7 +22,8 @@ class VulkanMatrixMultiply(
     private val descriptorSet = vulkan.createDescriptorSet(
         0 to inputBuffer,
         1 to weightsBuffer,
-        2 to outputBuffer,
+        2 to vulkan.createBuffer(outputSize * Float.SIZE_BYTES.toLong()),
+        3 to outputBuffer,
     )
 
     private val pushConstants = VulkanPushConstants(
@@ -35,6 +36,12 @@ class VulkanMatrixMultiply(
         descriptorSet,
         pushConstants,
         shader,
+        createSpecialization(
+            0 to inputSize,
+            1 to outputSize,
+            2 to batchSize,
+            3 to 0,
+        )
     )
 
     private val commandBuffer = vulkan.createCommandBuffer(

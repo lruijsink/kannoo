@@ -1,17 +1,12 @@
 package kannoo.vulkan
 
 import kannoo.core.ActivationFunction
-import kannoo.impl.Linear
-import kannoo.impl.Logistic
-import kannoo.impl.ReLU
-import kannoo.math.Matrix
-import kannoo.math.Vector
+import kannoo.math.randomMatrix
 
-class VulkanDenseForward(
+class VulkanMatrixMul2(
     val vulkan: Vulkan,
     val input: VulkanMatrixBuffer,
     val weights: VulkanMatrixBuffer,
-    val bias: VulkanVectorBuffer,
     val output: VulkanMatrixBuffer,
     val activation: ActivationFunction,
 ) {
@@ -24,52 +19,43 @@ class VulkanDenseForward(
         vulkan = vulkan,
         input = input,
         weights = vulkan.createMatrixBuffer(rows = outputSize, cols = input.cols),
-        bias = vulkan.createVectorBuffer(size = outputSize),
         output = vulkan.createMatrixBuffer(rows = input.rows, cols = outputSize),
         activation = activation,
     )
 
+    val shader = vulkan.createShader("shaders/tiled.spv", 32)
+
+    val inputSize = input.cols
+    val outputSize = output.cols
+    val batchSize = output.rows
+
     val descriptorSet = vulkan.createDescriptorSet(
         0 to input.buffer,
         1 to weights.buffer,
-        2 to bias.buffer,
-        3 to output.buffer,
+        2 to output.buffer,
     )
 
     val pushConstants = VulkanPushConstants(
-        input.cols,
-        output.cols,
-        output.rows,
+        inputSize,
+        outputSize,
+        batchSize,
     )
-
-    val shader = vulkan.createShader(
-        fileName = "shaders/dense_forward_with_constants.spv",
-        workgroupSize = 32,
-    )
-
-    val activationId = when (activation) {
-        Linear -> 0
-        ReLU -> 1
-        Logistic -> 2
-        else -> throw IllegalStateException("Activation function $activation not supported")
-    }
 
     val pipeline = vulkan.createPipeline(
         descriptorSet,
         pushConstants,
         shader,
         createSpecialization(
-            0 to input.cols,
-            1 to output.cols,
-            2 to output.rows,
-            3 to activationId,
+            0 to inputSize,
+            1 to outputSize,
+            2 to batchSize,
         ),
     )
 
     val commandBuffer = vulkan.createCommandBuffer(
         pipeline = pipeline,
-        groupCountX = (output.cols + shader.workgroupSize - 1) / shader.workgroupSize,
-        groupCountY = (output.rows + shader.workgroupSize - 1) / shader.workgroupSize,
+        groupCountX = (outputSize + shader.workgroupSize - 1) / shader.workgroupSize,
+        groupCountY = (batchSize + shader.workgroupSize - 1) / shader.workgroupSize,
     )
 
     val execution = vulkan.createExecution(
@@ -80,8 +66,7 @@ class VulkanDenseForward(
         if (input.rows != output.rows)
             throw IllegalArgumentException("Input and output must have same number of rows (= batch size)")
 
-        bias.set(Vector(bias.size))
-        weights.set(Matrix(weights.rows, weights.cols) { _, _ -> 2f })
+        weights.set(randomMatrix(weights.rows, weights.cols))
     }
 
     fun runCommandBuffer() {

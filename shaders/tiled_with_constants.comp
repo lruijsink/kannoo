@@ -3,11 +3,9 @@
 #define WORKGROUP_SIZE 32
 layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
 
-layout(push_constant) uniform Sizes {
-    uint INPUT_SIZE;// number of columns in I / W
-    uint OUTPUT_SIZE;// number of rows in W (outputs)
-    uint BATCH_SIZE;// number of rows in I (batch size)
-};
+layout(constant_id = 0) const uint INPUT_SIZE = 1;
+layout(constant_id = 1) const uint OUTPUT_SIZE = 1;
+layout(constant_id = 2) const uint BATCH_SIZE = 1;
 
 // Input matrix I (N x K)
 layout(binding = 0) readonly buffer InputBuffer {
@@ -19,13 +17,8 @@ layout(binding = 1) readonly buffer WeightBuffer {
     float W[];
 };
 
-// Bias
-layout(binding = 2) readonly buffer BiasBuffer {
-    float B[];
-};
-
 // Output matrix O (N x M)
-layout(binding = 3) writeonly buffer OutputBuffer {
+layout(binding = 2) writeonly buffer OutputBuffer {
     float O[];
 };
 
@@ -36,7 +29,7 @@ void main() {
     uint row = gl_GlobalInvocationID.y;
     uint col = gl_GlobalInvocationID.x;
 
-    float sum = B[col];
+    float sum = 0.0;
 
     for (uint t = 0; t < INPUT_SIZE; t += WORKGROUP_SIZE) {
         uint lx = gl_LocalInvocationID.x;

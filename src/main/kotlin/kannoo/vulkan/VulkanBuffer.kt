@@ -86,22 +86,28 @@ class VulkanBuffer(
         memByteBuffer(pMappedMemory.get(0), size.toInt())
     }
 
-    fun initZero() {
-        memSet(memAddress(mapped), 0, mapped.capacity() * Float.SIZE_BYTES.toLong())
-    }
-
-    fun initRandom() {
-        val floats = mapped.asFloatBuffer()
-        repeat(floats.capacity()) {
-            floats.put(randomSignedFloat())
-        }
-        floats.flip()
-    }
-
     override fun destroy() {
         vkUnmapMemory(vulkan.device, memory)
         vkFreeMemory(vulkan.device, memory, null)
         vkDestroyBuffer(vulkan.device, handle, null)
+    }
+
+    // TODO: These init functions seem to significantly degrade performance afterwards, not sure why but don't use them
+
+    fun initZero() {
+        memSet(memAddress(mapped), 0, mapped.capacity() * Float.SIZE_BYTES.toLong())
+    }
+
+    fun init(fn: (Int) -> Float) {
+        val floats = mapped.asFloatBuffer()
+        repeat(floats.capacity()) { i ->
+            floats.put(fn(i))
+        }
+        floats.flip()
+    }
+
+    fun initRandom() {
+        init { randomSignedFloat() }
     }
 }
 

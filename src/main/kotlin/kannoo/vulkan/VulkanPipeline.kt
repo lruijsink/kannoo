@@ -21,6 +21,7 @@ class VulkanPipeline(
     val descriptorSet: VulkanDescriptorSet,
     val pushConstants: VulkanPushConstants,
     val shader: VulkanShader,
+    val specialization: VulkanSpecialization? = null,
 ) : VulkanResource(vulkan) {
 
     val shaderModule: Long = createComputeShaderModule()
@@ -61,6 +62,9 @@ class VulkanPipeline(
             .module(shaderModule)
             .pName(stack.UTF8("main"))
 
+        if (specialization != null)
+            shaderStageCreateInto.pSpecializationInfo(specialization.createInfo(stack))
+
         val pipelineCreateInfo = VkComputePipelineCreateInfo.calloc(1)
             .`sType$Default`()
             .stage(shaderStageCreateInto)
@@ -83,4 +87,5 @@ fun Vulkan.createPipeline(
     descriptorSet: VulkanDescriptorSet,
     pushConstants: VulkanPushConstants,
     shader: VulkanShader,
-) = VulkanPipeline(this, descriptorSet, pushConstants, shader)
+    specialization: VulkanSpecialization? = null,
+) = VulkanPipeline(this, descriptorSet, pushConstants, shader, specialization)
