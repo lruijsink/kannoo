@@ -1,0 +1,24 @@
+#version 450
+
+layout(binding = 0) buffer MatrixBuffer {
+    float M[];
+};
+
+layout(binding = 1) readonly buffer VectorBuffer {
+    float V[];
+};
+
+layout(constant_id = 0) const uint COLS = 1;
+layout(constant_id = 1) const uint ROWS = 1;
+
+#define WORKGROUP_SIZE 32
+layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    uint y = gl_GlobalInvocationID.y;
+
+    if (x < COLS && y < ROWS) {
+        M[y * COLS + x] += V[x];
+    }
+}

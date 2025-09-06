@@ -18,10 +18,10 @@ import org.lwjgl.vulkan.VkShaderModuleCreateInfo
 
 class VulkanPipeline(
     vulkan: Vulkan,
-    val descriptorSet: VulkanDescriptorSet,
-    val pushConstants: VulkanPushConstants,
     val shader: VulkanShader,
+    val descriptorSet: VulkanDescriptorSet,
     val specialization: VulkanSpecialization? = null,
+    val pushConstantCount: Int = 0,
 ) : VulkanResource(vulkan) {
 
     val shaderModule: Long = createComputeShaderModule()
@@ -29,7 +29,7 @@ class VulkanPipeline(
     val handle: Long = createComputePipeline()
 
     private fun createComputeShaderModule(): Long = stackPush().use { stack ->
-        val createInfo = VkShaderModuleCreateInfo.calloc()
+        val createInfo = VkShaderModuleCreateInfo.calloc(stack)
             .`sType$Default`()
             .pCode(shader.code)
 
@@ -39,16 +39,19 @@ class VulkanPipeline(
     }
 
     private fun createPipelineLayout(): Long = stackPush().use { stack ->
-        val pushConstantRange = VkPushConstantRange.calloc(1)
-            .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
-            .offset(0)
-            .size(pushConstants.size)
-
-        val pipelineLayoutCreateInfo = VkPipelineLayoutCreateInfo.calloc()
+        val pipelineLayoutCreateInfo = VkPipelineLayoutCreateInfo.calloc(stack)
             .`sType$Default`()
             .setLayoutCount(1)
             .pSetLayouts(stack.longs(descriptorSet.layout))
-            .pPushConstantRanges(pushConstantRange)
+
+        if (pushConstantCount > 0) {
+            val pushConstantRange = VkPushConstantRange.calloc(1, stack)
+                .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
+                .offset(0)
+                .size(pushConstantCount)
+
+            pipelineLayoutCreateInfo.pPushConstantRanges(pushConstantRange)
+        }
 
         val pPipelineLayout = stack.mallocLong(1)
         vkCreatePipelineLayout(vulkan.device, pipelineLayoutCreateInfo, null, pPipelineLayout).orThrow()
@@ -56,7 +59,7 @@ class VulkanPipeline(
     }
 
     private fun createComputePipeline(): Long = stackPush().use { stack ->
-        val shaderStageCreateInto = VkPipelineShaderStageCreateInfo.calloc()
+        val shaderStageCreateInto = VkPipelineShaderStageCreateInfo.calloc(stack)
             .`sType$Default`()
             .stage(VK_SHADER_STAGE_COMPUTE_BIT)
             .module(shaderModule)
@@ -65,7 +68,7 @@ class VulkanPipeline(
         if (specialization != null)
             shaderStageCreateInto.pSpecializationInfo(specialization.createInfo(stack))
 
-        val pipelineCreateInfo = VkComputePipelineCreateInfo.calloc(1)
+        val pipelineCreateInfo = VkComputePipelineCreateInfo.calloc(1, stack)
             .`sType$Default`()
             .stage(shaderStageCreateInto)
             .layout(layout)
@@ -84,8 +87,8 @@ class VulkanPipeline(
 }
 
 fun Vulkan.createPipeline(
-    descriptorSet: VulkanDescriptorSet,
-    pushConstants: VulkanPushConstants,
     shader: VulkanShader,
+    descriptorSet: VulkanDescriptorSet,
     specialization: VulkanSpecialization? = null,
-) = VulkanPipeline(this, descriptorSet, pushConstants, shader, specialization)
+    pushConstantCount: Int = 0,
+) = VulkanPipeline(this, shader, descriptorSet, specialization, pushConstantCount)

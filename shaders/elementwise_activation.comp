@@ -1,0 +1,43 @@
+#version 450
+
+#define WORKGROUP_SIZE 64
+layout (local_size_x = WORKGROUP_SIZE) in;
+
+layout(constant_id = 0) const uint SIZE = 1;
+layout(constant_id = 1) const uint ACTIVATION = 0;
+layout(constant_id = 2) const bool DERIVATIVE = false;
+
+layout(binding = 0) buffer ElementsBuffer {
+    float M[];
+};
+
+#define ReLU 1
+#define Logistic 2
+
+float activation(float x) {
+    if (ACTIVATION == ReLU) {
+        return max(0.0, x);
+    }
+    if (ACTIVATION == Logistic) {
+        return 1.0 / (1.0 + exp(-x));
+    }
+    return x;
+}
+
+float derivative(float x) {
+    if (ACTIVATION == ReLU) {
+        return step(0.0, x);
+    }
+    if (ACTIVATION == Logistic) {
+        float y = activation(x);
+        return y * (1.0 - y);
+    }
+    return x;
+}
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    if (x < SIZE) {
+        M[x] = DERIVATIVE ? derivative(M[x]) : activation(M[x]);
+    }
+}

@@ -13,6 +13,8 @@ fun createSpecialization(entries: Map<Int, Any>) = VulkanSpecialization { stack 
     val sizes = entries.mapValues { (_, value) ->
         when (value) {
             is Int -> Int.SIZE_BYTES
+            is Float -> Float.SIZE_BYTES
+            is Boolean -> Int.SIZE_BYTES
             else -> throw IllegalStateException("Cannot use $value (${value::class}) as constant")
         }
     }
@@ -27,6 +29,8 @@ fun createSpecialization(entries: Map<Int, Any>) = VulkanSpecialization { stack 
 
         when (value) {
             is Int -> data.putInt(value)
+            is Float -> data.putFloat(value)
+            is Boolean -> data.putInt(if (value) 1 else 0)
         }
     }
     data.flip()

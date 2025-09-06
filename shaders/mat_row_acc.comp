@@ -1,0 +1,32 @@
+#version 450
+
+// Input matrix (N x M)
+layout(binding = 0) readonly buffer InputMatrixBuffer {
+    float M[];
+};
+
+// Ouptut vector (size N)
+layout(binding = 1) writeonly buffer OutputVectorBuffer {
+    float V[];
+};
+
+layout(constant_id = 0) const uint COLS = 1;
+layout(constant_id = 1) const uint ROWS = 1;
+
+layout(push_constant) uniform PushConstants {
+    float ACC_FACTOR;
+};
+
+#define WORKGROUP_SIZE 32
+layout (local_size_x = WORKGROUP_SIZE) in;
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    if (x < COLS) return;
+
+    float sum = 0.0;
+    for (uint y = 0; y < ROWS; y++) {
+        sum += M[y * COLS + x];
+    }
+    V[x] += sum * ACC_FACTOR;
+}

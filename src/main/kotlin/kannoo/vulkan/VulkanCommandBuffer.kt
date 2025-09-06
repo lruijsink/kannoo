@@ -23,12 +23,18 @@ class VulkanCommandBuffer(
     vulkan: Vulkan,
     val pipeline: VulkanPipeline,
     val groupCountX: Int,
-    val groupCountY: Int,
-    val groupCountZ: Int,
+    val groupCountY: Int = 1,
+    val groupCountZ: Int = 1,
 ) : VulkanResource(vulkan) {
 
     val pool: Long = createCommandPool()
     val handle: VkCommandBuffer = createCommandBuffer()
+
+    init {
+        if (pipeline.pushConstantCount == 0) {
+            record()
+        }
+    }
 
     private fun createCommandPool(): Long = stackPush().use { stack ->
         val commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc()
@@ -50,34 +56,43 @@ class VulkanCommandBuffer(
 
         val pCommandBuffer = stack.mallocPointer(1)
         vkAllocateCommandBuffers(vulkan.device, commandBufferAllocateInfo, pCommandBuffer).orThrow()
-        val commandBuffer = VkCommandBuffer(pCommandBuffer.get(), vulkan.device)
+        return VkCommandBuffer(pCommandBuffer.get(), vulkan.device)
+    }
 
+    fun record(pushConstants: VulkanPushConstants? = null): VulkanCommandBuffer = stackPush().use { stack ->
         val beginInfo = VkCommandBufferBeginInfo.calloc()
             .`sType$Default`()
 
-        vkBeginCommandBuffer(commandBuffer, beginInfo).orThrow()
+        vkBeginCommandBuffer(handle, beginInfo).orThrow()
 
-        vkCmdPushConstants(
-            commandBuffer,
-            pipeline.layout,
-            VK_SHADER_STAGE_COMPUTE_BIT,
-            0,
-            stack.ints(*pipeline.pushConstants.values.toIntArray()),
-        )
+        if (pushConstants != null) {
+            vkCmdPushConstants(
+                handle,
+                pipeline.layout,
+                VK_SHADER_STAGE_COMPUTE_BIT,
+                0,
+                pushConstants.record(stack),
+            )
+        } else if (pipeline.pushConstantCount > 0) {
+            throw IllegalStateException("Expected ${pipeline.pushConstantCount} but no producer was supplied")
+        }
 
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.handle)
+        vkCmdBindPipeline(handle, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline.handle)
+
         vkCmdBindDescriptorSets(
-            commandBuffer,
+            handle,
             VK_PIPELINE_BIND_POINT_COMPUTE,
             pipeline.layout,
             0,
             stack.longs(pipeline.descriptorSet.handle),
             null as IntBuffer?,
         )
-        vkCmdDispatch(commandBuffer, groupCountX, groupCountY, groupCountZ)
-        vkEndCommandBuffer(commandBuffer).orThrow()
 
-        return commandBuffer
+        vkCmdDispatch(handle, groupCountX, groupCountY, groupCountZ)
+
+        vkEndCommandBuffer(handle).orThrow()
+
+        return this
     }
 
     override fun destroy() {

@@ -36,3 +36,9 @@ class VulkanMatrixBuffer(
 
 fun Vulkan.createMatrixBuffer(rows: Int, cols: Int): VulkanMatrixBuffer =
     VulkanMatrixBuffer(rows, cols, createBuffer(rows * cols * Float.SIZE_BYTES.toLong()))
+
+fun Vulkan.createMatrixBuffer(matrix: Matrix): VulkanMatrixBuffer {
+    val buffer = createMatrixBuffer(matrix.rows, matrix.cols)
+    buffer.set(matrix)
+    return buffer
+}

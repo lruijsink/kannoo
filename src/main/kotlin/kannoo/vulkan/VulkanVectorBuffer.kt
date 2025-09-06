@@ -33,3 +33,9 @@ class VulkanVectorBuffer(
 
 fun Vulkan.createVectorBuffer(size: Int): VulkanVectorBuffer =
     VulkanVectorBuffer(size, createBuffer(size * Float.SIZE_BYTES.toLong()))
+
+fun Vulkan.createVectorBuffer(vector: Vector): VulkanVectorBuffer {
+    val buffer = createVectorBuffer(vector.size)
+    buffer.set(vector)
+    return buffer
+}

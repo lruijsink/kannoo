@@ -1,0 +1,61 @@
+#version 450
+
+// Input matrix I (N x K)
+layout(binding = 0) readonly buffer ABuffer {
+    float A[];
+};
+
+// Weight matrix W (M x K)
+layout(binding = 1) readonly buffer BBuffer {
+    float B[];
+};
+
+// Output matrix O (N x M)
+layout(binding = 2) buffer OBuffer {
+    float O[];
+};
+
+layout(constant_id = 0) const uint M = 1;// output rows
+layout(constant_id = 1) const uint N = 1;// output cols
+layout(constant_id = 2) const uint K = 1;// batch size
+layout(constant_id = 3) const bool TA = false;
+layout(constant_id = 4) const bool TB = false;
+
+layout(push_constant) uniform PushConstants {
+    float ACC_FACTOR;
+};
+
+#define WORKGROUP_SIZE 32
+layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
+
+shared float tA[WORKGROUP_SIZE][WORKGROUP_SIZE];
+shared float tB[WORKGROUP_SIZE][WORKGROUP_SIZE];
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    uint y = gl_GlobalInvocationID.y;
+    uint lx = gl_LocalInvocationID.x;
+    uint ly = gl_LocalInvocationID.y;
+
+    float sum = 0.0;
+    for (uint t = 0; t < K; t += WORKGROUP_SIZE) {
+        uint tx = lx + t;
+        uint ty = ly + t;
+
+        float a = TA ? A[y + tx * M] : A[y * K + tx];
+        float b = TB ? B[ty + x * K] : B[ty * N + x];
+
+        tA[ly][lx] = (tx < K) ? a : 0.0;
+        tB[ly][lx] = (ty < K) ? b : 0.0;
+        barrier();
+
+        for (uint k = 0; k < WORKGROUP_SIZE; k++) {
+            sum += tA[ly][k] * tB[k][lx];
+        }
+        barrier();
+    }
+
+    if (x < N && y < M) {
+        O[y * N + x] += sum * ACC_FACTOR;
+    }
+}

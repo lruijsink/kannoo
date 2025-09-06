@@ -26,24 +26,26 @@ class DenseLayer(val weights: Matrix, val bias: Vector, override val activationF
     override fun preActivation(input: Vector): Vector =
         weights * input + bias
 
-    override fun preActivationBatch(inputs: Matrix): Matrix =
-        inputs.multiplyTranspose(weights).broadcastPlus(bias)
-
     override fun deltaInput(deltaPreActivation: Vector, input: Vector): Vector =
         deltaPreActivation * weights
-
-    override fun deltaInputBatch(deltaPreActivations: Matrix, inputs: Matrix): Matrix =
-        deltaPreActivations * weights
 
     override fun gradients(deltaPreActivation: Vector, input: Vector, gradient: GradientReceiver) {
         gradient(weights, deltaPreActivation.outer(input))
         gradient(bias, deltaPreActivation)
     }
 
+    override fun preActivationBatch(inputs: Matrix): Matrix =
+        inputs.multiplyTranspose(weights).broadcastPlus(bias)
+
+    override fun deltaInputBatch(deltaPreActivations: Matrix, inputs: Matrix): Matrix =
+        deltaPreActivations * weights
+
     override fun gradientsBatch(deltaPreActivations: Matrix, inputs: Matrix, gradient: GradientReceiver) {
         gradient(weights, deltaPreActivations.transposeMultiply(inputs))
         gradient(bias, deltaPreActivations.sumRows())
     }
+
+
 }
 
 fun denseLayer(outputs: Int, activation: ActivationFunction) =

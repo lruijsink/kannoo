@@ -1,5 +1,9 @@
 package kannoo.vulkan
 
+import kannoo.core.ActivationFunction
+import kannoo.impl.Linear
+import kannoo.impl.Logistic
+import kannoo.impl.ReLU
 import org.lwjgl.PointerBuffer
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.system.MemoryUtil
@@ -20,3 +24,13 @@ fun readFileToNative(fileName: String): ByteBuffer =
 fun MemoryStack.pointers(strings: Iterable<String>): PointerBuffer =
     pointers(*strings.map { UTF8(it) }.toTypedArray())
 
+fun Int.divCeil(divisor: Int): Int =
+    (this + divisor - 1) / divisor
+
+val ActivationFunction.vulkanShaderId
+    get(): Int = when (this) {
+        is Linear -> 0
+        is ReLU -> 1
+        is Logistic -> 2
+        else -> throw IllegalStateException("Activation function $this not yet supported")
+    }
