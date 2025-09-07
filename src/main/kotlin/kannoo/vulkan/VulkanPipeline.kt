@@ -48,7 +48,7 @@ class VulkanPipeline(
             val pushConstantRange = VkPushConstantRange.calloc(1, stack)
                 .stageFlags(VK_SHADER_STAGE_COMPUTE_BIT)
                 .offset(0)
-                .size(pushConstantCount)
+                .size(pushConstantCount * 4) // TODO: Support types that aren't 4 bytes per element
 
             pipelineLayoutCreateInfo.pPushConstantRanges(pushConstantRange)
         }

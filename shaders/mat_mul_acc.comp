@@ -56,6 +56,6 @@ void main() {
     }
 
     if (x < N && y < M) {
-        O[y * N + x] += sum * ACC_FACTOR;
+        O[y * N + x] += ACC_FACTOR * sum;
     }
 }

@@ -1,6 +1,7 @@
 package kannoo.vulkan
 
 import kannoo.math.Matrix
+import kannoo.math.randomMatrix
 
 class VulkanMatrixBuffer(
     val rows: Int,
@@ -31,6 +32,10 @@ class VulkanMatrixBuffer(
         buffer.clear()
         matrix.slices.forEach { buffer.put(it.elements) }
         buffer.flip()
+    }
+
+    fun randomize() = apply {
+        set(randomMatrix(rows, cols))
     }
 }
 

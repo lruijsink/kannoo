@@ -2,6 +2,7 @@ package kannoo.vulkan
 
 import org.lwjgl.system.MemoryStack.stackPush
 import org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY
+import org.lwjgl.vulkan.VK10.VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
 import org.lwjgl.vulkan.VK10.VK_PIPELINE_BIND_POINT_COMPUTE
 import org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_COMPUTE_BIT
 import org.lwjgl.vulkan.VK10.vkAllocateCommandBuffers
@@ -13,6 +14,7 @@ import org.lwjgl.vulkan.VK10.vkCmdPushConstants
 import org.lwjgl.vulkan.VK10.vkCreateCommandPool
 import org.lwjgl.vulkan.VK10.vkDestroyCommandPool
 import org.lwjgl.vulkan.VK10.vkEndCommandBuffer
+import org.lwjgl.vulkan.VK10.vkResetCommandBuffer
 import org.lwjgl.vulkan.VkCommandBuffer
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo
@@ -39,7 +41,7 @@ class VulkanCommandBuffer(
     private fun createCommandPool(): Long = stackPush().use { stack ->
         val commandPoolCreateInfo = VkCommandPoolCreateInfo.calloc()
             .`sType$Default`()
-            .flags(0)
+            .flags(if (pipeline.pushConstantCount > 0) VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT else 0)
             .queueFamilyIndex(vulkan.queueFamilyIndex)
 
         val pCommandPool = stack.mallocLong(1)
@@ -60,6 +62,9 @@ class VulkanCommandBuffer(
     }
 
     fun record(pushConstants: VulkanPushConstants? = null): VulkanCommandBuffer = stackPush().use { stack ->
+        if (pushConstants != null)
+            vkResetCommandBuffer(handle, 0)
+
         val beginInfo = VkCommandBufferBeginInfo.calloc()
             .`sType$Default`()
 

@@ -1,120 +1,192 @@
-
+import kannoo.core.Model
+import kannoo.core.Sample
+import kannoo.core.inputLayer
 import kannoo.example.rnd
 import kannoo.impl.Logistic
+import kannoo.impl.MeanSquaredError
+import kannoo.impl.MiniBatchSGD
 import kannoo.impl.ReLU
+import kannoo.impl.denseLayer
 import kannoo.math.Matrix
 import kannoo.math.Shape
-import kannoo.math.broadcastPlus
+import kannoo.math.Vector
 import kannoo.math.matrix
 import kannoo.math.randomMatrix
 import kannoo.math.randomVector
 import kannoo.math.vector
+import kannoo.vulkan.DenseConfig
 import kannoo.vulkan.Vulkan
 import kannoo.vulkan.VulkanDense
+import kannoo.vulkan.VulkanModel
+import kannoo.vulkan.activate
 import kannoo.vulkan.createExecution
 import kannoo.vulkan.createMatrixBuffer
-import kannoo.vulkan.matActivation
+import kannoo.vulkan.createVectorBuffer
+import kannoo.vulkan.hadamardAssign
 import kannoo.vulkan.matMul
 import kannoo.vulkan.matMulAcc
+import kannoo.vulkan.matRowAcc
+import kannoo.vulkan.matVecAdd
 import kannoo.vulkan.pushConstants
 import kotlin.system.measureTimeMillis
 
 val vulkan = Vulkan()
 
+val x = matrix(
+    vector(0f, 0f),
+    vector(1f, 0f),
+    vector(0f, 1f),
+    vector(1f, 1f),
+)
+
+val t = matrix(
+    vector(1f, 0f, 0f, 0f),
+    vector(0f, 1f, 0f, 1f),
+    vector(0f, 1f, 0f, 1f),
+    vector(1f, 0f, 1f, 1f),
+)
+
+fun testModelPerf() {
+    val batchSize = 64
+    val model = VulkanModel(
+        vulkan,
+        inputSize = 28 * 28,
+        batchSize = batchSize,
+        configs = listOf(
+            DenseConfig(32, Logistic),
+            DenseConfig(10, Logistic),
+        )
+    )
+    val x = randomMatrix(batchSize, 28 * 28)
+    val t = randomMatrix(batchSize, 10)
+    repeat(10) {
+        val ms = measureTimeMillis {
+            repeat(60_000 / batchSize) {
+                model.backProp(x, t, -0.1f)
+            }
+        }
+        println("Took $ms ms")
+    }
+}
+
 fun testModel() {
+    val model = VulkanModel(
+        vulkan,
+        inputSize = x.cols,
+        batchSize = x.rows,
+        configs = listOf(
+            DenseConfig(8, Logistic),
+            DenseConfig(t.cols, Logistic),
+        )
+    )
+
+    val ms = measureTimeMillis {
+        repeat(1000) {
+            model.backProp(x, t, -0.5f)
+        }
+    }
+
+    println("GPU took $ms ms")
+    println(model.compute(x).prettyPrint())
+    println()
 }
 
-fun testMatMulAcc() {
-    val s = 0.5f
-
-    val A = matrix(
-        vector(1f, 2f, 3f),
-        vector(4f, 5f, 6f),
+fun testModelOld() {
+    val m = Model(
+        inputLayer(2),
+        denseLayer(8, Logistic),
+        denseLayer(4, Logistic),
     )
-
-    val B = matrix(
-        vector(-1f, 0.5f, 1f, -0.5f),
-        vector(1f, -1f, -0.5f, 0.5f),
-        vector(-0.5f, 1f, 0.5f, -1f),
-    ).transpose()
-
-    val C = Matrix(A.rows, B.rows)
-
-    C += (A multiplyTranspose B) * s
-    println(C.prettyPrint())
+    val sgd = MiniBatchSGD(m, MeanSquaredError, 0.5f, 4)
+    val s = List(x.rows) { i -> Sample(x[i], t[i]) }
+    val ms = measureTimeMillis {
+        repeat(1000) {
+            sgd.trainBatch(s)
+        }
+    }
+    println("CPU took $ms ms")
+    println((m.compute(x) as Matrix).prettyPrint())
     println()
-
-    C += (A multiplyTranspose  B) * s
-    println(C.prettyPrint())
-    println()
-
-
-    val bA = vulkan.createMatrixBuffer(A)
-    val bB = vulkan.createMatrixBuffer(B)
-    val bC = vulkan.createMatrixBuffer(C.copyZero())
-    val cmd = vulkan.matMulAcc(bA, bB, bC, transposeB = true)
-    val matTransposeMulAcc = vulkan.createExecution(cmd)
-
-    println()
-    println(bC.get().prettyPrint())
-
-    println()
-    cmd.record(pushConstants(s))
-    matTransposeMulAcc.submit()
-    println(bC.get().prettyPrint())
-
-    println()
-    cmd.record(pushConstants(3 * s))
-    matTransposeMulAcc.submit()
-    println(bC.get().prettyPrint())
 }
 
-fun testMatMul() {
-    val a1 = matrix(
-        vector(1f, 2f),
+fun testModelManual() {
+
+    val x0 = vulkan.createMatrixBuffer(
+        matrix(
+            vector(0f, 0f),
+            vector(1f, 0f),
+            vector(0f, 1f),
+            vector(1f, 1f),
+        )
     )
 
-    val b1 = matrix(
-        vector(1f, 0f),
-        vector(0f, 1f),
+    val t = matrix(
+        vector(1f, 0f, 0f, 0f),
+        vector(0f, 1f, 0f, 1f),
+        vector(0f, 1f, 0f, 1f),
+        vector(1f, 0f, 1f, 1f),
     )
 
-    val a2 = matrix(
-        vector(1f, 2f, 3f),
-        vector(4f, 5f, 6f),
+    val batchSize = x0.rows
+    val outputSize = t.cols
+    val hiddenSize = 3
+
+    val w0 = vulkan.createMatrixBuffer(randomMatrix(hiddenSize, x0.cols))
+    val b0 = vulkan.createVectorBuffer(Vector(hiddenSize))
+    val z0 = vulkan.createMatrixBuffer(batchSize, hiddenSize)
+    val f0 = Logistic
+
+    val x1 = vulkan.createMatrixBuffer(z0.rows, z0.cols)
+    val w1 = vulkan.createMatrixBuffer(randomMatrix(outputSize, hiddenSize))
+    val b1 = vulkan.createVectorBuffer(Vector(outputSize))
+    val z1 = vulkan.createMatrixBuffer(batchSize, outputSize)
+    val f1 = Logistic
+
+    val y = vulkan.createMatrixBuffer(z1.rows, z1.cols)
+
+    val fwd = vulkan.createExecution(
+        vulkan.matMul(x0, w0, z0, transposeB = true),
+        vulkan.matVecAdd(z0, b0),
+        vulkan.activate(z0, x1, f0),
+
+        vulkan.matMul(x1, w1, z1, transposeB = true),
+        vulkan.matVecAdd(z1, b1),
+        vulkan.activate(z1, y, f1),
     )
 
-    val b2 = matrix(
-        vector(1f, -2f, 3f, -4f),
-        vector(-5f, 6f, -7f, 8f),
-        vector(9f, -10f, 11f, -12f),
+    val C = MeanSquaredError
+    val r = 0.1f
+
+    val dy = vulkan.createMatrixBuffer(y.rows, y.cols)
+
+    val dz1 = vulkan.createMatrixBuffer(z1.rows, z1.cols)
+    val dx1 = vulkan.createMatrixBuffer(x1.rows, x1.cols)
+
+    val dz0 = vulkan.createMatrixBuffer(z0.rows, z0.cols)
+    // unnecessary: val dx0 = vulkan.createMatrixBuffer(x0.rows, x0.cols)
+
+    val back = vulkan.createExecution(
+        vulkan.activate(z1, dz1, f0, derivative = true),
+        vulkan.hadamardAssign(dz1, dy),
+        vulkan.matMul(dz1, w1, dx1),
+        vulkan.matMulAcc(dz1, x1, w1, transposeA = true).record(pushConstants(-r)),
+        vulkan.matRowAcc(dz1, b1).record(pushConstants(-r)),
+
+        vulkan.activate(z0, dz0, f0, derivative = true),
+        vulkan.hadamardAssign(dz0, dx1),
+        // unnecessary: vulkan.matMul(dz0, w0, dx0),
+        vulkan.matMulAcc(dz0, x0, w0, transposeA = true).record(pushConstants(-r)),
+        vulkan.matRowAcc(dz0, b0).record(pushConstants(-r)),
     )
 
-    val a = a2
-    val b = b2.transpose()
-    val c = a * b.transpose()
+    repeat(10000) {
+        fwd.submit()
+        dy.set(C.derivative(t, y.get()))
+        back.submit()
+    }
 
-    println(c.prettyPrint())
+    println(y.get().prettyPrint())
     println()
-
-    val aB = vulkan.createMatrixBuffer(a)
-    val bB = vulkan.createMatrixBuffer(b)
-    val cB = vulkan.createMatrixBuffer(c.copyZero())
-
-    vulkan.createExecution(vulkan.matMul(aB, bB, cB, transposeA = false, transposeB = true)).submit()
-
-    println(cB.get().prettyPrint())
-}
-
-fun testActivation() {
-    val a = Logistic
-    val m = matrix(vector(-1f, -2f, 3f), vector(-4f, 5f, 6f))
-    println(a.compute(m).prettyPrint())
-    println()
-
-    val b = vulkan.createMatrixBuffer(m)
-    vulkan.createExecution(vulkan.matActivation(b, a, derivative = false)).submit()
-    println(b.get().prettyPrint())
 }
 
 fun testPerf() {
@@ -154,28 +226,6 @@ fun testPerf() {
     println("           = $calc (${rnd(calc / 1_000_000_000_000.0f)} trillion) calculations")
     println()
 
-    var cpuDfMs = 1L
-    if (!cpuSkip) {
-        cpuDfMs = measureTimeMillis {
-            repeat(rounds / cpuReduction) {
-                activation.compute(input.multiplyTranspose(weights).broadcastPlus(bias))
-            }
-        }
-        println("CPU took ${rnd(cpuDfMs / 1000.0f)} sec. for ${rounds / cpuReduction}   dense forwards (${rounds.toFloat() * 1000 / (cpuDfMs * cpuReduction)} ops/sec.)")
-        println()
-    }
-
-    var cpuMmMs = 1L
-    if (!cpuSkip) {
-        cpuMmMs = measureTimeMillis {
-            repeat(rounds / cpuReduction) {
-                input.multiplyTranspose(weights)
-            }
-        }
-        println("CPU took ${rnd(cpuMmMs / 1000.0f)} sec. for ${rounds / cpuReduction}   matrix muls (${rounds.toFloat() * 1000 / (cpuMmMs * cpuReduction)} ops/sec.)")
-        println()
-    }
-
     val execDense2 = vulkan.createExecution(vulkanDense2.forward)
     val msDense2 = measureTimeMillis {
         repeat(rounds) {
@@ -184,11 +234,6 @@ fun testPerf() {
     }
     println("GPU took  ${rnd(msDense2 / 1000.0f)} sec. for $rounds dense 2s (${rounds.toFloat() * 1000 / msDense2} ops/sec.)")
     println()
-
-    if (!cpuSkip) {
-        println("GPU is ${rnd((cpuMmMs.toFloat() / msDense2) * cpuReduction)} times faster at dense 2")
-        println()
-    }
 
     val execDense2BackProp = vulkan.createExecution(vulkanDense2.backProp)
     val msDenseBackProp2 = measureTimeMillis {
@@ -206,5 +251,5 @@ fun testPerf() {
 }
 
 fun main() {
-    testPerf()
+    testModelPerf()
 }

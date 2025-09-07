@@ -44,8 +44,6 @@ class DenseLayer(val weights: Matrix, val bias: Vector, override val activationF
         gradient(weights, deltaPreActivations.transposeMultiply(inputs))
         gradient(bias, deltaPreActivations.sumRows())
     }
-
-
 }
 
 fun denseLayer(outputs: Int, activation: ActivationFunction) =

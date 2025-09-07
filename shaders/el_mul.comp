@@ -1,0 +1,25 @@
+#version 450
+
+#define WORKGROUP_SIZE 64
+layout (local_size_x = WORKGROUP_SIZE) in;
+
+layout(constant_id = 0) const uint SIZE = 1;
+
+layout(binding = 0) readonly buffer BufferA {
+    float A[];
+};
+
+layout(binding = 1) readonly buffer BufferB {
+    float B[];
+};
+
+layout(binding = 2) writeonly buffer BufferC {
+    float C[];
+};
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    if (x < SIZE) {
+        C[x] = A[x] * B[x];
+    }
+}

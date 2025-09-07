@@ -29,6 +29,10 @@ class VulkanVectorBuffer(
         buffer.mapped.asFloatBuffer().put(vector.elements)
         buffer.mapped.flip()
     }
+
+    fun zero() = apply {
+        set(Vector(size))
+    }
 }
 
 fun Vulkan.createVectorBuffer(size: Int): VulkanVectorBuffer =

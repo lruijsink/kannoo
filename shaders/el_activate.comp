@@ -7,8 +7,12 @@ layout(constant_id = 0) const uint SIZE = 1;
 layout(constant_id = 1) const uint ACTIVATION = 0;
 layout(constant_id = 2) const bool DERIVATIVE = false;
 
-layout(binding = 0) buffer ElementsBuffer {
-    float M[];
+layout(binding = 0) readonly buffer InputBuffer {
+    float I[];
+};
+
+layout(binding = 1) writeonly buffer OutputBuffer {
+    float O[];
 };
 
 #define ReLU 1
@@ -21,23 +25,25 @@ float activation(float x) {
     if (ACTIVATION == Logistic) {
         return 1.0 / (1.0 + exp(-x));
     }
+    // else linear:
     return x;
 }
 
 float derivative(float x) {
     if (ACTIVATION == ReLU) {
-        return step(0.0, x);
+        return x > 0.0 ? 1.0 : 0.0;
     }
     if (ACTIVATION == Logistic) {
         float y = activation(x);
         return y * (1.0 - y);
     }
-    return x;
+    // else linear:
+    return 1.0;
 }
 
 void main() {
     uint x = gl_GlobalInvocationID.x;
     if (x < SIZE) {
-        M[x] = DERIVATIVE ? derivative(M[x]) : activation(M[x]);
+        O[x] = DERIVATIVE ? derivative(I[x]) : activation(I[x]);
     }
 }

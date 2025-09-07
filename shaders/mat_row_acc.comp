@@ -6,7 +6,7 @@ layout(binding = 0) readonly buffer InputMatrixBuffer {
 };
 
 // Ouptut vector (size N)
-layout(binding = 1) writeonly buffer OutputVectorBuffer {
+layout(binding = 1) buffer OutputVectorBuffer {
     float V[];
 };
 
@@ -22,7 +22,7 @@ layout (local_size_x = WORKGROUP_SIZE) in;
 
 void main() {
     uint x = gl_GlobalInvocationID.x;
-    if (x < COLS) return;
+    if (x >= COLS) return;
 
     float sum = 0.0;
     for (uint y = 0; y < ROWS; y++) {
