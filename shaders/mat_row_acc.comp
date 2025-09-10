@@ -17,7 +17,7 @@ layout(push_constant) uniform PushConstants {
     float ACC_FACTOR;
 };
 
-#define WORKGROUP_SIZE 32
+#define WORKGROUP_SIZE 64
 layout (local_size_x = WORKGROUP_SIZE) in;
 
 void main() {

@@ -10,7 +10,7 @@ fun Vulkan.matMul(
     val (m, n, k) = matMulDimsMNK(matrixA, matrixB, matrixOut, transposeA, transposeB)
     return createCommandBuffer(
         pipeline = createPipeline(
-            shader = createShader("shaders/mat_mul.spv", 32),
+            shader = createShader("shaders/mat_mul.spv"),
             descriptorSet = createDescriptorSet(
                 0 to matrixA.buffer,
                 1 to matrixB.buffer,
@@ -24,8 +24,8 @@ fun Vulkan.matMul(
                 4 to transposeB,
             ),
         ),
-        groupCountX = matrixOut.cols.divCeil(32),
-        groupCountY = matrixOut.rows.divCeil(32),
+        groupCountX = matrixOut.cols.divCeil(8),
+        groupCountY = matrixOut.rows.divCeil(8),
     )
 }
 
@@ -39,7 +39,7 @@ fun Vulkan.matMulAcc(
     val (m, n, k) = matMulDimsMNK(matrixA, matrixB, matrixOut, transposeA, transposeB)
     return createCommandBuffer(
         pipeline = createPipeline(
-            shader = createShader("shaders/mat_mul_acc.spv", 32),
+            shader = createShader("shaders/mat_mul_acc.spv"),
             descriptorSet = createDescriptorSet(
                 0 to matrixA.buffer,
                 1 to matrixB.buffer,
@@ -54,8 +54,8 @@ fun Vulkan.matMulAcc(
             ),
             pushConstantCount = 1,
         ),
-        groupCountX = matrixOut.cols.divCeil(32),
-        groupCountY = matrixOut.rows.divCeil(32),
+        groupCountX = matrixOut.cols.divCeil(8),
+        groupCountY = matrixOut.rows.divCeil(8),
     )
 }
 
@@ -65,7 +65,7 @@ fun Vulkan.matRowAcc(matrix: VulkanMatrixBuffer, vector: VulkanVectorBuffer): Vu
 
     return createCommandBuffer(
         pipeline = createPipeline(
-            shader = createShader("shaders/mat_row_acc.spv", 32),
+            shader = createShader("shaders/mat_row_acc.spv"),
             descriptorSet = createDescriptorSet(
                 0 to matrix.buffer,
                 1 to vector.buffer,
@@ -76,7 +76,7 @@ fun Vulkan.matRowAcc(matrix: VulkanMatrixBuffer, vector: VulkanVectorBuffer): Vu
             ),
             pushConstantCount = 1,
         ),
-        groupCountX = vector.size.divCeil(32),
+        groupCountX = vector.size.divCeil(64),
     )
 }
 
@@ -86,7 +86,7 @@ fun Vulkan.matVecAdd(matrix: VulkanMatrixBuffer, vector: VulkanVectorBuffer): Vu
 
     return createCommandBuffer(
         pipeline = createPipeline(
-            shader = createShader("shaders/mat_vec_add.spv", 32),
+            shader = createShader("shaders/mat_vec_add.spv"),
             descriptorSet = createDescriptorSet(
                 0 to matrix.buffer,
                 1 to vector.buffer,
@@ -96,8 +96,8 @@ fun Vulkan.matVecAdd(matrix: VulkanMatrixBuffer, vector: VulkanVectorBuffer): Vu
                 1 to matrix.rows,
             ),
         ),
-        groupCountX = matrix.cols.divCeil(32),
-        groupCountY = matrix.rows.divCeil(32),
+        groupCountX = matrix.cols.divCeil(8),
+        groupCountY = matrix.rows.divCeil(8),
     )
 }
 

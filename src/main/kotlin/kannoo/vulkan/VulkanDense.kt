@@ -1,6 +1,7 @@
 package kannoo.vulkan
 
 import kannoo.core.ActivationFunction
+import kannoo.vulkan.ActivationMode.INFER_DERIVATIVE
 
 interface VulkanLayer {
     val inputBuffer: VulkanBuffer
@@ -25,32 +26,32 @@ class VulkanDense(
     val outputSize: Int = output.cols
     val weights: VulkanMatrixBuffer = vulkan.createMatrixBuffer(outputSize, inputSize).randomize()
     val bias: VulkanVectorBuffer = vulkan.createVectorBuffer(outputSize).zero()
-    val preActivation: VulkanMatrixBuffer = vulkan.createMatrixBuffer(output.rows, output.cols)
+//    val preActivation: VulkanMatrixBuffer = vulkan.createMatrixBuffer(output.rows, output.cols)
 
     override val inputBuffer: VulkanBuffer = input.buffer
     override val outputBuffer: VulkanBuffer = output.buffer
 
     override val forward: List<VulkanCommandBuffer> = listOf(
-        vulkan.matMul(input, weights, preActivation, transposeB = true),
-        vulkan.matVecAdd(preActivation, bias),
-        vulkan.activate(preActivation, output, activation),
+        vulkan.matMul(input, weights, output, transposeB = true),
+        vulkan.matVecAdd(output, bias),
+        vulkan.activateAssign(output, activation),
     )
 
     override val backProp: List<VulkanCommandBuffer> =
         if (deltaInput != null)
             listOf(
-                vulkan.activateAssign(preActivation, activation, derivative = true),
-                vulkan.hadamardAssign(preActivation, deltaOutput),
-                vulkan.matMul(preActivation, weights, deltaInput),
-                vulkan.matMulAcc(preActivation, input, weights, transposeA = true),
-                vulkan.matRowAcc(preActivation, bias),
+                vulkan.activateAssign(output, activation, INFER_DERIVATIVE),
+                vulkan.hadamardAssign(output, deltaOutput),
+                vulkan.matMul(output, weights, deltaInput),
+                vulkan.matMulAcc(output, input, weights, transposeA = true),
+                vulkan.matRowAcc(output, bias),
             )
         else
             listOf(
-                vulkan.activateAssign(preActivation, activation, derivative = true),
-                vulkan.hadamardAssign(preActivation, deltaOutput),
-                vulkan.matMulAcc(preActivation, input, weights, transposeA = true),
-                vulkan.matRowAcc(preActivation, bias),
+                vulkan.activateAssign(output, activation, INFER_DERIVATIVE),
+                vulkan.hadamardAssign(output, deltaOutput),
+                vulkan.matMulAcc(output, input, weights, transposeA = true),
+                vulkan.matRowAcc(output, bias),
             )
 
     override fun recordBackProp(learningRate: Float) {

@@ -45,7 +45,6 @@ class VulkanDenseTest {
     @Test
     fun `Test forward pass on a small layer`() {
         vulkan.createExecution(layer.forward).submit()
-        assertTensorEquals(preActivation, layer.preActivation.get())
         assertTensorEquals(Logistic.compute(preActivation), layer.output.get())
     }
 

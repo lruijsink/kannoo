@@ -14,6 +14,7 @@ import kannoo.math.matrix
 import kannoo.math.randomMatrix
 import kannoo.math.randomVector
 import kannoo.math.vector
+import kannoo.vulkan.ActivationMode.DERIVATIVE
 import kannoo.vulkan.DenseConfig
 import kannoo.vulkan.Vulkan
 import kannoo.vulkan.VulkanDense
@@ -47,7 +48,7 @@ val t = matrix(
 )
 
 fun testModelPerf() {
-    val batchSize = 64
+    val batchSize = 640
     val model = VulkanModel(
         vulkan,
         inputSize = 28 * 28,
@@ -59,7 +60,7 @@ fun testModelPerf() {
     )
     val x = randomMatrix(batchSize, 28 * 28)
     val t = randomMatrix(batchSize, 10)
-    repeat(10) {
+    repeat(100) {
         val ms = measureTimeMillis {
             repeat(60_000 / batchSize) {
                 model.backProp(x, t, -0.1f)
@@ -166,13 +167,13 @@ fun testModelManual() {
     // unnecessary: val dx0 = vulkan.createMatrixBuffer(x0.rows, x0.cols)
 
     val back = vulkan.createExecution(
-        vulkan.activate(z1, dz1, f0, derivative = true),
+        vulkan.activate(z1, dz1, f0, DERIVATIVE),
         vulkan.hadamardAssign(dz1, dy),
         vulkan.matMul(dz1, w1, dx1),
         vulkan.matMulAcc(dz1, x1, w1, transposeA = true).record(pushConstants(-r)),
         vulkan.matRowAcc(dz1, b1).record(pushConstants(-r)),
 
-        vulkan.activate(z0, dz0, f0, derivative = true),
+        vulkan.activate(z0, dz0, f0, DERIVATIVE),
         vulkan.hadamardAssign(dz0, dx1),
         // unnecessary: vulkan.matMul(dz0, w0, dx0),
         vulkan.matMulAcc(dz0, x0, w0, transposeA = true).record(pushConstants(-r)),

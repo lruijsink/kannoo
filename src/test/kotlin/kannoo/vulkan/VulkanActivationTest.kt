@@ -5,6 +5,7 @@ import kannoo.impl.Logistic
 import kannoo.impl.ReLU
 import kannoo.math.assertTensorEquals
 import kannoo.math.randomIntMatrix
+import kannoo.vulkan.ActivationMode.DERIVATIVE
 import org.junit.jupiter.api.Test
 
 class VulkanActivationTest {
@@ -50,7 +51,7 @@ class VulkanActivationTest {
 
             assertTensorEquals(activated, output.get())
 
-            val derivativeCommandBuffer = vulkan.activate(input, output, fn, derivative = true)
+            val derivativeCommandBuffer = vulkan.activate(input, output, fn, DERIVATIVE)
             val derivativeExecution = vulkan.createExecution(derivativeCommandBuffer)
             derivativeExecution.submit()
 
@@ -99,7 +100,7 @@ class VulkanActivationTest {
             assertTensorEquals(activated, buffer.get())
 
             buffer.set(matrix)
-            val derivativeCommandBuffer = vulkan.activateAssign(buffer, fn, derivative = true)
+            val derivativeCommandBuffer = vulkan.activateAssign(buffer, fn, DERIVATIVE)
             val derivativeExecution = vulkan.createExecution(derivativeCommandBuffer)
             derivativeExecution.submit()
 

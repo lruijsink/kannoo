@@ -25,7 +25,7 @@ layout(push_constant) uniform PushConstants {
     float ACC_FACTOR;
 };
 
-#define WORKGROUP_SIZE 32
+#define WORKGROUP_SIZE 8
 layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
 
 shared float tA[WORKGROUP_SIZE][WORKGROUP_SIZE];

@@ -3,9 +3,13 @@
 #define WORKGROUP_SIZE 64
 layout (local_size_x = WORKGROUP_SIZE) in;
 
+#define REGULAR 0
+#define DERIVATIVE 1
+#define INFER_DERIVATIVE 2
+
 layout(constant_id = 0) const uint SIZE = 1;
 layout(constant_id = 1) const uint ACTIVATION = 0;
-layout(constant_id = 2) const bool DERIVATIVE = false;
+layout(constant_id = 2) const uint MODE = REGULAR;
 
 layout(binding = 0) readonly buffer InputBuffer {
     float I[];
@@ -41,9 +45,28 @@ float derivative(float x) {
     return 1.0;
 }
 
+float inferDerivative(float x) {
+    if (ACTIVATION == ReLU) {
+        return x > 0.0 ? 1.0 : 0.0;
+    }
+    if (ACTIVATION == Logistic) {
+        return x * (1.0 - x);
+    }
+    // else linear:
+    return 1.0;
+}
+
 void main() {
     uint x = gl_GlobalInvocationID.x;
-    if (x < SIZE) {
-        O[x] = DERIVATIVE ? derivative(I[x]) : activation(I[x]);
+    if (x >= SIZE) return;
+
+    if (MODE == REGULAR) {
+        O[x] = activation(I[x]);
+    }
+    if (MODE == DERIVATIVE) {
+        O[x] = derivative(I[x]);
+    }
+    if (MODE == INFER_DERIVATIVE) {
+        O[x] = inferDerivative(I[x]);
     }
 }

@@ -21,7 +21,7 @@ layout(constant_id = 2) const uint K = 1;// batch size
 layout(constant_id = 3) const bool TA = false;
 layout(constant_id = 4) const bool TB = false;
 
-#define WORKGROUP_SIZE 32
+#define WORKGROUP_SIZE 8
 layout (local_size_x = WORKGROUP_SIZE, local_size_y = WORKGROUP_SIZE) in;
 
 shared float tA[WORKGROUP_SIZE][WORKGROUP_SIZE];

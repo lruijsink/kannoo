@@ -68,10 +68,6 @@ class VulkanModel(
             println(l.weights.get().prettyPrint())
             println()
 
-            println("Pre-activation: ")
-            println(l.preActivation.get().prettyPrint())
-            println()
-
             println("Output: ")
             println(l.output.get().prettyPrint())
             println()
